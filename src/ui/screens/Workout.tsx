@@ -499,20 +499,44 @@ function washColour(wash: number | null): string | undefined {
   return `color-mix(in srgb, var(--color-ink) ${String(wash * 100)}%, transparent)`;
 }
 
+/**
+ * The gap between a wash and the rule above and below it.
+ *
+ * The hairline is itself ink at about 15 % of the ground, so the top of the wash scale
+ * passes straight through it: zone 5 at 16 % is brighter than the rule, and a rule with no
+ * contrast against the fill it touches reads as a blurred edge rather than a boundary.
+ * Insetting the fill keeps the rule on ground at full contrast on both sides, so the
+ * ceiling can stay at 20 % without the separators dissolving.
+ *
+ * It also makes the row read the way the chart does. DESIGN.md asks the two to match, and
+ * the chart draws blocks — bounded shapes with space around them — not tinted rows.
+ */
+const WASH_INSET_PX = 4;
+
 function Step({ row, ref }: { row: StepRow; ref?: React.Ref<HTMLDivElement> }) {
   const tone = ROW_TONE[row.state];
+  const wash = row.state === 'current' ? undefined : washColour(row.wash);
   return (
     <div
       ref={ref}
-      className={`flex items-baseline gap-[14px] py-[9px] pr-[10px] ${tone.frame}`}
-      style={row.state === 'current' ? undefined : { backgroundColor: washColour(row.wash) }}
+      className={`relative ${tone.frame}`}
       aria-current={row.state === 'current' ? 'step' : undefined}
     >
-      <div className={`${MONO} text-micro w-[16px] ${tone.number}`}>{row.number}</div>
-      <div className={`text-label grow font-sans ${tone.name}`}>{row.name}</div>
-      <div className={`${MONO} text-caption ${tone.target}`}>{row.target}</div>
-      <div className={`${MONO} text-caption w-[52px] text-right ${tone.duration}`}>
-        {row.duration}
+      {wash !== undefined && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0"
+          style={{ top: WASH_INSET_PX, bottom: WASH_INSET_PX, backgroundColor: wash }}
+        />
+      )}
+      {/* Positioned, so it paints over the wash rather than under it. */}
+      <div className="relative flex items-baseline gap-[14px] py-[9px] pr-[10px]">
+        <div className={`${MONO} text-micro w-[16px] ${tone.number}`}>{row.number}</div>
+        <div className={`text-label grow font-sans ${tone.name}`}>{row.name}</div>
+        <div className={`${MONO} text-caption ${tone.target}`}>{row.target}</div>
+        <div className={`${MONO} text-caption w-[52px] text-right ${tone.duration}`}>
+          {row.duration}
+        </div>
       </div>
     </div>
   );
