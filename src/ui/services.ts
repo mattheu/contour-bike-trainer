@@ -28,7 +28,7 @@ import {
   type BundledRoute,
 } from '../ride/routes';
 import { builtInWorkoutIds, seedWorkouts } from '../ride/workouts';
-import { planRouteImport, routeFingerprint, type RouteFingerprint } from '../route/import';
+import { planRouteImport, routeGeometryKey } from '../route/import';
 import type { Route as RouteGeometry } from '../route/types';
 import { TrainerTickSource } from '../ride/tick';
 import type { EngineTrainer } from '../ride/types';
@@ -1342,17 +1342,18 @@ export async function exportAllRoutes(): Promise<void> {
 const MAX_ROUTE_IMPORT_BYTES = 64 * 1024 * 1024;
 
 /**
- * Every stored route's geometry, for planRouteImport to match an incoming track against.
+ * Every stored route's geometry key, for planRouteImport to match an incoming track
+ * against.
  *
  * The whole list, built-ins included: the likeliest duplicate of all is a route the build
  * already ships. A record whose GPX will not parse contributes nothing — it has no
  * geometry to compare, and the boot alert has already named it.
  */
-async function storedRouteFingerprints(): Promise<RouteFingerprint[]> {
+async function storedRouteKeys(): Promise<string[]> {
   const stored = await storage.routes.list();
   return stored.flatMap((route) => {
     const read = storedRouteGeometry(route);
-    return read.status === 'ok' ? [routeFingerprint(read.geometry)] : [];
+    return read.status === 'ok' ? [routeGeometryKey(read.geometry)] : [];
   });
 }
 
@@ -1361,9 +1362,9 @@ async function storedRouteFingerprints(): Promise<RouteFingerprint[]> {
  *
  * Every track the rider does not already have becomes a new route with a new id. A GPX
  * carries no ids to match on, so sameness is geometry rather than identity: a track whose
- * start, end, distance and ascent match a stored route is skipped and counted. Skipped
- * rather than overwritten, because a route is not editable — the stored copy is the same
- * route, and rewriting it would churn an id that rides reference.
+ * points match a stored route's, to the metre, is skipped and counted. Skipped rather
+ * than overwritten, because a route is not editable — the stored copy is the same route,
+ * and rewriting it would churn an id that rides reference.
  *
  * The reading is planRouteImport, which is pure and tested; this writes what it returns.
  * Nothing throws: a file chosen in a picker is untrusted input and the rider gets a
@@ -1388,7 +1389,7 @@ export async function importRoutes(file: File): Promise<RouteImportResult> {
   await ready;
   let plan;
   try {
-    plan = planRouteImport(text, file.name, await storedRouteFingerprints());
+    plan = planRouteImport(text, file.name, await storedRouteKeys());
   } catch (error) {
     return { status: 'failed', reason: errorMessage(error) };
   }
