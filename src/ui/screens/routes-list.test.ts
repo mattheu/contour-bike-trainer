@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Ride, Route as StoredRoute } from '../../storage/types';
-import { rideCounts, riddenLabel, sortRoutes } from './routes-list';
+import { ROUTE_DELETE_WORDING, rideCounts, riddenLabel, sortRoutes } from './routes-list';
 
 function ride(routeId: string | null, id: string): Ride {
   return {
@@ -62,5 +62,25 @@ describe('sortRoutes', () => {
     const input = [route('b', 'Sa Calobra'), route('a', 'Box Hill Repeats')];
     expect(sortRoutes(input).map((r) => r.id)).toEqual(['a', 'b']);
     expect(input.map((r) => r.id)).toEqual(['b', 'a']);
+  });
+});
+
+describe('ROUTE_DELETE_WORDING', () => {
+  it('does not borrow the rides list’s claim that this cannot be undone', () => {
+    // A route is metadata over a GPX that is still in the build. The rides wording is
+    // about something unrecoverable, and reusing it here would be a false warning.
+    const words = Object.values(ROUTE_DELETE_WORDING);
+    expect(words.some((word) => /undone|permanent|forever/i.test(word))).toBe(false);
+  });
+
+  it('scopes the removal to this install, which is the whole of what happens', () => {
+    // A promise seedRoutes keeps: the seeded marker stops a removed route being written
+    // back on the next boot. Narrower than deleting a ride, wider than hiding a row.
+    expect(ROUTE_DELETE_WORDING.prompt).toBe('Remove from this install?');
+  });
+
+  it('repeats one verb across the control and its confirm', () => {
+    expect(ROUTE_DELETE_WORDING.confirm).toBe(ROUTE_DELETE_WORDING.action);
+    expect(ROUTE_DELETE_WORDING.cancel).toBe('Keep');
   });
 });

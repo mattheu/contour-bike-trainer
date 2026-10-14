@@ -95,18 +95,25 @@ export interface SeedResult {
 }
 
 /**
- * Seeds the starters into the repository, using each one's declared id.
+ * Seeds the starters into the repository, using each one's declared id. The same two
+ * rules as seedRoutes, which carries the full reasoning.
  *
- * First run only, which is where this parts company with seedRoutes: a route is read-only
- * and is reseeded from its manifest entry on every boot, but a workout is editable, so
- * rewriting an existing record would silently undo the rider's edit the next time the app
- * started. Present means left alone, whatever it now says.
+ * Present means left alone, whatever it now says: rewriting an existing record would
+ * silently undo the rider's edit the next time the app started. Absent is written only
+ * while `seeded` is false, because a starter the rider deleted is absent too, and without
+ * the marker the next reload would bring it back.
+ *
+ * `skipped` is filled either way. A starter that will not parse is a bug in a file we
+ * shipped, and an install that has already been seeded should still say so.
  */
 export async function seedWorkouts(
   repository: Repository<StoredWorkout>,
+  /** Whether this install has already had a seeding pass complete. */
+  seeded: boolean,
   bundled: BundledWorkouts = bundledWorkouts(),
 ): Promise<SeedResult> {
   const result: SeedResult = { written: [], unchanged: [], skipped: bundled.skipped };
+  if (seeded) return result;
 
   for (const entry of bundled.workouts) {
     const existing = await repository.get(entry.id);

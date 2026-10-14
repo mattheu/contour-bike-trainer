@@ -4,7 +4,9 @@ import { FtmsTrainer } from '../ble/ftms-trainer';
 import { WebBluetoothHeartRateMonitor } from '../ble/hrm';
 import type { ConnectionState, HeartRateMonitor, Trainer } from '../ble/types';
 import { archiveFileName, buildArchive, readArchive } from '../export/archive';
+import { routeGpxFileName, workoutBundleFileName, workoutFileName } from '../export/file-name';
 import { buildTcx, tcxFileName } from '../export/tcx';
+import { bundleWorkoutSources, splitWorkoutDocuments } from '../export/workout-bundle';
 import { Recorder } from '../instrument/recorder';
 import { TimerProbe, visibilityState, watchVisibility } from '../instrument/probe';
 import { summarise } from '../instrument/stats';
@@ -12,7 +14,13 @@ import { VisibilityTracker } from '../instrument/verdict';
 import { systemClock } from '../ride/clock';
 import { RideEngine, type EngineSnapshot } from '../ride/engine';
 import { RideRecorder } from '../ride/recorder';
-import { loadRouteGeometry, registerRoute, seedRoutes, type BundledRoute } from '../ride/routes';
+import {
+  bundledRoute,
+  loadRouteGeometry,
+  registerRoute,
+  seedRoutes,
+  type BundledRoute,
+} from '../ride/routes';
 import { seedWorkouts } from '../ride/workouts';
 import type { Route as RouteGeometry } from '../route/types';
 import { TrainerTickSource } from '../ride/tick';
@@ -36,6 +44,7 @@ import { smoothPower, stepLabel } from './format';
 import type { RiderProfile } from './screens/rider-profile';
 import type { DeleteResult } from './screens/ride-delete';
 import type { ImportResult } from './screens/rides-import';
+import type { WorkoutImportResult } from './screens/workouts-import';
 import { NEW_WORKOUT_SOURCE, type SaveResult } from './screens/workout-editor';
 import { experimentStore, rideStore, type WorkoutSnapshot } from './store';
 import { createWakeLock } from './wake-lock';
@@ -322,13 +331,37 @@ export function currentSettings(): Readonly<Settings> {
   return settings;
 }
 
-/** Start-up work the screens await before reading storage. Seeding is idempotent, so
- * running it on every boot neither duplicates a route nor rewrites an unchanged one. */
+/**
+ * Start-up work the screens await before reading storage.
+ *
+ * Seeding happens once per install, and this is where "once" is decided. Each marker is
+ * written only after its own pass has resolved: a pass that threw halfway leaves the
+ * marker false and runs again on the next boot, which is the behaviour to want — the
+ * alternative is an install permanently missing the routes that pass did not reach.
+ *
+ * Marked per collection rather than once for both, so a failure seeding workouts cannot
+ * cost the routes their marker and have them rewritten on every boot afterwards.
+ *
+ * The two writes are also the reason a deleted route or workout stays deleted. Without
+ * them the seed sees an absent record, cannot tell it from one it has never written, and
+ * puts it back.
+ */
 export const ready: Promise<void> = (async () => {
   try {
     settings = await storage.settings.get();
-    await seedRoutes(storage.routes);
-    const seeded = await seedWorkouts(storage.workouts);
+
+    await seedRoutes(storage.routes, settings.routesSeeded);
+    if (!settings.routesSeeded) {
+      await storage.settings.put({ routesSeeded: true });
+      settings = { ...settings, routesSeeded: true };
+    }
+
+    const seeded = await seedWorkouts(storage.workouts, settings.workoutsSeeded);
+    if (!settings.workoutsSeeded) {
+      await storage.settings.put({ workoutsSeeded: true });
+      settings = { ...settings, workoutsSeeded: true };
+    }
+
     // A starter that will not parse is a bug in a file we shipped, not in anything the
     // rider did — but it is theirs that is missing, so it says so rather than going quiet.
     if (seeded.skipped.length > 0) {
@@ -987,6 +1020,22 @@ export async function createWorkout(): Promise<string | null> {
   return id;
 }
 
+/**
+ * Removes this install's record of a route. Nothing cascades, by design and not by
+ * omission: a ride carries its own frozen routeId and routeName, and the GPX itself is in
+ * the build rather than in the database, so the history and the geometry both survive.
+ * A ride on a removed route still opens, still draws its profile and still exports.
+ */
+export async function deleteRoute(routeId: string): Promise<DeleteResult> {
+  await ready;
+  try {
+    await storage.routes.delete(routeId);
+    return { status: 'done' };
+  } catch (error) {
+    return { status: 'failed', reason: errorMessage(error) };
+  }
+}
+
 /** No cascade: a workout is one record, and the rides that reference it keep their own
  * frozen workoutId and workoutName, so deleting it rewrites no history. */
 export async function deleteWorkout(workoutId: string): Promise<DeleteResult> {
@@ -1102,4 +1151,114 @@ export async function importRides(file: File): Promise<ImportResult> {
   } catch (error) {
     return { status: 'failed', reason: errorMessage(error) };
   }
+}
+
+/**
+ * One route's GPX, handed back exactly as it is in the build.
+ *
+ * Nothing is generated: the file is bundled by src/ride/routes.ts and this writes those
+ * same bytes out under the route's name. There is no Import to match it, and deliberately
+ * so — a stored route is metadata plus a path into the build, so an import would need
+ * routes to own their own GPX, which is a different feature and a later phase.
+ */
+export async function exportRouteGpx(routeId: string): Promise<void> {
+  await ready;
+  const stored = await storage.routes.get(routeId);
+  if (stored === undefined) {
+    fault('That route is no longer in the list, so there is nothing to download.');
+    return;
+  }
+  // Joined by id, which routes/manifest.json guarantees is stable; stored.file is the
+  // same path on the other side of that join.
+  const bundled = bundledRoute(routeId);
+  if (bundled === undefined) {
+    fault(`The GPX for ${stored.name} is not in this build, so there is nothing to download.`);
+    return;
+  }
+  download(new Blob([bundled.gpx], { type: 'application/gpx+xml' }), routeGpxFileName(stored.name));
+}
+
+/**
+ * One workout's YAML, byte for byte as the rider wrote it.
+ *
+ * ADR-0014 is why there is nothing to build here: the record holds the source text, so
+ * the download is that string. Re-emitting it through a serialiser would strip the
+ * comments and layout the ADR exists to keep.
+ */
+export async function exportWorkoutYaml(workoutId: string): Promise<void> {
+  await ready;
+  const workout = await storage.workouts.get(workoutId);
+  if (workout === undefined) {
+    fault('That workout is no longer in the library, so there is nothing to download.');
+    return;
+  }
+  download(new Blob([workout.source], { type: 'application/yaml' }), workoutFileName(workout.name));
+}
+
+/**
+ * The whole library as one multi-document YAML file.
+ *
+ * In the order the list shows them, so the file reads the way the screen does rather than
+ * in whatever order the repository happens to return.
+ */
+export async function exportAllWorkouts(): Promise<void> {
+  await ready;
+  const workouts = await storage.workouts.list();
+  const ordered = [...workouts].sort((a, b) => a.name.localeCompare(b.name));
+  download(
+    new Blob([bundleWorkoutSources(ordered.map((workout) => workout.source))], {
+      type: 'application/yaml',
+    }),
+    workoutBundleFileName(),
+  );
+}
+
+/**
+ * A YAML bundle is text a person can hand-edit, so it stays small. The ceiling is here to
+ * make picking the wrong file say so rather than to express a view on library size.
+ */
+const MAX_WORKOUT_IMPORT_BYTES = 8 * 1024 * 1024;
+
+/**
+ * Imports a YAML bundle the rider picked off disk.
+ *
+ * Every document becomes a new workout with a new id. The file carries no ids to match
+ * on — it is a bundle of workouts, not an app archive — so there is nothing here that
+ * could overwrite a workout the rider has edited, which is the property worth having.
+ * Importing the same file twice gives two copies, visibly, on the list.
+ *
+ * A document that will not parse is counted and named rather than aborting the rest, the
+ * way readArchive treats a bad record and bundledWorkouts a bad starter. Nothing throws:
+ * a file chosen in a picker is untrusted input and the rider gets a sentence either way.
+ */
+export async function importWorkouts(file: File): Promise<WorkoutImportResult> {
+  if (file.size > MAX_WORKOUT_IMPORT_BYTES) {
+    const mb = Math.round(file.size / (1024 * 1024));
+    return {
+      status: 'failed',
+      reason: `that file is ${String(mb)} MB, larger than Contour will read — is it a workout file?`,
+    };
+  }
+
+  let documents;
+  try {
+    documents = splitWorkoutDocuments(await file.text());
+  } catch (error) {
+    return { status: 'failed', reason: errorMessage(error) };
+  }
+
+  await ready;
+  let imported = 0;
+  const reasons: string[] = [];
+
+  for (const document of documents) {
+    // saveWorkout is the one path that writes a workout, and it parses on the way in to
+    // fill the name and description. A document that will not parse fails there, which is
+    // also what keeps an unreadable one out of the library.
+    const result = await saveWorkout(createId(), document.source);
+    if (result.status === 'saved') imported += 1;
+    else reasons.push(`Document ${String(document.index)} was skipped because ${result.reason}`);
+  }
+
+  return { status: 'done', imported, skipped: reasons.length, reasons };
 }

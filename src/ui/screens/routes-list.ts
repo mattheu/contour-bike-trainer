@@ -24,3 +24,26 @@ export function riddenLabel(count: number): string {
 export function sortRoutes(routes: readonly StoredRoute[]): StoredRoute[] {
   return [...routes].sort((a, b) => a.name.localeCompare(b.name));
 }
+
+/**
+ * Removing a route is the rides list's two-press confirm with its own words, and the
+ * words matter because the act is not the same one.
+ *
+ * Deleting a ride destroys the only copy of something that cannot be reconstructed, so it
+ * says "can't be undone". A route is metadata over a GPX file that lives in the build:
+ * what goes is this install's record of it, nothing that references it is touched, and
+ * the file itself is still in the repository. Saying "can't be undone" here would be
+ * borrowing weight from the rides list that this action has not got.
+ *
+ * "From this install" is a promise seedRoutes can now keep: the seeded marker in Settings
+ * means a removed route is not written back on the next boot. It is the honest scope —
+ * narrower than deleting a ride, wider than hiding a row — and it would have been a lie
+ * before that marker existed.
+ */
+export const ROUTE_DELETE_WORDING = {
+  /** Names the icon button, and the verb the confirm repeats. */
+  action: 'Remove',
+  prompt: 'Remove from this install?',
+  confirm: 'Remove',
+  cancel: 'Keep',
+} as const;

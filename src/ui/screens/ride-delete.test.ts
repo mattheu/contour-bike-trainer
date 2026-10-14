@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ROUTE_SUBJECT,
+  WORKOUT_SUBJECT,
   cancelDelete,
   deleteAlert,
   deleteWording,
@@ -99,6 +101,24 @@ describe('returnToAfterDelete', () => {
 });
 
 describe('deleteAlert', () => {
+  it('names the thing the rider actually removed, not always a ride', () => {
+    // The same two presses run all three lists, so without this the routes list reports a
+    // failure as "that ride could not be deleted" and reads like a different bug.
+    expect(
+      deleteAlert({ status: 'failed', reason: 'it is closed' }, 'Alpe', ROUTE_SUBJECT),
+    ).toEqual({ level: 'fault', message: 'That route could not be deleted: it is closed' });
+    expect(
+      deleteAlert({ status: 'failed', reason: 'it is closed' }, 'Sweet Spot', WORKOUT_SUBJECT),
+    ).toEqual({ level: 'fault', message: 'That workout could not be deleted: it is closed' });
+  });
+
+  it('reports a removed route as removed, matching the control that was pressed', () => {
+    expect(deleteAlert({ status: 'done' }, 'Alpe', ROUTE_SUBJECT).message).toBe('Alpe removed.');
+    expect(deleteAlert({ status: 'done' }, 'Sweet Spot', WORKOUT_SUBJECT).message).toBe(
+      'Sweet Spot deleted.',
+    );
+  });
+
   it('names the ride and clears itself when the delete worked', () => {
     expect(deleteAlert({ status: 'done' }, 'Ditchling Beacon Loop')).toEqual({
       level: 'info',

@@ -90,45 +90,53 @@ export function loadRouteGeometry(id: string): RouteGeometry {
 }
 
 export interface SeedResult {
-  /** Ids written, because they were absent or the manifest entry had changed. */
+  /** Ids written, because the repository had never seen them. */
   written: string[];
-  /** Ids already present and identical, left alone. */
+  /** Ids already present, left exactly as the rider has them. Empty when the pass was
+   * skipped outright, because then nothing was looked at. */
   unchanged: string[];
 }
 
-function sameRoute(stored: StoredRoute, next: Omit<StoredRoute, 'updatedAt'>): boolean {
-  return (
-    stored.name === next.name &&
-    stored.region === next.region &&
-    stored.description === next.description &&
-    stored.file === next.file &&
-    stored.totalDistanceM === next.totalDistanceM &&
-    stored.totalAscentM === next.totalAscentM
-  );
-}
-
 /**
- * Seeds the bundled routes into the repository, using each route's declared id.
+ * Seeds the bundled routes into the repository, using each route's declared id, exactly
+ * as seedWorkouts seeds the starters.
  *
- * Idempotent by construction: an unchanged route is not rewritten, so re-running this on
- * every boot neither duplicates a route nor churns its updatedAt — which a later sync
- * layer would read as a genuine edit.
+ * Two rules, and it takes both to make a deletion stick.
+ *
+ * Present means left alone, whatever the manifest now says. This used to compare the
+ * stored record to the manifest entry and rewrite any route that differed, which made the
+ * routes list a mirror of the build rather than something the rider owns.
+ *
+ * Absent is only written on an install that has never been seeded, which is what `seeded`
+ * says. On its own the first rule is not enough: a route the rider deleted is absent, and
+ * absent is indistinguishable from never-seen, so without the marker every deletion would
+ * be undone by the next reload.
+ *
+ * The marker is a setting rather than an argument this function derives, because the only
+ * honest moment to set it is after a whole pass has finished — a pass that threw halfway
+ * must run again. Its caller, src/ui/services.ts, owns that ordering.
+ *
+ * The cost, accepted: a route added to routes/manifest.json later, or an entry corrected
+ * in it, never reaches an install that has already booted. Only a fresh database picks
+ * either up.
  */
 export async function seedRoutes(
   repository: Repository<StoredRoute>,
+  /** Whether this install has already had a seeding pass complete. */
+  seeded: boolean,
   routes: ManifestRoute[] = bundledRoutes(),
 ): Promise<SeedResult> {
   const result: SeedResult = { written: [], unchanged: [] };
+  if (seeded) return result;
 
   for (const entry of routes) {
-    const next = toStoredRoute(entry);
     const existing = await repository.get(entry.id);
-    if (existing !== undefined && sameRoute(existing, next)) {
+    if (existing !== undefined) {
       result.unchanged.push(entry.id);
       continue;
     }
     // updatedAt is stamped by the repository on write.
-    await repository.put({ ...next, updatedAt: existing?.updatedAt ?? '' });
+    await repository.put({ ...toStoredRoute(entry), updatedAt: '' });
     result.written.push(entry.id);
   }
 

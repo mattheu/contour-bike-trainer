@@ -33,10 +33,10 @@ export interface Storage {
 
 /**
  * The one exception to client-generated UUIDs: a bundled route's id is the id written in
- * routes/manifest.json. Bundled routes are reseeded from that manifest on every boot, so a
- * fresh UUID each time would orphan the routeId of every ride already recorded against
- * them. Once a ride references an id, that id must never change — renaming the GPX file is
- * fine, editing its manifest id is not.
+ * routes/manifest.json. It is what joins this record to the GPX in the build, and what
+ * every ride already recorded against the route refers to, so a fresh UUID per install
+ * would orphan both. Once a ride references an id, that id must never change — renaming
+ * the GPX file is fine, editing its manifest id is not.
  */
 export interface Route extends StoredRecord {
   name: string;
@@ -129,6 +129,21 @@ export type ControlMode = 'erg' | 'simulation';
 export type Units = 'metric' | 'imperial';
 
 export interface Settings {
+  /**
+   * Whether the bundled routes and the starter workouts have been seeded into this
+   * install. Not a rider preference, which is what the rest of this blob is — they live
+   * here because Settings is the one small record every boot already reads, and an
+   * install-state record of its own would be a new store for two booleans.
+   *
+   * They are what makes a deletion survive a reload. Without them seeding writes back
+   * whatever is missing on every boot, and missing is exactly what a deleted record looks
+   * like. Set only after a seeding pass has finished: see src/ui/services.ts.
+   *
+   * Deliberately not on RideSettings, which is the snapshot frozen into a Ride. Nothing
+   * here reaches a ride record.
+   */
+  routesSeeded: boolean;
+  workoutsSeeded: boolean;
   controlMode: ControlMode;
   trainerDifficulty: number;
   riderMassKg: number;

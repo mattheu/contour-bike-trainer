@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { AlertState } from '../../ride/types';
 import type { Workout as StoredWorkout } from '../../storage/types';
 import { PlanSparkline } from '../charts';
@@ -24,10 +24,12 @@ import {
   isArmed,
   pressDelete,
   retainArmed,
+  WORKOUT_SUBJECT,
   type Armed,
   type DeleteResult,
 } from './ride-delete';
 import { Selectable } from './Selectable';
+import { workoutImportAlert, type WorkoutImportResult } from './workouts-import';
 import {
   DELETE_WORDING,
   LENGTHS,
@@ -61,6 +63,11 @@ interface WorkoutsProps {
   onStart: (workoutId: string) => void;
   /** Mints a workout on the starting template and opens the editor on it. */
   onCreate: () => void;
+  /** Emits the workout's stored YAML source: see services.exportWorkoutYaml. */
+  onDownload: (workoutId: string) => void;
+  /** The whole library as one multi-document YAML file. */
+  onExportAll: () => Promise<void>;
+  onImport: (file: File) => Promise<WorkoutImportResult>;
   onDelete: (workoutId: string) => Promise<DeleteResult>;
   onNavigate: (screen: ListScreen) => void;
   onOpenProfile: () => void;
@@ -77,6 +84,9 @@ export function Workouts({
   onOpen,
   onStart,
   onCreate,
+  onDownload,
+  onExportAll,
+  onImport,
   onDelete,
   onNavigate,
   onOpenProfile,
@@ -110,7 +120,9 @@ export function Workouts({
       const outcome = pressDelete(armed, row.id);
       setRequested(outcome.armed);
       if (outcome.deleted === null) return;
-      void onDelete(outcome.deleted).then((result) => setAlert(deleteAlert(result, row.name)));
+      void onDelete(outcome.deleted).then((result) =>
+        setAlert(deleteAlert(result, row.name, WORKOUT_SUBJECT)),
+      );
     },
     [armed, onDelete],
   );
@@ -158,6 +170,7 @@ export function Workouts({
               armed={isArmed(armed, row.id)}
               onOpen={onOpen}
               onStart={onStart}
+              onDownload={onDownload}
               onPressDelete={() => press(row)}
               onCancelDelete={() => setRequested(cancelDelete())}
             />
@@ -170,6 +183,58 @@ export function Workouts({
           )}
         </div>
       </div>
+
+      <Footer
+        empty={workouts.length === 0}
+        onExportAll={() => void onExportAll()}
+        onImport={(file) =>
+          void onImport(file).then((result) => setAlert(workoutImportAlert(result)))
+        }
+      />
+    </div>
+  );
+}
+
+/**
+ * Backup and restore, below the list and outside its scrolling region — the rides list's
+ * footer, in the same place and with the same shape, because it does the same job.
+ *
+ * One departure: nothing here is accent. The rides list puts its one accent on Import,
+ * because that screen has no other control that begins something; this screen's is New
+ * workout in the header, and DESIGN.md allows one per screen.
+ */
+function Footer({
+  empty,
+  onExportAll,
+  onImport,
+}: {
+  empty: boolean;
+  onExportAll: () => void;
+  onImport: (file: File) => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="border-hairline bg-ground/60 flex shrink-0 items-center gap-[16px] border-t pt-[24px]">
+      <Button onClick={onExportAll} disabled={empty}>
+        Download all workouts
+      </Button>
+      <div className="grow" />
+      {/* A real button rather than a bare file input: the input carries no box, and a box
+          is the whole signal that something is pressable. */}
+      <input
+        ref={input}
+        type="file"
+        accept=".yaml,.yml,application/yaml,text/yaml"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          // Cleared so picking the same file twice still fires a change event.
+          event.target.value = '';
+          if (file !== undefined) onImport(file);
+        }}
+      />
+      <Button onClick={() => input.current?.click()}>Import workouts</Button>
     </div>
   );
 }
@@ -179,6 +244,7 @@ function WorkoutRowView({
   armed,
   onOpen,
   onStart,
+  onDownload,
   onPressDelete,
   onCancelDelete,
 }: {
@@ -186,6 +252,7 @@ function WorkoutRowView({
   armed: boolean;
   onOpen: (workoutId: string) => void;
   onStart: (workoutId: string) => void;
+  onDownload: (workoutId: string) => void;
   onPressDelete: () => void;
   onCancelDelete: () => void;
 }) {
@@ -209,6 +276,22 @@ function WorkoutRowView({
                 and it is how a workout that will not parse is reached, since such a row
                 is deliberately not selectable. */}
             <Button onClick={() => onOpen(row.id)}>Edit</Button>
+            {/* The rides list's glyph, in its position. A workout that will not parse is
+                still downloadable: the source is exactly what the rider needs in order to
+                fix it somewhere with a better editor than a textarea. */}
+            <IconButton label={`Download ${row.name} as YAML`} onClick={() => onDownload(row.id)}>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.25"
+                aria-hidden="true"
+              >
+                <path d="M8,1.5 V10.5 M4.5,7.5 L8,11 L11.5,7.5 M2,13.5 H14" />
+              </svg>
+            </IconButton>
             <IconButton label={`Delete ${row.name}`} onClick={onPressDelete}>
               <svg
                 width="16"

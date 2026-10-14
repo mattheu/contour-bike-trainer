@@ -158,6 +158,15 @@ rather than a parsed tree is what makes that possible.
 condensed format reference sits beside the text box, so you need this page for the detail
 rather than for the basics.
 
-The six that ship with the app are seeded on first run and are yours after that — edit or
-delete them like any other. They live in [`workouts/`](../workouts/) in the project if you want
-the originals back.
+The six that ship with the app are seeded on first run and are yours after that — edit or delete
+them like any other, and a deleted one stays deleted. They live in [`workouts/`](../workouts/) in
+the project if you want the originals back.
+
+**Download** on a row gives you that workout's YAML, exactly as you wrote it. Below the list,
+**Download all workouts** gives you the whole library as one file, each workout separated by a
+`---` line, with every comment and blank line intact — it is an ordinary YAML file you can read,
+edit and keep. **Import workouts** reads a file of that shape back in.
+
+Import always creates new workouts rather than replacing any you have, so importing the same file
+twice gives you two copies. That is deliberate: nothing you have edited can be overwritten by an
+import. A document that will not parse is skipped and counted, and the rest still arrive.

@@ -48,7 +48,7 @@ describe('bundledRoutes', () => {
 describe('seedRoutes', () => {
   it('writes every bundled route on first run', async () => {
     const repo = repository();
-    const result = await seedRoutes(repo);
+    const result = await seedRoutes(repo, false);
 
     const stored = await repo.list();
     expect(stored).toHaveLength(bundledRoutes().length);
@@ -62,7 +62,7 @@ describe('seedRoutes', () => {
 
   it('stores the route under its manifest id', async () => {
     const repo = repository();
-    await seedRoutes(repo);
+    await seedRoutes(repo, false);
 
     const rolling = await repo.get('test-rolling');
     expect(rolling).toMatchObject({
@@ -75,23 +75,23 @@ describe('seedRoutes', () => {
 
   it('is idempotent: running twice neither duplicates nor rewrites', async () => {
     const repo = repository();
-    await seedRoutes(repo);
+    await seedRoutes(repo, false);
     const first = await repo.get('test-rolling');
 
-    const second = await seedRoutes(repo);
+    // The marker is true on every boot after the first, which is what the caller writes.
+    const second = await seedRoutes(repo, true);
 
     expect(await repo.list()).toHaveLength(bundledRoutes().length);
     expect(second.written).toEqual([]);
-    expect(second.unchanged.sort()).toEqual(
-      bundledRoutes()
-        .map((r) => r.id)
-        .sort(),
-    );
+    // Nothing is looked at once the marker is set, so nothing is reported as unchanged.
+    expect(second.unchanged).toEqual([]);
     // updatedAt is untouched, so a later sync layer does not read a reseed as an edit.
     expect((await repo.get('test-rolling'))?.updatedAt).toBe(first?.updatedAt);
   });
 
-  it('rewrites a route whose manifest entry has changed', async () => {
+  it('leaves a route alone even when its manifest entry has changed', async () => {
+    // The seed cannot tell a corrected entry from a route the rider deleted, so it
+    // rewrites neither. The cost of that choice, stated in seedRoutes, is this test.
     const repo = repository();
     const entry: ManifestRoute = {
       id: 'fixture-route',
@@ -100,13 +100,42 @@ describe('seedRoutes', () => {
       totalDistanceM: 1000,
       totalAscentM: 10,
     };
-    await seedRoutes(repo, [entry]);
+    await seedRoutes(repo, false, [entry]);
 
-    const result = await seedRoutes(repo, [{ ...entry, name: 'After', totalAscentM: 20 }]);
+    const result = await seedRoutes(repo, true, [{ ...entry, name: 'After', totalAscentM: 20 }]);
 
-    expect(result.written).toEqual(['fixture-route']);
-    expect(await repo.get('fixture-route')).toMatchObject({ name: 'After', totalAscentM: 20 });
+    expect(result.written).toEqual([]);
+    expect(await repo.get('fixture-route')).toMatchObject({ name: 'Before', totalAscentM: 10 });
     expect(await repo.list()).toHaveLength(1);
+  });
+
+  it('does not bring back a route the rider deleted', async () => {
+    // What a rider would actually check, in the order they would do it: boot, remove a
+    // route, reload. A delete control that the next reload undoes is not a delete control,
+    // and absent alone cannot carry that — the marker is what tells a deleted route from
+    // one this install has never seen.
+    const repo = repository();
+    await seedRoutes(repo, false);
+    await repo.delete('test-rolling');
+
+    const result = await seedRoutes(repo, true);
+
+    expect(result.written).toEqual([]);
+    expect(await repo.get('test-rolling')).toBeUndefined();
+    expect(await repo.list()).toHaveLength(bundledRoutes().length - 1);
+  });
+
+  it('seeds an install that was running before the marker existed, writing nothing', async () => {
+    // Such a blob parses as not seeded, so the first boot after the change runs a full
+    // pass. Safe because every record is already there and present means left alone.
+    const repo = repository();
+    await seedRoutes(repo, false);
+    const before = await repo.get('test-rolling');
+
+    const upgrade = await seedRoutes(repo, false);
+
+    expect(upgrade.written).toEqual([]);
+    expect((await repo.get('test-rolling'))?.updatedAt).toBe(before?.updatedAt);
   });
 });
 

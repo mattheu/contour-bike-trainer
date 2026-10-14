@@ -196,6 +196,25 @@ function RideApp() {
     return result;
   }, []);
 
+  const importWorkouts = useCallback(async (file: File) => {
+    const result = await services.importWorkouts(file);
+    if (result.status === 'done' && result.imported > 0) {
+      setWorkoutsVersion((version) => version + 1);
+    }
+    return result;
+  }, []);
+
+  /**
+   * Removing a route changes the same two lists a ride import does — the routes list it
+   * leaves, and the ride counts beside the ones that remain — so it shares their counter.
+   * Nothing cascades: see services.deleteRoute.
+   */
+  const deleteRoute = useCallback(async (routeId: string): Promise<DeleteResult> => {
+    const result = await services.deleteRoute(routeId);
+    if (result.status === 'done') setHistoryVersion((n) => n + 1);
+    return result;
+  }, []);
+
   const startWorkout = useCallback(async (workoutId: string) => {
     await services.startWorkout(workoutId);
     setSummaryOrigin('finished');
@@ -319,6 +338,9 @@ function RideApp() {
           onOpen={setEditingWorkoutId}
           onStart={(workoutId) => void startWorkout(workoutId)}
           onCreate={() => void createWorkout()}
+          onDownload={(id) => void services.exportWorkoutYaml(id)}
+          onExportAll={() => services.exportAllWorkouts()}
+          onImport={importWorkouts}
           onDelete={deleteWorkout}
           onNavigate={navigate}
           onOpenProfile={() => setProfileOpen(true)}
@@ -356,6 +378,8 @@ function RideApp() {
         routes={history?.routes ?? []}
         rides={history?.rides ?? []}
         onSelect={(routeId) => void startRide(routeId)}
+        onDownload={(id) => void services.exportRouteGpx(id)}
+        onDelete={deleteRoute}
         onNavigate={navigate}
         onOpenProfile={() => setProfileOpen(true)}
       />

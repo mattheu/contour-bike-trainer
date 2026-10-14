@@ -89,6 +89,24 @@ export function deleteWording(origin: DeleteOrigin): DeleteWording {
 export type DeleteResult = { status: 'done' } | { status: 'failed'; reason: string };
 
 /**
+ * What was removed, in the words its own screen uses. Everything above this line is about
+ * an id and two presses and works unchanged on all three lists; only the sentence has to
+ * know whether it is talking about a ride, a workout or a route — and a failure that says
+ * "that ride" on the routes list is the kind of wrong that makes a rider doubt the rest.
+ */
+export interface DeleteSubject {
+  /** Lowercase: it appears mid-sentence. */
+  noun: string;
+  /** The past participle of the control the rider actually pressed. */
+  done: string;
+}
+
+const RIDE: DeleteSubject = { noun: 'ride', done: 'deleted' };
+export const WORKOUT_SUBJECT: DeleteSubject = { noun: 'workout', done: 'deleted' };
+/** Removed, not deleted: see ROUTE_DELETE_WORDING for why the routes list is careful here. */
+export const ROUTE_SUBJECT: DeleteSubject = { noun: 'route', done: 'removed' };
+
+/**
  * The one line the rider gets. A delete that worked is passing news — the row is gone and
  * they can see that — so it clears itself; a delete that failed left a ride they believe
  * is gone in the history, which is the kind of thing that has to be read.
@@ -96,10 +114,11 @@ export type DeleteResult = { status: 'done' } | { status: 'failed'; reason: stri
 export function deleteAlert(
   result: DeleteResult,
   title: string,
+  subject: DeleteSubject = RIDE,
 ): { level: AlertLevel; message: string } {
   return result.status === 'failed'
-    ? { level: 'fault', message: `That ride could not be deleted: ${result.reason}` }
-    : { level: 'info', message: `${title} deleted.` };
+    ? { level: 'fault', message: `That ${subject.noun} could not be deleted: ${result.reason}` }
+    : { level: 'info', message: `${title} ${subject.done}.` };
 }
 
 /**

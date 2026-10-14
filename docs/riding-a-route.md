@@ -2,11 +2,19 @@
 
 ## Choosing one
 
-**Choose a route** on the Connect screen opens the list. Each row shows a thumbnail of the
-route's profile, its name, distance, elevation gain, and how many times you have ridden it.
+The **Routes** tab lists what you can ride. Each row shows a thumbnail of the route's profile, its
+name, distance, elevation gain, and how many times you have ridden it.
 
-This release ships two synthetic routes rather than real places, and they are named as what they
-are:
+Three real climbs ship with the app:
+
+- **Greenhow Hill**, Yorkshire Dales. 67 km, 1,104 m — the long one, and the only route here where
+  the climbing is spread rather than stacked.
+- **Sa Calobra**, Mallorca. 13 km, 702 m — relentlessly consistent, which makes it the honest test
+  of whether you can hold a number.
+- **Alpe d'Huez**, Oisans. 16 km, 1,259 m — trimmed to finish at the top rather than running on
+  through the village.
+
+Two synthetic routes ship alongside them, named as what they are:
 
 - **Test Route 1 — Rolling.** 20 km, about 250 m of climbing, continuous gentle undulation with
   nothing sustained.
@@ -17,8 +25,15 @@ are:
 Clicking a row starts the ride immediately. There is no confirmation step — the row _is_ the
 button.
 
-There is no import in this release. Adding a route means dropping a GPX file into the project and
-adding an entry to its manifest, which the project [README](../README.md) covers.
+Each row has **Download**, which gives you that route's GPX file, and **Delete**, which removes it
+from this install. Deleting takes two presses and the route stays gone — the bundled routes are
+seeded once, on first run, not restored on every launch. The GPX is still in the project, so a
+route you delete can be brought back by clearing the app's storage.
+
+There is no route import yet. Adding one means dropping a GPX file into the project and adding an
+entry to its manifest, which the project [README](../README.md) covers. Because routes are seeded
+only on first run, a route added to the manifest later will not appear in an install that has
+already been used.
 
 ## While you are riding
 
@@ -69,8 +84,10 @@ covered in [exporting to Strava](exporting-to-strava.md). **Done** takes you to 
 ## Your history
 
 The **Rides** tab lists every ride, newest first, with its date, route, distance, moving time and
-average power. Two filters sit above it — a route, and a period (month, three months, year, or
-everything). The heading on the right totals whatever is currently shown.
+average power. Three filters sit above it. **Type** is All, Routes or Workouts; choosing Routes
+reveals a route filter and choosing Workouts reveals a workout filter, so the second filter is
+always about what you have actually selected. **Period** sits on the right — month, three months,
+year, or everything. The heading totals whatever is currently shown.
 
 Clicking a row opens that ride's summary again. The download icon beside a row exports it
 without opening it.

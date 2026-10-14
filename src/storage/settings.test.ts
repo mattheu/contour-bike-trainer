@@ -17,6 +17,8 @@ function withStored(value: string): KeyValueStore {
 describe('DEFAULT_SETTINGS', () => {
   it('matches the table in the spec', () => {
     expect(DEFAULT_SETTINGS).toEqual({
+      routesSeeded: false,
+      workoutsSeeded: false,
       controlMode: 'simulation',
       trainerDifficulty: 50,
       riderMassKg: 75,
@@ -149,5 +151,32 @@ describe('StoredSettingsRepository', () => {
     await a.put({ ftp: 265 });
 
     expect((await b.get()).ftp).toBe(200);
+  });
+});
+
+describe('the seeded markers', () => {
+  it('reads a blob written before they existed as not seeded', () => {
+    // The safe direction. An install upgrading into this build seeds once more, and that
+    // pass writes nothing: every record is already present, and present means left alone.
+    const parsed = parseSettings({ ftp: 265 });
+
+    expect(parsed.routesSeeded).toBe(false);
+    expect(parsed.workoutsSeeded).toBe(false);
+  });
+
+  it('round-trips both markers once they are set', async () => {
+    const store = createMemoryKeyValueStore();
+    const settings = new StoredSettingsRepository(store);
+
+    await settings.put({ routesSeeded: true });
+
+    // Merged, not replaced: seeding routes must not un-seed workouts.
+    expect(await settings.get()).toEqual({ ...DEFAULT_SETTINGS, routesSeeded: true });
+  });
+
+  it('ignores a marker that is not a boolean rather than trusting it', () => {
+    // A hand-edited blob saying "yes" must not be read as seeded, which would leave a
+    // fresh install with no routes at all.
+    expect(parseSettings({ routesSeeded: 'yes', workoutsSeeded: 1 })).toEqual(DEFAULT_SETTINGS);
   });
 });
