@@ -1,9 +1,14 @@
 /**
  * The contour texture behind a screen.
  *
- * 640x520 of contour lines in ink at 10%, radially masked so they fade out from the
- * corner they sit in. Served from public/ as a background image rather than inlined:
- * it is 65 kB of path data, it never changes, and a bundle should not carry it.
+ * 640x520 of contour lines in ink, radially masked so they fade out from the corner they
+ * sit in. Served from public/ as a background image rather than inlined: it is 65 kB of
+ * path data, it never changes, and a bundle should not carry it.
+ *
+ * The artwork is drawn at full strength and the strength is set here, at 10%. It used to
+ * carry its own stroke-opacity, which capped every consumer: the splash lockup masks the
+ * same file, and a mask can never be more opaque than its source, so the rings there could
+ * not reach the 16% the design asks for however they were styled.
  *
  * Decorative only — aria-hidden, and behind everything.
  *
@@ -20,6 +25,7 @@ export function ContourField({ className = '' }: { className?: string }) {
       style={{
         backgroundImage: 'url(/contour-field.svg)',
         backgroundRepeat: 'no-repeat',
+        opacity: 0.1,
       }}
     />
   );

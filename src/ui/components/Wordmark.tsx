@@ -50,7 +50,7 @@ export function Lockup() {
     <div className="bg-accent text-ground text-hero-tablet sm:text-hero relative overflow-hidden px-[0.28em] py-[0.12em]">
       <div
         aria-hidden="true"
-        className="bg-ground absolute inset-0 [mask-image:url(/contour-field.svg)] [mask-position:-80px_-60px] [mask-repeat:no-repeat]"
+        className="bg-ground absolute inset-0 opacity-[0.16] [mask-image:url(/contour-field.svg)] [mask-position:-80px_-60px] [mask-repeat:no-repeat]"
       />
       {/* The mark sits a touch high in its box without this: the serif's baseline. */}
       <span className="relative block pb-[0.06em] leading-none">
