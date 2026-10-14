@@ -1,0 +1,18 @@
+name: 5x3 VO2 max
+description: Five three-minute efforts above threshold, three minutes easy between. Hard from the first one.
+
+warmup: { duration: 15m, ramp: [50%, 80%] }
+
+steps:
+  # Two short openers before the set, so the first effort is not the worst one.
+  - repeat: 2
+    steps:
+      - { duration: 1m, power: 105%, cadence: [95, 105], name: Opener }
+      - { duration: 2m, power: 50%, name: Easy }
+
+  - repeat: 5
+    steps:
+      - { duration: 3m, power: 115%, cadence: [95, 105], name: VO2 max }
+      - { duration: 3m, power: 50%, name: Recovery }
+
+cooldown: { duration: 10m, ramp: [55%, 40%] }

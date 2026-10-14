@@ -1,0 +1,8 @@
+{
+  "workouts": [
+    { "id": "2x20-threshold", "file": "2x20-threshold.yaml" },
+    { "id": "5x3-vo2", "file": "5x3-vo2.yaml" },
+    { "id": "endurance-90", "file": "endurance-90.yaml" },
+    { "id": "openers", "file": "openers.yaml" }
+  ]
+}

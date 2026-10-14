@@ -1,0 +1,49 @@
+{
+  "routes": [
+    {
+      "id": "test-rolling",
+      "name": "Test Route 1 — Rolling",
+      "region": "Synthetic",
+      "file": "test-rolling.gpx",
+      "description": "Generated test route: a 20 km loop of continuous 2-5 % undulations, nothing sustained.",
+      "totalDistanceM": 19977,
+      "totalAscentM": 250
+    },
+    {
+      "id": "test-mixed",
+      "name": "Test Route 2 — Mixed",
+      "region": "Synthetic",
+      "file": "test-mixed.gpx",
+      "description": "Generated test route: flat start, a sustained 5 km climb ramping to 12 %, a fast descent, then rolling terrain.",
+      "totalDistanceM": 29937,
+      "totalAscentM": 699
+    },
+    {
+      "id": "greenhow-hill",
+      "name": "Greenhow Hill",
+      "region": "Yorkshire Dales",
+      "file": "greenhow-hill.gpx",
+      "description": "Real route: a 67 km Dales loop over five climbs, the longest 4.2 km at 6.9 %.",
+      "totalDistanceM": 66622,
+      "totalAscentM": 1104
+    },
+    {
+      "id": "sa-calobra",
+      "name": "Sa Calobra",
+      "region": "Mallorca",
+      "file": "sa-calobra.gpx",
+      "description": "Real route: the Coll dels Reis ascent, 10.2 km at 6.9 % averaging 700 m of gain.",
+      "totalDistanceM": 13063,
+      "totalAscentM": 702
+    },
+    {
+      "id": "alpe-dhuez",
+      "name": "Alpe d'Huez",
+      "region": "Oisans",
+      "file": "alpe-dhuez.gpx",
+      "description": "Real route: the 21 hairpins, finishing at the summit.",
+      "totalDistanceM": 15713,
+      "totalAscentM": 1259
+    }
+  ]
+}

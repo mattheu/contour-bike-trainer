@@ -1,0 +1,130 @@
+import type { Ride } from '../../storage/types';
+import { ABSENT, distance } from '../format';
+
+/**
+ * Filtering, grouping and the period header for the rides list. Storage deliberately
+ * offers no queries beyond list and get, so the narrowing happens here — in a pure
+ * module a test can hold to account rather than inside the screen.
+ */
+export type Period = 'month' | '3months' | 'year' | 'all';
+
+export const PERIODS: readonly { value: Period; label: string }[] = [
+  { value: 'month', label: 'Month' },
+  { value: '3months', label: '3 months' },
+  { value: 'year', label: 'Year' },
+  { value: 'all', label: 'All' },
+];
+
+export const ALL_ROUTES = 'all';
+
+// Spelled out rather than taken from Intl: en-GB abbreviates September to "Sept", the
+// mockup uses "Sep", and an ICU upgrade must not silently re-word the history list.
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const MONTHS_SHORT = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
+const MONTHS_LONG = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
+/** "Tue 29 Sep", in the rider's own timezone. */
+export function rideDate(iso: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return ABSENT;
+  return `${DAYS[at.getDay()]} ${at.getDate()} ${MONTHS_SHORT[at.getMonth()]}`;
+}
+
+/** The inclusive lower bound of a period, or null for "everything ever". */
+export function periodStart(period: Period, now: Date): Date | null {
+  if (period === 'all') return null;
+  if (period === 'month') return new Date(now.getFullYear(), now.getMonth(), 1);
+  if (period === '3months') return new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  return new Date(now.getFullYear(), 0, 1);
+}
+
+export interface RideFilter {
+  /** A route id, or ALL_ROUTES. */
+  routeId: string;
+  period: Period;
+}
+
+/** Newest first, which is the only order the list is ever shown in. */
+export function filterRides(
+  rides: readonly Ride[],
+  filter: RideFilter,
+  now: Date = new Date(),
+): Ride[] {
+  const from = periodStart(filter.period, now);
+  return rides
+    .filter((ride) => filter.routeId === ALL_ROUTES || ride.routeId === filter.routeId)
+    .filter((ride) => from === null || new Date(ride.startedAt) >= from)
+    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+}
+
+/** The routes that actually appear in the history, for the filter select. */
+export function riddenRoutes(rides: readonly Ride[]): { id: string; name: string }[] {
+  const byId = new Map<string, string>();
+  for (const ride of rides) {
+    if (ride.routeId !== null && !byId.has(ride.routeId)) {
+      byId.set(ride.routeId, ride.routeName ?? ride.routeId);
+    }
+  }
+  return [...byId].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function periodLabel(period: Period, now: Date = new Date()): string {
+  if (period === 'month') return MONTHS_LONG[now.getMonth()]!;
+  if (period === '3months') return '3 months';
+  if (period === 'year') return String(now.getFullYear());
+  return 'All time';
+}
+
+/** "September · 6 rides · 158.8 km". Singular where it matters; an empty list says so. */
+export function periodSummary(
+  rides: readonly Ride[],
+  period: Period,
+  now: Date = new Date(),
+): string {
+  const label = periodLabel(period, now);
+  if (rides.length === 0) return `${label} · no rides`;
+  const km = rides.reduce((total, ride) => total + ride.distanceM, 0) / 1000;
+  const count = `${rides.length} ${rides.length === 1 ? 'ride' : 'rides'}`;
+  return `${label} · ${count} · ${distance(km)} km`;
+}
+
+/**
+ * What a ride is called, and the line under it where the name alone does not say enough.
+ *
+ * A route names the ride. A workout ridden without one is named by the plan rather than
+ * passed off as a free ride, with "Workout" under it to say what kind of session it was —
+ * it is the one thing that separates it from a route row at a glance. Only a ride with
+ * neither is free, and keeps the mockup's "No route" line. A ride that is both is phase 4:
+ * the route names it, and the plan ridden over it goes underneath.
+ */
+export function rideTitle(ride: Ride): { title: string; meta: string | null } {
+  if (ride.routeName !== null) return { title: ride.routeName, meta: ride.workoutName };
+  if (ride.workoutName !== null) return { title: ride.workoutName, meta: 'Workout' };
+  return { title: 'Free ride', meta: 'No route' };
+}

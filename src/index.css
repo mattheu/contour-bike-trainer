@@ -1,0 +1,149 @@
+@import 'tailwindcss';
+
+/* Self-hosted, latin subsets only: a webfont request is the one thing that would break
+   offline operation. Swap so a readout is never invisible mid-effort. */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('/fonts/jetbrains-mono-300-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-400-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-500-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/instrument-serif-italic-400-latin.woff2') format('woff2');
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* Design tokens live here, not in a config file — Tailwind v4. */
+@theme {
+  /* design/DESIGN.md is the source of truth for these. Accent means "behind you, or
+     your target"; muted means "the route or plan ahead". One accent use per screen. */
+  --color-ground: #0c0c0b;
+  --color-ink: #e8e4da;
+  --color-muted: #8a867c;
+  --color-hairline: #2e2d2a;
+  --color-accent: #ff5a1f;
+  /* System messages only, never ride data. Hue 42 against the accent's 16, so the two
+     never blur in peripheral vision. Three levels: see Alerts in design/DESIGN.md. */
+  --color-alert: #f2c14e;
+
+  /* The POC screens still reference these; phase 2 replaces them with the tokens above. */
+  --color-surface: #0c0c0b;
+  --color-surface-raised: #171717;
+
+  /* design/DESIGN.md: ten sizes, nothing in between. */
+  --text-hero: 108px;
+  --text-hero-tablet: 72px;
+  --text-figure: 44px;
+  --text-stat: 32px;
+  --text-title: 24px;
+  --text-sub: 20px;
+  --text-body: 16px;
+  --text-label: 14px;
+  --text-caption: 12px;
+  --text-micro: 11px;
+
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+}
+
+/*
+ * The wordmark. A component class rather than utilities: the optical spacing is a
+ * per-pair kern in em, and seven arbitrary-value spans would say nothing about why.
+ * The arc over the first o is the contour line crossing the word — the mark itself.
+ */
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  white-space: nowrap;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-kerning: normal;
+  line-height: 1.1;
+}
+
+.wordmark span {
+  position: relative;
+  display: inline-block;
+}
+
+.wordmark .k-o1 {
+  margin-left: -0.045em;
+}
+.wordmark .k-n {
+  margin-left: -0.054em;
+}
+.wordmark .k-t {
+  margin-left: -0.047em;
+}
+.wordmark .k-o2 {
+  margin-left: -0.05em;
+}
+.wordmark .k-u {
+  margin-left: -0.063em;
+}
+.wordmark .k-r {
+  margin-left: -0.043em;
+}
+
+/* The drawn C–o join: a contour stroke, in the current colour so every treatment works. */
+.wordmark .k-o1::before {
+  content: '';
+  position: absolute;
+  left: -0.145em;
+  bottom: 0.245em;
+  width: 0.2em;
+  height: 0.12em;
+  border: solid currentColor;
+  border-width: 0 0 0.012em 0;
+  border-radius: 0 0 65% 50%;
+  transform: rotate(-38deg);
+}
+
+/* Stroke family. Plain custom properties: these are SVG attributes, not utilities. */
+:root {
+  --stroke-hairline: 1px;
+  --stroke-chart: 1.5px;
+  --stroke-ridden: 2.5px;
+}
+
+/* Avoids a white flash before React mounts. */
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: #e5e5e5;
+}
