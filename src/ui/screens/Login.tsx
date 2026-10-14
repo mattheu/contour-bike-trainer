@@ -17,13 +17,18 @@ import { Lockup } from '../components/Wordmark';
 export function Login({ onStart }: { onStart: () => void }) {
   return (
     <div className="text-ink relative flex h-screen flex-col items-center justify-center gap-[40px] overflow-hidden px-[24px] sm:gap-[56px] sm:px-[56px]">
-      <Lockup />
+      {/* The column takes the lockup's own width rather than a number of its own, so the
+          control lines up with the mark above it and keeps doing so if the type scale
+          moves. On a phone both go full width, where there is nothing to line up with. */}
+      <div className="flex w-full max-w-[360px] flex-col items-stretch sm:w-auto sm:max-w-none">
+        <Lockup />
 
-      {/* Stretched by the column, so the control is as wide as the fields will be. */}
-      <div className="flex w-full max-w-[360px] flex-col">
-        <Button tone="accent" onClick={onStart}>
-          Start
-        </Button>
+        {/* Stretched by the column, so the control is as wide as the fields will be. */}
+        <div className="mt-[40px] flex flex-col sm:mt-[56px]">
+          <Button tone="accent" onClick={onStart}>
+            Start
+          </Button>
+        </div>
       </div>
 
       <div className={`${MONO} text-micro text-muted absolute bottom-[20px] sm:bottom-[28px]`}>
