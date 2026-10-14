@@ -31,6 +31,20 @@ const HIGH_FRACTION = 1.5;
 
 export type PowerZone = 1 | 2 | 3 | 4 | 5 | 6;
 
+/**
+ * What each zone is called. Here beside the boundaries rather than at the one screen that
+ * prints them: a key naming 90-105 % as anything but threshold is worse than no key, and
+ * two files is all it takes for that to happen.
+ */
+export const ZONE_NAMES: Record<PowerZone, string> = {
+  1: 'Active recovery',
+  2: 'Endurance',
+  3: 'Tempo',
+  4: 'Threshold',
+  5: 'VO2 max',
+  6: 'Anaerobic',
+};
+
 function requireFinite(name: string, value: number): void {
   if (!Number.isFinite(value))
     throw new RangeError(`${name} must be a finite number, got ${value}`);

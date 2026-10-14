@@ -20,6 +20,7 @@ import { Segmented } from '../components/Segmented';
 import { SLIDE } from '../components/motion';
 import { Stat } from '../components/Stat';
 import { LABEL, MONO } from '../components/styles';
+import { ZoneKey } from '../components/ZoneKey';
 import { ZoneLadder } from '../components/ZoneLadder';
 import { ABSENT, distance, num } from '../format';
 import type { RideSnapshot, WorkoutSnapshot } from '../store';
@@ -341,11 +342,22 @@ export function Workout({
         </div>
       </div>
 
-      <div className="mt-[24px] flex items-end justify-between px-[64px] pb-[36px]">
-        <div className={`${MONO} text-label text-muted`}>
+      {/* A gap as well as justify-between: with three items in the band, spacing them apart
+          leaves nothing between them once the next line is long, and the key would be read
+          as a continuation of it. The gap is what the truncation above gives way to. */}
+      <div className="mt-[24px] flex items-end justify-between gap-[32px] px-[64px] pb-[36px]">
+        {/* truncate, because a step's name is whatever its author wrote: without it a long
+            one wraps the band to two lines and the charts above lose the height to it. */}
+        <div className={`${MONO} text-label text-muted min-w-0 truncate`}>
           next <span className="text-ink">{workout.nextLabel ?? ABSENT}</span>
         </div>
-        <div className="flex items-center gap-[14px]" data-testid="workout-erg">
+        {/* In the bottom band rather than under the charts, which is where the ride
+            screen keeps its gradient key: the band is a flex sibling of the measured
+            chart area, so whatever it takes is already out of the budget that
+            planChartHeight and the Steps panel divide — and shorter than the line it
+            joins, so in practice it takes nothing. */}
+        <ZoneKey />
+        <div className="flex shrink-0 items-center gap-[14px]" data-testid="workout-erg">
           <div className={`${LABEL} text-micro`}>ERG</div>
           <div className={`${MONO} text-micro text-ink`}>{ergLabel(workout.ergEngaged)}</div>
         </div>
@@ -467,7 +479,8 @@ function PanelHeading({
  * competing with the marker for what orange means.
  */
 const QUIET = {
-  frame: 'border-hairline border-t pl-[14px]',
+  // No border-hairline: the rule is translucent and set in the style, so it stacks.
+  frame: 'border-t pl-[14px]',
   number: 'text-muted',
   name: 'text-muted',
   target: 'text-muted',
@@ -499,13 +512,30 @@ function washColour(wash: number | null): string | undefined {
   return `color-mix(in srgb, var(--color-ink) ${String(wash * 100)}%, transparent)`;
 }
 
+/**
+ * The rule above a row, as translucent ink rather than the flat hairline token, at the
+ * strength `stepRows` computed from the rows either side of it.
+ *
+ * A rule has two sides and a top border only knows one. Fixed at the hairline's own value
+ * it reads crisp against an unwashed row and blurred against a brighter one; taken from
+ * the brighter of its two neighbours it is above both, so the boundary is a line from
+ * either direction. On two unwashed rows it comes out at the hairline exactly.
+ */
+function ruleColour(rule: number): string {
+  return `color-mix(in srgb, var(--color-ink) ${String(Math.min(1, rule) * 100)}%, transparent)`;
+}
+
 function Step({ row, ref }: { row: StepRow; ref?: React.Ref<HTMLDivElement> }) {
   const tone = ROW_TONE[row.state];
   return (
     <div
       ref={ref}
       className={`flex items-baseline gap-[14px] py-[9px] pr-[10px] ${tone.frame}`}
-      style={row.state === 'current' ? undefined : { backgroundColor: washColour(row.wash) }}
+      style={
+        row.state === 'current'
+          ? undefined
+          : { backgroundColor: washColour(row.wash), borderTopColor: ruleColour(row.rule) }
+      }
       aria-current={row.state === 'current' ? 'step' : undefined}
     >
       <div className={`${MONO} text-micro w-[16px] ${tone.number}`}>{row.number}</div>

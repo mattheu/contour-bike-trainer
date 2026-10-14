@@ -151,9 +151,9 @@ describe('the zone wash', () => {
   });
 
   it('stays behind the type it sits under', () => {
-    // The hairline rule is itself ink at about 15 % over the ground; a brighter wash
-    // leaves the rule with no contrast against the fill it touches.
-    expect(ZONE_WASH_OPACITY[6]).toBeCloseTo(0.15, 10);
+    // Free to use the range the chart needs: the Steps panel's rule is translucent and
+    // composites above the fill, so it cannot be swallowed by a brighter one.
+    expect(ZONE_WASH_OPACITY[6]).toBeCloseTo(0.2, 10);
   });
 
   it('has nothing for an absent zone, rather than the lightest one', () => {

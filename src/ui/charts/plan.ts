@@ -68,25 +68,26 @@ export function planTotalSeconds(steps: readonly ExpandedStep[]): number {
  * at, these are a chart and a list you read a step off, and separable levels are what let a
  * sweet-spot block be told from a threshold one without reading the axis.
  *
- * Six evenly spaced steps of 3 points, from nothing at zone 1 to 15 % at zone 6. Zone 1
+ * Six evenly spaced steps of 4 points, from nothing at zone 1 to 20 % at zone 6. Zone 1
  * carries no wash because recovery is the absence of work, and the absence of shading says
  * that better than the faintest shade would.
  *
- * 15 % is the ceiling because the hairline rule is itself ink at about 15 % over the
- * ground. A wash brighter than the rule leaves it with no contrast against the fill it
- * touches, and the boundary between two rows reads as a blurred edge rather than a line.
- * Keeping the scale within the rule's own value is what keeps the list crisp.
+ * The ceiling is not set by the rule between rows, although it looks as though it should
+ * be: that rule is ink at about 15 % and a flat one would vanish under a brighter fill, so
+ * the Steps panel draws it translucent and it composites above whatever it sits on. The
+ * scale is free to use the range the chart needs, which is the point — DESIGN.md asks the
+ * list and the chart to show one intensity at one shade.
  *
  * A zone 1 row and a free row therefore look alike in the list, which is accepted — a free
  * step reads as free from its target, and on the chart it is a gap where zone 1 is a block.
  */
 export const ZONE_WASH_OPACITY: Record<PowerZone, number> = {
   1: 0,
-  2: 0.03,
-  3: 0.06,
-  4: 0.09,
-  5: 0.12,
-  6: 0.15,
+  2: 0.04,
+  3: 0.08,
+  4: 0.12,
+  5: 0.16,
+  6: 0.2,
 };
 
 /** The wash for a zone, or null where there is no zone: absence is not zone 1. */

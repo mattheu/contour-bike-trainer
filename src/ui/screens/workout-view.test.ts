@@ -3,6 +3,7 @@ import type { ExpandedStep } from '../../workout/expand';
 import { zoneWash } from '../charts';
 import type { WorkoutSnapshot } from '../store';
 import {
+  RULE_MARGIN,
   CADENCE_MAX_RPM,
   CADENCE_MIN_RPM,
   cadenceBand,
@@ -107,13 +108,17 @@ describe('stepRows', () => {
   });
 
   it('reads a step as name, target and duration', () => {
-    expect(stepRows(snapshot(), FTP)[1]).toEqual({
+    const rows = stepRows(snapshot(), FTP);
+    expect(rows[1]).toEqual({
       number: 2,
       name: 'Sweet spot',
       target: '90 %',
       duration: '6:42',
       state: 'current',
       wash: zoneWash(4),
+      // The brighter of the two rows it divides, plus the hairline's own value. Here that
+      // is this row itself: the warmup above it is lighter.
+      rule: Math.max(rows[0]?.wash ?? 0, zoneWash(4) ?? 0) + RULE_MARGIN,
     });
   });
 
@@ -127,6 +132,22 @@ describe('stepRows', () => {
     const rows = stepRows(snapshot(), FTP);
     expect(rows[0]?.target).toBe('50 → 75 %');
     expect(rows[4]?.target).toBe('free');
+  });
+
+  it('rules each row above the brighter of the rows either side of it', () => {
+    const rows = stepRows(snapshot(), FTP);
+    for (const [index, row] of rows.entries()) {
+      const above = index === 0 ? 0 : (rows[index - 1]?.wash ?? 0);
+      expect(row.rule).toBeGreaterThan(above);
+      expect(row.rule).toBeGreaterThan(row.wash ?? 0);
+    }
+  });
+
+  it('rules two unwashed rows at the hairline exactly, changing nothing', () => {
+    const rows = stepRows(snapshot(), FTP);
+    // The free step has no wash; neither does the recovery-zone row, if any sits above it.
+    const free = rows.find((row) => row.wash === null);
+    expect(free?.rule).toBeGreaterThanOrEqual(RULE_MARGIN);
   });
 
   it('washes each row at its zone, which is the plan chart own block scale', () => {

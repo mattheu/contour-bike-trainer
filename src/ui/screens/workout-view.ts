@@ -31,7 +31,20 @@ export interface StepRow {
    * a row and the block above it are the same shade of the same intensity.
    */
   wash: number | null;
+  /**
+   * The rule above this row, 0-1 of ink, composited over whatever it sits on.
+   *
+   * Computed from both neighbours rather than fixed, because a rule has two sides. A top
+   * border composites over its own row and knows nothing of the row above it, so a fixed
+   * one lands dimmer than a brighter neighbour and the boundary reads crisp from below and
+   * blurred from above. Taking the brighter of the two and adding the hairline's own value
+   * puts it above both, at any scale — change the wash ceiling and this follows on its own.
+   */
+  rule: number;
 }
+
+/** What the hairline token is worth as ink over the ground, and the rule's margin. */
+export const RULE_MARGIN = 0.15;
 
 export interface Clock {
   value: string;
@@ -87,17 +100,21 @@ function stateOf(index: number, stepIndex: number): StepState {
  * blocks still below is what tells you where you are in the work.
  */
 export function stepRows(workout: WorkoutSnapshot, ftpW: number): StepRow[] {
+  // At the difficulty being ridden, not as written: the wash has to agree with the chart's
+  // blocks, and the chart draws the plan the rider is actually being given.
+  const washes = workout.steps.map((step) => zoneWash(stepZone(step, ftpW, workout.scalePct)));
+
   return workout.steps.map((step, index) => {
     const state = stateOf(index, workout.stepIndex);
+    const above = index === 0 ? 0 : (washes[index - 1] ?? 0);
     return {
       number: index + 1,
       name: step.name ?? '',
       target: stepTarget(step.power),
       duration: duration(state === 'current' ? workout.stepRemainingS : step.durationS),
       state,
-      // At the difficulty being ridden, not as written: the wash has to agree with the
-      // chart's blocks, and the chart draws the plan the rider is actually being given.
-      wash: zoneWash(stepZone(step, ftpW, workout.scalePct)),
+      wash: washes[index] ?? null,
+      rule: Math.max(above, washes[index] ?? 0) + RULE_MARGIN,
     };
   });
 }
