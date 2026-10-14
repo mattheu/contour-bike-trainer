@@ -584,7 +584,10 @@ Also note that mockup's zones legend reads `Z1 <55 · Z2 56–75 · Z3 76–90 �
 
 ## Phase 4 — Regroup and polish
 
-Scope to be confirmed once phases 1–3 are real. Candidates: workout laid over a route (ERG for power, simulation ignored, route used for the visuals and the recorded track), GPX upload, workout import, richer history and summary statistics, a real basemap.
+**Not a workout laid over a route.** Decided against on 2026-10-14 and recorded as [ADR-0016](docs/adr/0016-no-workouts-on-routes.md): in ERG the trainer holds the target whatever the gradient, so the route has no effect on the ride and the terrain is wallpaper. Either the hills are real or they are not. A plan held by the rider against real simulated terrain — the version where the hills stay real — is a different feature and is deferred to a later phase rather than smuggled in as a variant of this one.
+
+1. **The ghost.** The headline item, standing on its own rather than as polish: your previous ride on this route, drawn against the current one, so a route you have ridden before has something to ride against. The last ride on a route and the best one are the two candidates, and the choice between them is part of the work.
+2. Candidates still open: GPX upload, workout import, richer history and summary statistics, a real basemap.
 
 ## Phase 5 — Backend and phone mirror
 

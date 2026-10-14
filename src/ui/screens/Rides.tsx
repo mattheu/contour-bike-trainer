@@ -19,13 +19,18 @@ import { AlertStrip } from './AlertStrip';
 import { Nav, type ListScreen } from './Nav';
 import {
   ALL_ROUTES,
+  ALL_WORKOUTS,
+  INITIAL_RIDE_FILTER,
   PERIODS,
+  RIDE_TYPES,
   filterRides,
   periodSummary,
   rideDate,
   rideTitle,
   riddenRoutes,
-  type Period,
+  riddenWorkouts,
+  selectType,
+  type RideFilter,
 } from './rides-list';
 import {
   cancelDelete,
@@ -56,8 +61,8 @@ interface RidesProps {
 }
 
 /**
- * design/mockups/rides.html without the Type filter: workouts arrive in phase 3, so
- * every row is a ride and the filter would have one option.
+ * design/mockups/rides.html, with the type filter the mockup draws and the route or
+ * workout filter that hangs off it.
  *
  * The header, filters and column labels are fixed rows and the list scrolls inside its
  * own region. DESIGN.md's no-scrolling rule is about page chrome; a history that grows
@@ -73,15 +78,18 @@ export function Rides({
   onNavigate,
   onOpenProfile,
 }: RidesProps) {
-  const [period, setPeriod] = useState<Period>('month');
-  const [routeId, setRouteId] = useState<string>(ALL_ROUTES);
+  // One value, because the filters are not independent: selectType drops the route or
+  // workout that hangs off the type being left. What matches lives in rides-list.ts.
+  const [filter, setFilter] = useState<RideFilter>(INITIAL_RIDE_FILTER);
   const [alert, setAlert] = useState<AlertState | null>(null);
   // Stable: AlertStrip's five-second info timer restarts whenever this identity changes.
   const clearAlert = useCallback(() => setAlert(null), []);
 
   const routes = useMemo(() => riddenRoutes(rides), [rides]);
-  const shown = useMemo(() => filterRides(rides, { routeId, period }), [rides, routeId, period]);
-  const summary = useMemo(() => periodSummary(shown, period), [shown, period]);
+  const workouts = useMemo(() => riddenWorkouts(rides), [rides]);
+  const shown = useMemo(() => filterRides(rides, filter), [rides, filter]);
+  // Totals whatever is on screen, under every combination of the four.
+  const summary = useMemo(() => periodSummary(shown, filter.period), [shown, filter.period]);
 
   // The confirm state machine is ride-delete.ts; this holds its one value and nothing
   // else. Narrowed to what is on screen, so a filter change takes the question with it.
@@ -124,42 +132,47 @@ export function Rides({
 
       <div className="-mt-[8px] flex items-end gap-[40px]">
         <div className="flex flex-col gap-[8px]">
-          <label htmlFor="ride-route-filter" className={`${LABEL} text-micro`}>
-            Route
-          </label>
-          {/* Chrome draws the native arrow against the border box, so padding cannot
-              move it. Ours is a hairline mark that follows the tokens instead. */}
-          <div className="text-muted relative">
-            <select
-              id="ride-route-filter"
-              value={routeId}
-              onChange={(event) => setRouteId(event.target.value)}
-              className={`${MONO} border-hairline text-ink text-label bg-ground/60 min-h-[44px] w-full min-w-[240px] appearance-none border py-[10px] pr-[36px] pl-[14px]`}
-            >
-              <option value={ALL_ROUTES}>All routes</option>
-              {routes.map((route) => (
-                <option key={route.id} value={route.id}>
-                  {route.name}
-                </option>
-              ))}
-            </select>
-            <svg
-              className="pointer-events-none absolute top-1/2 right-[14px] -translate-y-1/2"
-              width="10"
-              height="6"
-              viewBox="0 0 10 6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1"
-              aria-hidden="true"
-            >
-              <path d="M0.5,0.5 L5,5 L9.5,0.5" />
-            </svg>
-          </div>
+          <div className={`${LABEL} text-micro`}>Type</div>
+          <Segmented
+            options={RIDE_TYPES}
+            value={filter.type}
+            onChange={(type) => setFilter(selectType(filter, type))}
+            label="Type"
+          />
         </div>
+        {filter.type === 'routes' && (
+          <FilterSelect
+            id="ride-route-filter"
+            label="Route"
+            allValue={ALL_ROUTES}
+            allLabel="All routes"
+            options={routes}
+            value={filter.routeId}
+            onChange={(routeId) => setFilter({ ...filter, routeId })}
+          />
+        )}
+        {filter.type === 'workouts' && (
+          <FilterSelect
+            id="ride-workout-filter"
+            label="Workout"
+            allValue={ALL_WORKOUTS}
+            allLabel="All workouts"
+            options={workouts}
+            value={filter.workoutId}
+            onChange={(workoutId) => setFilter({ ...filter, workoutId })}
+          />
+        )}
+        {/* Period is pinned to the far end, so the dependent filter appearing and
+            disappearing is absorbed by the gap rather than moving anything. */}
+        <div className="grow" />
         <div className="flex flex-col gap-[8px]">
           <div className={`${LABEL} text-micro`}>Period</div>
-          <Segmented options={PERIODS} value={period} onChange={setPeriod} label="Period" />
+          <Segmented
+            options={PERIODS}
+            value={filter.period}
+            onChange={(period) => setFilter({ ...filter, period })}
+            label="Period"
+          />
         </div>
       </div>
 
@@ -181,7 +194,7 @@ export function Rides({
           ))}
           <div className="border-hairline border-t" />
           {shown.length === 0 && (
-            <div className={`${LABEL} text-micro pt-[26px]`}>No rides in this period</div>
+            <div className={`${LABEL} text-micro pt-[26px]`}>No rides match these filters</div>
           )}
         </div>
       </div>
@@ -191,6 +204,66 @@ export function Rides({
         onExportAll={() => void onExportAll()}
         onImport={(file) => void onImport(file).then((result) => setAlert(importAlert(result)))}
       />
+    </div>
+  );
+}
+
+/**
+ * The route and workout filters, which differ only in their words, their options and the
+ * sentinel that means "don't narrow". Passed in rather than inferred, so the component
+ * never needs to know which of the two lists it is showing.
+ */
+function FilterSelect({
+  id,
+  label,
+  allValue,
+  allLabel,
+  options,
+  value,
+  onChange,
+}: {
+  id: string;
+  label: string;
+  allValue: string;
+  allLabel: string;
+  options: readonly { id: string; name: string }[];
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-[8px]">
+      <label htmlFor={id} className={`${LABEL} text-micro`}>
+        {label}
+      </label>
+      {/* Chrome draws the native arrow against the border box, so padding cannot
+          move it. Ours is a hairline mark that follows the tokens instead. */}
+      <div className="text-muted relative">
+        <select
+          id={id}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`${MONO} border-hairline text-ink text-label bg-ground/60 min-h-[44px] w-full min-w-[240px] appearance-none border py-[10px] pr-[36px] pl-[14px]`}
+        >
+          <option value={allValue}>{allLabel}</option>
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.name}
+            </option>
+          ))}
+        </select>
+        <svg
+          className="pointer-events-none absolute top-1/2 right-[14px] -translate-y-1/2"
+          width="10"
+          height="6"
+          viewBox="0 0 10 6"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1"
+          aria-hidden="true"
+        >
+          <path d="M0.5,0.5 L5,5 L9.5,0.5" />
+        </svg>
+      </div>
     </div>
   );
 }

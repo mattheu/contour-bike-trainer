@@ -21,6 +21,7 @@ Consequences. They are written for someone joining in a year who wants to know _
 | [0013](0013-coggan-power-zones.md)                         | The six Coggan power zones, and five for heart rate           | Accepted           |
 | [0014](0014-the-stored-workout-is-its-source-text.md)      | The stored workout is its source text, not a parsed tree      | Accepted           |
 | [0015](0015-tss-is-the-only-load-figure.md)                | TSS is the only load figure shown                             | Accepted           |
+| [0016](0016-no-workouts-on-routes.md)                      | No workouts ridden on routes                                  | Accepted           |
 
 ## Process
 

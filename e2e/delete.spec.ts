@@ -36,6 +36,14 @@ async function endRide(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: 'Download TCX' })).toBeVisible();
 }
 
+/**
+ * A nav button, scoped to the nav. The rides list's Type filter offers Routes and
+ * Workouts too, so an unscoped name matches twice on that screen.
+ */
+function nav(page: Page, section: string) {
+  return page.getByRole('group', { name: 'Section' }).getByRole('button', { name: section });
+}
+
 /** A row in the history, by the route it was ridden on. */
 function rideRow(page: Page, routeName: string) {
   return page.getByRole('link', { name: routeName });
@@ -50,7 +58,7 @@ test.describe('deleting a ride', () => {
     await endRide(page);
     await page.getByRole('button', { name: 'Done' }).click();
 
-    await page.getByRole('button', { name: 'Routes' }).click();
+    await nav(page, 'Routes').click();
     await rideAgain(page, ROLLING_ROUTE_NAME);
     await endRide(page);
     await page.getByRole('button', { name: 'Done' }).click();
@@ -85,8 +93,8 @@ test.describe('deleting a ride', () => {
 
     // Storage, not the rendered list: leaving the screen and coming back re-reads both
     // repositories, so a ride that only vanished from React state would be back here.
-    await page.getByRole('button', { name: 'Routes' }).click();
-    await page.getByRole('button', { name: 'Rides' }).click();
+    await nav(page, 'Routes').click();
+    await nav(page, 'Rides').click();
     await expect(rideRow(page, ROLLING_ROUTE_NAME)).toHaveCount(1);
     await expect(rideRow(page, FIXTURE_ROUTE.name)).toHaveCount(0);
 
@@ -98,7 +106,7 @@ test.describe('deleting a ride', () => {
     await page.getByRole('button', { name: 'Delete', exact: true }).click();
 
     // Back on the history, which is now empty.
-    await expect(page.getByText('No rides in this period')).toBeVisible();
+    await expect(page.getByText('No rides match these filters')).toBeVisible();
     await expect(rideRow(page, ROLLING_ROUTE_NAME)).toHaveCount(0);
   });
 
@@ -115,13 +123,10 @@ test.describe('deleting a ride', () => {
     await page.getByRole('button', { name: 'Discard', exact: true }).click();
 
     // Routes, not Rides: what the rider wants next is something to ride.
-    await expect(page.getByRole('button', { name: 'Routes' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(nav(page, 'Routes')).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByRole('link', { name: FIXTURE_ROUTE.name })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Rides' }).click();
-    await expect(page.getByText('No rides in this period')).toBeVisible();
+    await nav(page, 'Rides').click();
+    await expect(page.getByText('No rides match these filters')).toBeVisible();
   });
 });

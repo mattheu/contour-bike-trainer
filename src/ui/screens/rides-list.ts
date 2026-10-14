@@ -1,4 +1,5 @@
 import type { Ride } from '../../storage/types';
+import type { SegmentedOption } from '../components/Segmented';
 import { ABSENT, distance } from '../format';
 
 /**
@@ -16,6 +17,16 @@ export const PERIODS: readonly { value: Period; label: string }[] = [
 ];
 
 export const ALL_ROUTES = 'all';
+export const ALL_WORKOUTS = 'all';
+
+/** What kind of session a ride was: the two the app can start. */
+export type RideType = 'all' | 'routes' | 'workouts';
+
+export const RIDE_TYPES: readonly SegmentedOption<RideType>[] = [
+  { value: 'all', label: 'All' },
+  { value: 'routes', label: 'Routes' },
+  { value: 'workouts', label: 'Workouts' },
+];
 
 // Spelled out rather than taken from Intl: en-GB abbreviates September to "Sept", the
 // mockup uses "Sep", and an ICU upgrade must not silently re-word the history list.
@@ -64,10 +75,52 @@ export function periodStart(period: Period, now: Date): Date | null {
   return new Date(now.getFullYear(), 0, 1);
 }
 
+/**
+ * A ride that is both a route and a workout counts as a route, following rideTitle: the
+ * route is what names the row, and the plan ridden over it is the line underneath. That
+ * is phase 4; today startRide takes a route and startWorkout rides without one.
+ *
+ * A ride with neither — which no entry point can currently produce, but an older archive
+ * or a later phase could — is shown under All and claimed by neither named type. Sorting
+ * it into the one it is least unlike would put a row under a heading that does not
+ * describe it, and there is no third option to offer because there is nothing to offer.
+ */
+export function matchesType(ride: Ride, filter: RideType): boolean {
+  if (filter === 'all') return true;
+  if (filter === 'routes') return ride.routeId !== null;
+  return ride.routeId === null && ride.workoutId !== null;
+}
+
 export interface RideFilter {
-  /** A route id, or ALL_ROUTES. */
+  type: RideType;
+  /** A route id, or ALL_ROUTES. Offered only when the type is routes. */
   routeId: string;
+  /** A workout id, or ALL_WORKOUTS. Offered only when the type is workouts. */
+  workoutId: string;
   period: Period;
+}
+
+/** What the screen opens on: everything ridden this month. */
+export const INITIAL_RIDE_FILTER: RideFilter = {
+  type: 'all',
+  routeId: ALL_ROUTES,
+  workoutId: ALL_WORKOUTS,
+  period: 'month',
+};
+
+/**
+ * Switching type, with the filter that hangs off the old one dropped. Same problem as
+ * retainArmed in ride-delete.ts: a value the rider can no longer see is a value they
+ * cannot undo, and a route id left armed behind the Workouts tab silently narrows the
+ * list the moment they switch back.
+ */
+export function selectType(filter: RideFilter, type: RideType): RideFilter {
+  return {
+    ...filter,
+    type,
+    routeId: type === 'routes' ? filter.routeId : ALL_ROUTES,
+    workoutId: type === 'workouts' ? filter.workoutId : ALL_WORKOUTS,
+  };
 }
 
 /** Newest first, which is the only order the list is ever shown in. */
@@ -78,7 +131,9 @@ export function filterRides(
 ): Ride[] {
   const from = periodStart(filter.period, now);
   return rides
+    .filter((ride) => matchesType(ride, filter.type))
     .filter((ride) => filter.routeId === ALL_ROUTES || ride.routeId === filter.routeId)
+    .filter((ride) => filter.workoutId === ALL_WORKOUTS || ride.workoutId === filter.workoutId)
     .filter((ride) => from === null || new Date(ride.startedAt) >= from)
     .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
 }
@@ -89,6 +144,27 @@ export function riddenRoutes(rides: readonly Ride[]): { id: string; name: string
   for (const ride of rides) {
     if (ride.routeId !== null && !byId.has(ride.routeId)) {
       byId.set(ride.routeId, ride.routeName ?? ride.routeId);
+    }
+  }
+  return [...byId].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * The workouts that actually appear in the history, built the same way and for the same
+ * reason: a Ride freezes workoutId and workoutName at save, so it outlives the workout it
+ * was ridden from. Listing the workouts repository instead would quietly drop the filter
+ * option for every ride whose plan has since been deleted.
+ *
+ * Narrowed to the rides the Workouts type actually shows, so every option selects at
+ * least one row — which riddenRoutes gets for nothing, since a ride with a route id is
+ * always a route ride. A plan ridden over a route is found under Routes, with the plan
+ * on the row's second line.
+ */
+export function riddenWorkouts(rides: readonly Ride[]): { id: string; name: string }[] {
+  const byId = new Map<string, string>();
+  for (const ride of rides) {
+    if (ride.workoutId !== null && matchesType(ride, 'workouts') && !byId.has(ride.workoutId)) {
+      byId.set(ride.workoutId, ride.workoutName ?? ride.workoutId);
     }
   }
   return [...byId].map(([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name));
