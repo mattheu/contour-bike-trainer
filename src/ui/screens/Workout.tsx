@@ -49,9 +49,13 @@ import { useElementHeight, useElementWidth } from './use-element-width';
 
 export interface WorkoutProps {
   snapshot: RideSnapshot;
-  /** Non-null exactly when a workout is running; the screen exists for it. */
+  /**
+   * Non-null exactly when a workout is running; the screen exists for it. It carries the
+   * session's own FTP, which is why there is no ftpW prop beside it: everything here that
+   * zones or scales reads the FTP the targets were resolved against rather than the
+   * profile's, which a workout declaring its own `ftp:` is not being ridden at.
+   */
   workout: WorkoutSnapshot;
-  ftpW: number;
   hrMaxBpm: number;
   targetMarginPct: number;
   targets: Targets;
@@ -84,7 +88,6 @@ export interface WorkoutProps {
 export function Workout({
   snapshot,
   workout,
-  ftpW,
   hrMaxBpm,
   targetMarginPct,
   targets,
@@ -121,6 +124,10 @@ export function Workout({
     globalThis.addEventListener('keydown', onKeyDown);
     return () => globalThis.removeEventListener('keydown', onKeyDown);
   }, [onPauseToggle]);
+
+  // The session's FTP, not the profile's: a workout that declares its own `ftp:` is ridden
+  // at it, so the plan, the zones, the band and the share all have to be read against it.
+  const ftpW = workout.ftpW;
 
   // The target the ladder's accent window is drawn from is the workout's, not the panel's:
   // during a workout the plan is what you are aiming at.

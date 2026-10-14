@@ -112,6 +112,13 @@ export interface EngineWorkoutSnapshot {
   /** False on a free step: simulation parameters went to the trainer instead. */
   ergEngaged: boolean;
   scalePct: number;
+  /**
+   * The FTP the session is being ridden at, which is the workout's own where it declares
+   * one. Published rather than left for the screen to look up: the targets on this
+   * snapshot were resolved against it, so anything that zones or scales them has to use
+   * the same number or it draws a plan the rider is not riding.
+   */
+  ftpW: number;
   finished: boolean;
 }
 
@@ -590,6 +597,7 @@ export class RideEngine {
       next: state.next,
       ergEngaged: state.erg,
       scalePct: this.workoutScalePct,
+      ftpW: this.workout.ftp,
       finished: state.finished,
     };
   }

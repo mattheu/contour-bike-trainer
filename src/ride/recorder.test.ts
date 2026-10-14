@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import type { RideSample, RideSettings } from '../storage/types';
+import { parseWorkout } from '../workout/parse';
+import { workoutFtp } from '../workout/runner';
 import { RideRecorder } from './recorder';
 
 const SETTINGS: RideSettings = {
@@ -193,5 +195,38 @@ describe('RideRecorder', () => {
 
       expect(r.build({ pausedS: 0, finished: false }).ride.settings.workoutScalePct).toBe(100);
     });
+  });
+});
+
+/**
+ * ADR-0017: a ride freezes the settings it was ridden with. For a workout session that is
+ * the session's FTP — the workout's own where it declares one — because that is the number
+ * its targets were given at, and the summary re-zones the finished ride against it.
+ */
+describe('the FTP a ride freezes', () => {
+  function frozenFtpFor(source: string): number {
+    const r = new RideRecorder({
+      routeId: null,
+      routeName: null,
+      workoutId: 'w1',
+      workoutName: parseWorkout(source).name,
+      startedAt: '2026-09-30T07:05:00.000Z',
+      // What services.ts freezes at the start of a workout session.
+      settings: { ...SETTINGS, ftp: workoutFtp(parseWorkout(source), SETTINGS.ftp) },
+    });
+    r.add(sample({ t: 0 }));
+    return r.build({ pausedS: 0, finished: true }).ride.settings.ftp;
+  }
+
+  it("is the workout's own where it declares one, not the rider's profile", () => {
+    expect(frozenFtpFor('name: Fixed\nftp: 250\nsteps:\n  - { duration: 1m, power: 100% }\n')).toBe(
+      250,
+    );
+  });
+
+  it("is the rider's where the workout declares none", () => {
+    expect(frozenFtpFor('name: Relative\nsteps:\n  - { duration: 1m, power: 100% }\n')).toBe(
+      SETTINGS.ftp,
+    );
   });
 });

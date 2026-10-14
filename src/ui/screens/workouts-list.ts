@@ -2,7 +2,7 @@ import type { Workout as StoredWorkout } from '../../storage/types';
 import { expandWorkout, type ExpandedStep } from '../../workout/expand';
 import { trainingStressScore } from '../../workout/load';
 import { WorkoutParseError, parseWorkout } from '../../workout/parse';
-import { plannedPowerSeries } from '../../workout/runner';
+import { plannedPowerSeries, workoutFtp } from '../../workout/runner';
 import type { SegmentedOption } from '../components/Segmented';
 
 /**
@@ -60,7 +60,7 @@ export function workoutRow(stored: StoredWorkout, riderFtpW: number): WorkoutRow
   try {
     const parsed = parseWorkout(stored.source);
     const expanded = expandWorkout(parsed);
-    const ftpW = parsed.ftp ?? riderFtpW;
+    const ftpW = workoutFtp(parsed, riderFtpW);
     return {
       id: stored.id,
       name: parsed.name,

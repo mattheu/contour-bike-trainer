@@ -21,7 +21,7 @@ import {
 
 const ftpPercent = (value: number) => ({ unit: 'ftpPercent' as const, value });
 
-/** The rider's, which every stepRows call needs to put a zone behind a row. */
+/** The session's, which every stepRows call needs to put a zone behind a row. */
 const FTP = 250;
 
 const STEPS: ExpandedStep[] = [
@@ -61,6 +61,7 @@ function snapshot(patch: Partial<WorkoutSnapshot> = {}): WorkoutSnapshot {
     nextLabel: '5:00 Recovery · 55 %',
     ergEngaged: true,
     scalePct: 100,
+    ftpW: FTP,
     ...patch,
   };
 }

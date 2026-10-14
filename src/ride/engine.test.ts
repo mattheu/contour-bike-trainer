@@ -752,6 +752,16 @@ steps:
     expect(engine.getSnapshot().workout?.scalePct).toBe(50);
   });
 
+  /**
+   * The screen zones and scales everything it draws against this: a workout with its own
+   * `ftp:` is ridden at it, so the FTP the targets came from has to travel with them
+   * rather than be looked up again from the rider's profile.
+   */
+  it('publishes the FTP the session is being ridden at', () => {
+    const { engine } = harness(null, {}, workout(STEPS, 250));
+    expect(engine.getSnapshot().workout?.ftpW).toBe(250);
+  });
+
   it('clamps the difficulty to the ends the control allows', () => {
     const { engine } = harness(null, {}, workout());
     engine.setWorkoutScalePct(400);

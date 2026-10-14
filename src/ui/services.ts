@@ -46,7 +46,7 @@ import {
 } from '../storage/types';
 import { expandWorkout } from '../workout/expand';
 import { parseWorkout } from '../workout/parse';
-import { DEFAULT_SCALE_PCT, nudgeScalePct, startRun } from '../workout/runner';
+import { DEFAULT_SCALE_PCT, nudgeScalePct, startRun, workoutFtp } from '../workout/runner';
 import { smoothPower, stepLabel } from './format';
 import type { RiderProfile } from './screens/rider-profile';
 import type { DeleteResult } from './screens/ride-delete';
@@ -631,6 +631,7 @@ function workoutSnapshot(state: EngineSnapshot['workout']): WorkoutSnapshot | nu
     nextLabel: state.next === null ? null : stepLabel(state.next),
     ergEngaged: state.ergEngaged,
     scalePct: state.scalePct,
+    ftpW: state.ftpW,
   };
   if (publishedWorkout !== null && sameWorkout(publishedWorkout, next)) return publishedWorkout;
   publishedWorkout = next;
@@ -696,12 +697,18 @@ function engineSettings() {
   };
 }
 
-/** Frozen now: changing your FTP later must not re-zone a ride already ridden. */
-function frozenSettings() {
+/**
+ * Frozen now: changing your FTP later must not re-zone a ride already ridden. ADR-0017.
+ *
+ * The FTP is the session's, not the profile's — a workout that declares its own is ridden
+ * at it, so that is the FTP this ride was ridden with and the one the summary must zone it
+ * against. The caller names it; a ride with no workout has only the profile's.
+ */
+function frozenSettings(ftp: number = settings.ftp) {
   return {
     trainerDifficulty: settings.trainerDifficulty,
     workoutScalePct,
-    ftp: settings.ftp,
+    ftp,
     hrMax: settings.hrMax,
     riderMassKg: settings.riderMassKg,
     bikeMassKg: settings.bikeMassKg,
@@ -806,8 +813,10 @@ export async function startWorkout(workoutId: string): Promise<void> {
     stored = await storage.workouts.get(workoutId);
     if (stored === undefined) throw new Error(`no workout with id "${workoutId}"`);
     const parsed = parseWorkout(stored.source);
-    // The workout's own FTP where it has one, the rider profile's where it does not.
-    ftp = parsed.ftp ?? settings.ftp;
+    // The workout's own FTP where it has one, the rider profile's where it does not. One
+    // number for the session: the engine rides it, the screen draws against it, and the
+    // ride freezes it.
+    ftp = workoutFtp(parsed, settings.ftp);
     name = parsed.name;
     run = startRun(expandWorkout(parsed));
   } catch (error) {
@@ -830,7 +839,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
     workoutId,
     workoutName: name,
     startedAt: new Date().toISOString(),
-    settings: frozenSettings(),
+    settings: frozenSettings(ftp),
   });
 
   armRide(next);

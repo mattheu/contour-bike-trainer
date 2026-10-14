@@ -255,7 +255,6 @@ function RideApp() {
       <WorkoutScreen
         snapshot={snapshot}
         workout={snapshot.workout}
-        ftpW={settings.ftp}
         hrMaxBpm={settings.hrMax}
         targetMarginPct={settings.targetMarginPct}
         targets={targets}

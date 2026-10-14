@@ -39,6 +39,13 @@ export interface WorkoutSnapshot {
   nextLabel: string | null;
   ergEngaged: boolean;
   scalePct: number;
+  /**
+   * The FTP this session is ridden at: the workout's own where it declares one, the
+   * rider's where it does not. On the snapshot because it belongs to the session rather
+   * than to the profile — the screen reads it from here instead of Settings, so the plan,
+   * the zones and the target band are all drawn against the FTP the targets came from.
+   */
+  ftpW: number;
 }
 
 export interface RideSnapshot {

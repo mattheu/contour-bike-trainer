@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { ExpandedStep } from '../../workout/expand';
+import { DEFAULT_SETTINGS } from '../../storage/settings';
+import { expandWorkout, type ExpandedStep } from '../../workout/expand';
+import { parseWorkout } from '../../workout/parse';
+import { workoutFtp } from '../../workout/runner';
 import { planChartGeometry, type PlanChartSample } from './plan-chart';
 import { ZONE_WASH_OPACITY } from './plan';
 
@@ -240,5 +243,77 @@ describe('an empty plan', () => {
     expect(chart.blocks).toEqual([]);
     expect(chart.planPaths).toEqual([]);
     expect(chart.marker).toBeNull();
+  });
+});
+
+/**
+ * The bug this pins: riding `Format test`, which declares `ftp: 250`, on its `power: 100%`
+ * step while holding exactly the commanded watts drew the accent actual line clear of the
+ * grey plan block. The chart was handed the profile's FTP, so it resolved 100 % to 200 W
+ * and drew the block there while the rider held the 250 W the trainer had asked for.
+ *
+ * A session's FTP is the workout's own where it declares one, so the plan and the power
+ * ridden against it have to be one number — see docs/writing-a-workout.md.
+ */
+describe('the plan is drawn at the FTP the session is ridden at', () => {
+  const sourceByPath = import.meta.glob('../../../workouts/*.yaml', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+  }) as Record<string, string>;
+
+  const formatTest = Object.entries(sourceByPath).find(([path]) =>
+    path.endsWith('format-test-15.yaml'),
+  )?.[1] as string;
+
+  /** The y the plan block sits at, and the y a sample of that many watts lands at. */
+  function heights(source: string, heldW: number, ftpW?: number) {
+    const parsed = parseWorkout(source);
+    const steps = expandWorkout(parsed).steps;
+    const at = steps.findIndex(
+      (s) =>
+        s.power.kind === 'constant' &&
+        s.power.value.unit === 'ftpPercent' &&
+        s.power.value.value === 100,
+    );
+    const chart = planChartGeometry({
+      steps,
+      samples: [
+        { t: 0, powerW: heldW },
+        { t: 1, powerW: heldW },
+      ],
+      // Exactly what services.ts hands the engine and publishes on the snapshot.
+      ftpW: ftpW ?? workoutFtp(parsed, DEFAULT_SETTINGS.ftp),
+      scalePct: 100,
+      elapsedS: 0,
+      width: WIDTH,
+      height: HEIGHT,
+    });
+    return {
+      plan: points(chart.blocks[at]?.d ?? '')[1]?.y,
+      actual: points(chart.actualPaths[0] ?? '')[0]?.y,
+    };
+  }
+
+  it("is the workout's own FTP: a 100 % step of a workout declaring 250 is drawn at 250 W", () => {
+    // The test only means anything while the two numbers differ.
+    expect(parseWorkout(formatTest).ftp).toBe(250);
+    expect(DEFAULT_SETTINGS.ftp).not.toBe(250);
+
+    const { plan, actual } = heights(formatTest, 250);
+    expect(plan).toBeDefined();
+    expect(actual).toBe(plan);
+
+    // And the regression itself: handed the profile's FTP instead, the same held watts
+    // draw clear of the block, which is exactly what the rider saw.
+    const wrong = heights(formatTest, 250, DEFAULT_SETTINGS.ftp);
+    expect(wrong.actual).not.toBe(wrong.plan);
+  });
+
+  it('leaves a workout that declares none exactly as it was, on the profile FTP', () => {
+    const source = 'name: Relative\nsteps:\n  - { duration: 1m, power: 100% }\n';
+    const { plan, actual } = heights(source, DEFAULT_SETTINGS.ftp);
+    expect(plan).toBeDefined();
+    expect(actual).toBe(plan);
   });
 });

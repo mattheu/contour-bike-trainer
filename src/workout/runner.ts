@@ -1,5 +1,5 @@
 import type { ExpandedStep, ExpandedWorkout } from './expand';
-import type { PowerValue, StepPower } from './types';
+import type { PowerValue, StepPower, Workout } from './types';
 
 /**
  * Elapsed seconds to what the rider should be doing.
@@ -42,6 +42,18 @@ function requireFtp(ftp: number): void {
   if (!Number.isFinite(ftp) || ftp <= 0) {
     throw new RangeError(`ftp must be greater than zero, got ${ftp}`);
   }
+}
+
+/**
+ * The FTP the session is ridden at: the workout's own where it declares one, the rider's
+ * where it does not. docs/writing-a-workout.md.
+ *
+ * One number for the whole session, resolved in one place — targets, zones, the plan chart
+ * and the ride's frozen settings all take this, so nothing can zone a session against an
+ * FTP it was not ridden at.
+ */
+export function workoutFtp(workout: Pick<Workout, 'ftp'>, riderFtpW: number): number {
+  return workout.ftp ?? riderFtpW;
 }
 
 export function clampScalePct(scalePct: number): number {

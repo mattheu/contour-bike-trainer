@@ -11,6 +11,7 @@ import {
   startRun,
   stateAt,
   targetWattsAt,
+  workoutFtp,
 } from './runner';
 import type { ExpandedStep } from './expand';
 
@@ -207,5 +208,27 @@ describe('plannedPowerSeries', () => {
       ),
     );
     expect(plannedPowerSeries(expanded.steps, FTP)).toHaveLength(expanded.totalDurationS);
+  });
+});
+
+describe('workoutFtp', () => {
+  const declared = 'name: Fixed\nftp: 250\nsteps:\n  - { duration: 1m, power: 100% }\n';
+  const undeclared = 'name: Relative\nsteps:\n  - { duration: 1m, power: 100% }\n';
+
+  it("is the workout's own where it declares one, whatever the rider's profile says", () => {
+    expect(workoutFtp(parseWorkout(declared), 200)).toBe(250);
+  });
+
+  it("is the rider's where the workout declares none", () => {
+    expect(workoutFtp(parseWorkout(undeclared), 200)).toBe(200);
+  });
+
+  it('is the number the targets are resolved against, so one FTP governs the session', () => {
+    const source = declared;
+    const ftp = workoutFtp(parseWorkout(source), 200);
+    const expanded = expandWorkout(parseWorkout(source));
+    const first = expanded.steps[0] as ExpandedStep;
+
+    expect(targetWattsAt(first.power, 0, first.durationS, ftp)).toBe(250);
   });
 });
