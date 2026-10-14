@@ -5,7 +5,7 @@ Consequences. They are written for someone joining in a year who wants to know _
 
 | #                                                          | Decision                                                      | Status             |
 | ---------------------------------------------------------- | ------------------------------------------------------------- | ------------------ |
-| [0000](0000-shell-and-tick-source.md)                      | Shell and tick source — browser tab or Electron               | Proposed           |
+| [0000](0000-shell-and-tick-source.md)                      | Shell and tick source — browser tab or Electron               | Accepted           |
 | [0001](0001-react-and-typescript-for-the-ui.md)            | React and TypeScript for the UI                               | Accepted           |
 | [0002](0002-async-repository-with-client-generated-ids.md) | Async repository interface with client-generated ids          | Accepted           |
 | [0003](0003-bluetooth-behind-an-interface-with-a-fake.md)  | Bluetooth behind an interface, with a fake implementation     | Accepted           |

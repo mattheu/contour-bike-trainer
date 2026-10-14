@@ -10,8 +10,9 @@ is about running and developing it.
 This is **phase 3**: structured workouts on top of the phase 2 MVP. Storage, the route list,
 simulation riding, the ride screen, the history and TCX export, plus a hand-written YAML workout
 format, a library with an editor, and ERG-controlled sessions ridden with or without a route.
-ADR-0000 — browser tab or Electron shell — is still `Proposed`, which is why the phase 1
-background experiment below is still here.
+ADR-0000 — browser tab or Electron shell — was settled on 2026-10-13: browser now, Electron at
+phase 5. The phase 1 background experiment below is kept as the instrument that re-checks the
+assumption, not as an open question.
 
 ## Requirements
 
@@ -127,8 +128,8 @@ reproducible and tunable rather than a binary blob nobody can regenerate.
 
 ## The background experiment
 
-Phase 1 material, kept because ADR-0000 is still `Proposed` and this is the measurement that
-settles it. Behind `?experiment=1`, it replaces the ride flow outright — running it alongside a
+Phase 1 material. It settled ADR-0000 and is kept to re-check that decision on each release —
+Chrome's throttling behaviour is undocumented, so it is an assumption with a shelf life. Behind `?experiment=1`, it replaces the ride flow outright — running it alongside a
 ride would put a second interval next to the probe and stop the control being a control. The
 spec's _Background operation_ section explains why any of it matters.
 
@@ -214,9 +215,9 @@ the exported `summary`:
 Also check that every `control-write` has a matching `control-response`. A write with no
 response means the command did not land.
 
-Write the four result files and the conclusion up in
-[`docs/adr/0000-shell-and-tick-source.md`](docs/adr/0000-shell-and-tick-source.md), which is
-where the criteria already are.
+Compare against the measurements already recorded in
+[`docs/adr/0000-shell-and-tick-source.md`](docs/adr/0000-shell-and-tick-source.md). A run that
+disagrees with them is the signal that the decision needs revisiting.
 
 ## Layout
 
