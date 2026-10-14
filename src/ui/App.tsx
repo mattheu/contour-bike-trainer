@@ -69,17 +69,17 @@ function SessionGate() {
   }, []);
 
   /**
-   * The splash is `/`. An install with no session opened on a deeper hash — a bookmark
-   * carried from somewhere else — would otherwise sign in and land on a record it has
-   * never had, so the bar is put back to the screen actually on it.
+   * An install with no session belongs at `/login`, whatever it was opened on. A deeper
+   * hash — a bookmark carried from somewhere else — would otherwise sign in and land on a
+   * record it has never had, so the bar is put back to the screen actually on it.
    */
   useEffect(() => {
     if (session !== 'none') return;
-    const splash = formatHash({ name: 'splash' });
-    if (window.location.hash === '' || window.location.hash === splash) return;
+    const login = formatHash({ name: 'login' });
+    if (window.location.hash === login) return;
     // Replaced, not pushed, like every other correction here: back must not return to a
     // screen this install cannot show.
-    window.location.replace(splash);
+    window.location.replace(login);
   }, [session]);
 
   if (session === null) return <Loading />;
@@ -203,7 +203,7 @@ function RideApp() {
   const hash = formatHash(screen);
 
   /**
-   * The bar, corrected to the screen actually on the glass: an unknown hash, the splash
+   * The bar, corrected to the screen actually on the glass: an unknown hash, the login
    * on an install that has a session, a cold /ride, a ride that has just saved itself.
    *
    * location.replace rather than history.replaceState, which is the same replacement plus

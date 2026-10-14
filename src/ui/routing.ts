@@ -27,7 +27,7 @@ export interface RideLabel {
  * bar and honest, because both of them do resolve.
  */
 export type Location =
-  | { name: 'splash' }
+  | { name: 'login' }
   | { name: 'routes' }
   | { name: 'workouts' }
   | { name: 'rides' }
@@ -46,11 +46,15 @@ export function parseHash(hash: string): Location | null {
   const query = cut === -1 ? '' : raw.slice(cut + 1);
 
   const segments = path.split('/').filter((segment) => segment !== '');
-  if (segments.length === 0) return { name: 'splash' };
+  // `/` is the login screen's address rather than a root of its own: signed in it
+  // resolves straight to the routes list, signed out it is corrected to `/login`.
+  if (segments.length === 0) return { name: 'login' };
   if (segments.length > 2) return null;
 
   const [head, tail] = segments;
   switch (head) {
+    case 'login':
+      return tail === undefined ? { name: 'login' } : null;
     case 'routes':
       // No route detail screen: choosing a route starts a ride, and /ride is where that
       // lives. A second segment here is a path the app has never had.
@@ -83,8 +87,8 @@ function parseLabel(query: string): RideLabel | null {
 
 export function formatHash(location: Location): string {
   switch (location.name) {
-    case 'splash':
-      return '#/';
+    case 'login':
+      return '#/login';
     case 'routes':
     case 'workouts':
     case 'rides':
@@ -116,8 +120,9 @@ export interface RideContext {
  *
  * - An unknown or malformed hash goes to the routes list. It is the cold start, and the
  *   one screen that needs nothing to exist before it can be drawn.
- * - The splash goes the same way. Reaching here means the install has a session, which
- *   is what "straight past it" means.
+ * - The login screen goes the same way. Reaching here means the install has a session,
+ *   which is what "straight past it" means — and it is why `/login` is not a screen a
+ *   signed-in rider can sit on.
  * - `/ride` describes and never causes. With nothing behind it — a bookmark, a reload
  *   after the ride ended — it redirects rather than rendering a ride that is not there;
  *   with a ride that has finished and saved, it becomes that ride's summary. The label
@@ -125,7 +130,7 @@ export interface RideContext {
  */
 export function resolve(location: Location | null, ride: RideContext): Location {
   if (location === null) return { name: 'routes' };
-  if (location.name === 'splash') return { name: 'routes' };
+  if (location.name === 'login') return { name: 'routes' };
   if (location.name !== 'ride') return location;
   if (ride.finishedRideId !== null) return { name: 'summary', rideId: ride.finishedRideId };
   if (ride.label === null) return { name: 'routes' };

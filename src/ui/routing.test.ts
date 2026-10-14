@@ -10,10 +10,12 @@ describe('parseHash', () => {
     expect(parseHash('#/rides')).toEqual({ name: 'rides' });
   });
 
-  it('reads an empty hash as the splash', () => {
-    expect(parseHash('')).toEqual({ name: 'splash' });
-    expect(parseHash('#')).toEqual({ name: 'splash' });
-    expect(parseHash('#/')).toEqual({ name: 'splash' });
+  it('reads an empty hash, and /login, as the login screen', () => {
+    expect(parseHash('')).toEqual({ name: 'login' });
+    expect(parseHash('#')).toEqual({ name: 'login' });
+    expect(parseHash('#/')).toEqual({ name: 'login' });
+    expect(parseHash('#/login')).toEqual({ name: 'login' });
+    expect(parseHash('#/login/extra')).toBeNull();
   });
 
   it('reads the two screens that carry a record id', () => {
@@ -60,7 +62,7 @@ describe('parseHash', () => {
 
 describe('formatHash', () => {
   it('writes the paths ADR-0018 names', () => {
-    expect(formatHash({ name: 'splash' })).toBe('#/');
+    expect(formatHash({ name: 'login' })).toBe('#/login');
     expect(formatHash({ name: 'routes' })).toBe('#/routes');
     expect(formatHash({ name: 'workout', workoutId: '30-30s' })).toBe('#/workouts/30-30s');
     expect(formatHash({ name: 'summary', rideId: 'abc' })).toBe('#/rides/abc');
@@ -73,7 +75,7 @@ describe('formatHash', () => {
 
 describe('round trip', () => {
   const every: Location[] = [
-    { name: 'splash' },
+    { name: 'login' },
     { name: 'routes' },
     { name: 'workouts' },
     { name: 'rides' },
@@ -99,9 +101,9 @@ describe('round trip', () => {
 });
 
 describe('resolve', () => {
-  it('sends an unknown hash and the splash to the routes list', () => {
+  it('sends an unknown hash and the login screen to the routes list', () => {
     expect(resolve(null, NOTHING_RIDDEN)).toEqual({ name: 'routes' });
-    expect(resolve({ name: 'splash' }, NOTHING_RIDDEN)).toEqual({ name: 'routes' });
+    expect(resolve({ name: 'login' }, NOTHING_RIDDEN)).toEqual({ name: 'routes' });
   });
 
   it('leaves every screen that stands on its own alone', () => {

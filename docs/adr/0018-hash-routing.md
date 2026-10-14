@@ -30,13 +30,13 @@ anywhere near it.
 
 Hash routing, hand-written, no library.
 
-| Path                           | Screen                                                |
-| ------------------------------ | ----------------------------------------------------- |
-| `/`                            | The splash, or straight past it when a session exists |
-| `/routes` `/workouts` `/rides` | The three lists                                       |
-| `/workouts/:id`                | The workout editor                                    |
-| `/ride`                        | Whatever is being ridden, route or workout            |
-| `/rides/:id`                   | A ride's summary                                      |
+| Path                           | Screen                                     |
+| ------------------------------ | ------------------------------------------ |
+| `/login`                       | The login screen; `/` is an alias for it   |
+| `/routes` `/workouts` `/rides` | The three lists                            |
+| `/workouts/:id`                | The workout editor                         |
+| `/ride`                        | Whatever is being ridden, route or workout |
+| `/rides/:id`                   | A ride's summary                           |
 
 **Hash, not the History API.** A static build needs no server rewrite rules, and it keeps working
 under `file://` when Electron arrives at phase 5 (ADR-0000). The History API would need both of
@@ -48,6 +48,11 @@ function, both pure and testable, in the order of thirty lines.
 **One path for a ride, and a ride is not deep-linkable below that.** `/ride` covers a route ride
 and a workout alike. There is deliberately no path to a step or an interval: a step is engine
 state, not a location, and a URL naming one would be wrong the moment the rider skipped it.
+
+**`/login` is where a session-less install goes**, whatever hash it was opened on, and it is
+not a screen a signed-in rider can sit on — reaching it with a session resolves straight to the
+routes list. `/` is an alias rather than a root of its own, so there is one address for the
+screen and phase 5's expired session already has somewhere to send people.
 
 **`/ride` is only valid while a ride exists.** Reached cold — a bookmark, a reload after the ride
 ended — it redirects to the routes list rather than rendering a ride screen with no ride behind it.
