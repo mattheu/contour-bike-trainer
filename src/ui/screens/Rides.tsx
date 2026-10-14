@@ -305,9 +305,10 @@ function Footer({
           if (file !== undefined) onImport(file);
         }}
       />
-      <Button tone="accent" onClick={() => input.current?.click()}>
-        Import rides
-      </Button>
+      {/* Grey. Restoring a backup is housekeeping, not the thing this screen is for —
+          and the rides list has no action that begins a ride, so it carries no accent
+          at all. DESIGN.md's Tones line still cites Import as an accent example. */}
+      <Button onClick={() => input.current?.click()}>Import rides</Button>
     </div>
   );
 }

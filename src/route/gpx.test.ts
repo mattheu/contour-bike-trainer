@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { haversineM, parseGpx } from './gpx';
-import { FIXTURE_LENGTH_M, climbRoute, flatRoute } from '../../test/fixtures';
+import { haversineM, parseGpx, parseGpxTracks } from './gpx';
+import { FIXTURE_LENGTH_M, climbRoute, flatGpxText, flatRoute } from '../../test/fixtures';
 
 function gpxWith(body: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -144,5 +144,95 @@ describe('parseGpx route points', () => {
 
   it('rejects a namespaced GPX with an empty route', () => {
     expect(() => parseGpx(rteWith(''))).toThrow(/no usable points/);
+  });
+});
+
+describe('parseGpxTracks', () => {
+  const POINT = '<trkpt lat="51.5" lon="-1.5"><ele>100</ele></trkpt>';
+  const SECOND = '<trkpt lat="51.51" lon="-1.5"><ele>110</ele></trkpt>';
+
+  function tracks(body: string): string {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">${body}</gpx>`;
+  }
+
+  it('reads each track as its own route rather than concatenating them', () => {
+    // The two tracks are 600 km apart. parseGpx would measure the jump between them as
+    // ridden distance, which is the whole reason this reader exists.
+    const xml = tracks(
+      `<trk><name>One</name><trkseg>${POINT}${SECOND}</trkseg></trk>` +
+        `<trk><name>Two</name><trkseg><trkpt lat="46.5" lon="-1.5"><ele>50</ele></trkpt>` +
+        `<trkpt lat="46.51" lon="-1.5"><ele>60</ele></trkpt></trkseg></trk>`,
+    );
+
+    const { tracks: read, skipped } = parseGpxTracks(xml);
+
+    expect(skipped).toEqual([]);
+    expect(read).toHaveLength(2);
+    expect(read.map((track) => track.name)).toEqual(['One', 'Two']);
+    expect(read[0]?.route.totalDistanceM).toBeLessThan(2000);
+    expect(read[1]?.route.totalDistanceM).toBeLessThan(2000);
+  });
+
+  it('joins the segments within one track, which are one route', () => {
+    const xml = tracks(
+      `<trk><name>Segmented</name><trkseg>${POINT}</trkseg><trkseg>${SECOND}</trkseg></trk>`,
+    );
+
+    const { tracks: read } = parseGpxTracks(xml);
+
+    expect(read).toHaveLength(1);
+    expect(read[0]?.route.points).toHaveLength(2);
+  });
+
+  it('carries a nameless track rather than dropping it', () => {
+    const { tracks: read } = parseGpxTracks(
+      tracks(`<trk><trkseg>${POINT}${SECOND}</trkseg></trk>`),
+    );
+
+    expect(read[0]?.name).toBeNull();
+    expect(read[0]?.index).toBe(1);
+  });
+
+  it('skips one unreadable track and keeps the rest, naming what it skipped', () => {
+    const xml = tracks(
+      `<trk><name>Good</name><trkseg>${POINT}${SECOND}</trkseg></trk>` +
+        `<trk><name>Short</name><trkseg>${POINT}</trkseg></trk>`,
+    );
+
+    const { tracks: read, skipped } = parseGpxTracks(xml);
+
+    expect(read.map((track) => track.name)).toEqual(['Good']);
+    expect(skipped).toHaveLength(1);
+    expect(skipped[0]).toMatchObject({ index: 2, name: 'Short' });
+    expect(skipped[0]?.reason).toMatch(/at least two/);
+  });
+
+  it('reads a planner export of <rte> as a route, as parseGpx does', () => {
+    const xml = tracks(
+      '<rte><name>Planned</name><rtept lat="51.5" lon="-1.5"><ele>100</ele></rtept>' +
+        '<rtept lat="51.51" lon="-1.5"><ele>110</ele></rtept></rte>',
+    );
+
+    const { tracks: read } = parseGpxTracks(xml);
+
+    expect(read[0]?.name).toBe('Planned');
+    expect(read[0]?.route.totalAscentM).toBeCloseTo(10, 1);
+  });
+
+  it('throws on a file that is not a route at all, rather than returning nothing', () => {
+    // Nothing partial about it: there is no track to report as skipped, so the caller
+    // needs the whole file reported as unreadable.
+    expect(() => parseGpxTracks(tracks('<wpt lat="51.5" lon="-1.5"></wpt>'))).toThrow(
+      /no usable points/,
+    );
+    expect(() => parseGpxTracks('not xml at all')).toThrow(/GPX/);
+  });
+
+  it('reads the bundled fixtures the same way parseGpx does', () => {
+    const { tracks: read } = parseGpxTracks(flatGpxText);
+
+    expect(read).toHaveLength(1);
+    expect(read[0]?.route.totalDistanceM).toBeCloseTo(flatRoute().totalDistanceM, 6);
   });
 });

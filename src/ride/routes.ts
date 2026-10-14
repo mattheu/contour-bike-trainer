@@ -33,12 +33,14 @@ export interface BundledRoute extends ManifestRoute {
   gpx: string;
 }
 
-function toStoredRoute(entry: ManifestRoute): Omit<StoredRoute, 'updatedAt'> {
+function toStoredRoute(entry: BundledRoute): Omit<StoredRoute, 'updatedAt'> {
   return {
     id: entry.id,
     name: entry.name,
     ...(entry.region === undefined ? {} : { region: entry.region }),
     ...(entry.description === undefined ? {} : { description: entry.description }),
+    // The record carries the GPX itself; the file name rides along as provenance only.
+    gpx: entry.gpx,
     file: entry.file,
     totalDistanceM: entry.totalDistanceM,
     totalAscentM: entry.totalAscentM,
@@ -79,14 +81,41 @@ export function bundledRoute(id: string): BundledRoute | undefined {
   return bundledRoutes().find((route) => route.id === id);
 }
 
-/** The points, distances and elevations the engine rides. Parsed on demand: a route's
- * geometry is thousands of points and only one route is ridden at a time. */
-export function loadRouteGeometry(id: string): RouteGeometry {
-  const route = bundledRoute(id);
+/**
+ * What a stored route has to ride on, or why it has nothing.
+ *
+ * Total rather than throwing, because every caller is a screen. The old version read the
+ * bundle by id and threw when it found nothing, and the one in RouteRow's render threw
+ * inside a useMemo — a single stored route whose manifest entry had been removed took the
+ * whole routes list down with it. A record that cannot be ridden is a row without a
+ * sparkline, not a blank screen.
+ */
+export type StoredGeometry =
+  { status: 'ok'; geometry: RouteGeometry } | { status: 'unavailable'; reason: string };
+
+/**
+ * The points, distances and elevations the engine rides, parsed from the record's own
+ * GPX. ADR-0014's rule: the source is the record and the geometry is computed from it on
+ * read, so a route is rideable wherever it came from — the build or a file the rider
+ * picked off disk.
+ *
+ * Parsed on demand and not cached, exactly as a workout's YAML is. ADR-0014 settled that
+ * trade too: a cache here is an invalidation question, and one route is parsed at a time.
+ */
+export function storedRouteGeometry(route: StoredRoute | undefined): StoredGeometry {
   if (route === undefined) {
-    throw new Error(`No bundled route with id "${id}". Add it to routes/manifest.json.`);
+    return { status: 'unavailable', reason: 'it is no longer in this install' };
   }
-  return parseGpx(route.gpx);
+  if (route.gpx === undefined || route.gpx.trim() === '') {
+    // Backfill could not reach it: its file left the build. See backfillRouteSources.
+    return { status: 'unavailable', reason: 'this install has no GPX for it' };
+  }
+  try {
+    return { status: 'ok', geometry: parseGpx(route.gpx) };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return { status: 'unavailable', reason: `its GPX could not be read: ${reason}` };
+  }
 }
 
 export interface SeedResult {
@@ -124,7 +153,7 @@ export async function seedRoutes(
   repository: Repository<StoredRoute>,
   /** Whether this install has already had a seeding pass complete. */
   seeded: boolean,
-  routes: ManifestRoute[] = bundledRoutes(),
+  routes: BundledRoute[] = bundledRoutes(),
 ): Promise<SeedResult> {
   const result: SeedResult = { written: [], unchanged: [] };
   if (seeded) return result;
@@ -138,6 +167,60 @@ export async function seedRoutes(
     // updatedAt is stamped by the repository on write.
     await repository.put({ ...toStoredRoute(entry), updatedAt: '' });
     result.written.push(entry.id);
+  }
+
+  return result;
+}
+
+export interface BackfillResult {
+  /** Ids given their GPX out of the build, because the record had none. */
+  filled: string[];
+  /** Names of records with no source and nothing in the build to fill it from. */
+  orphaned: string[];
+}
+
+/**
+ * Fills in the GPX of records written before a route carried one.
+ *
+ * Not seeding, and deliberately not gated on the seeded marker. Seeding decides whether a
+ * route should exist in this install at all, and the marker is what makes a deletion
+ * stick; this repairs records that already exist and were written by an older build, so
+ * skipping it on a seeded install would mean it never ran anywhere it was needed. It
+ * writes nothing a record already has and adds nothing the rider removed.
+ *
+ * The lookup is by id first and by file second. The id is the join routes/manifest.json
+ * promises never to change — the file name it may; and the file is the only key left when
+ * the id itself has gone from the manifest, which is how a route renamed in the build
+ * still finds its bytes.
+ *
+ * What cannot be filled is left exactly as it is. The alternative is deleting a record
+ * the rider may have ridden a dozen times, on the strength of a file having left the
+ * build — the destructive answer to a problem whose honest answer is a row that says so.
+ * Such a route keeps its name, its distances and its ride count, loses its sparkline, and
+ * cannot be started: storedRouteGeometry returns unavailable for it everywhere. The names
+ * come back so the caller can say which ones, once, rather than per row.
+ */
+export async function backfillRouteSources(
+  repository: Repository<StoredRoute>,
+  routes: BundledRoute[] = bundledRoutes(),
+): Promise<BackfillResult> {
+  const result: BackfillResult = { filled: [], orphaned: [] };
+
+  const byId = new Map(routes.map((route) => [route.id, route.gpx]));
+  const byFile = new Map(routes.map((route) => [route.file, route.gpx]));
+
+  for (const stored of await repository.list()) {
+    if (stored.gpx !== undefined && stored.gpx.trim() !== '') continue;
+
+    const gpx =
+      byId.get(stored.id) ?? (stored.file === undefined ? undefined : byFile.get(stored.file));
+    if (gpx === undefined) {
+      result.orphaned.push(stored.name);
+      continue;
+    }
+
+    await repository.put({ ...stored, gpx });
+    result.filled.push(stored.id);
   }
 
   return result;

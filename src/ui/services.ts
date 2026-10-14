@@ -4,7 +4,13 @@ import { FtmsTrainer } from '../ble/ftms-trainer';
 import { WebBluetoothHeartRateMonitor } from '../ble/hrm';
 import type { ConnectionState, HeartRateMonitor, Trainer } from '../ble/types';
 import { archiveFileName, buildArchive, readArchive } from '../export/archive';
-import { routeGpxFileName, workoutBundleFileName, workoutFileName } from '../export/file-name';
+import {
+  routeBundleFileName,
+  routeGpxFileName,
+  workoutBundleFileName,
+  workoutFileName,
+} from '../export/file-name';
+import { buildRouteGpx } from '../export/route-gpx';
 import { buildTcx, tcxFileName } from '../export/tcx';
 import { bundleWorkoutSources, splitWorkoutDocuments } from '../export/workout-bundle';
 import { Recorder } from '../instrument/recorder';
@@ -15,13 +21,14 @@ import { systemClock } from '../ride/clock';
 import { RideEngine, type EngineSnapshot } from '../ride/engine';
 import { RideRecorder } from '../ride/recorder';
 import {
-  bundledRoute,
-  loadRouteGeometry,
+  backfillRouteSources,
   registerRoute,
   seedRoutes,
+  storedRouteGeometry,
   type BundledRoute,
 } from '../ride/routes';
 import { seedWorkouts } from '../ride/workouts';
+import { planRouteImport } from '../route/import';
 import type { Route as RouteGeometry } from '../route/types';
 import { TrainerTickSource } from '../ride/tick';
 import type { EngineTrainer } from '../ride/types';
@@ -44,6 +51,7 @@ import { smoothPower, stepLabel } from './format';
 import type { RiderProfile } from './screens/rider-profile';
 import type { DeleteResult } from './screens/ride-delete';
 import type { ImportResult } from './screens/rides-import';
+import type { RouteImportResult } from './screens/routes-import';
 import type { WorkoutImportResult } from './screens/workouts-import';
 import { NEW_WORKOUT_SOURCE, type SaveResult } from './screens/workout-editor';
 import { experimentStore, rideStore, type WorkoutSnapshot } from './store';
@@ -86,9 +94,19 @@ export const availableScripts = FAKE_SCRIPTS;
 export const experimentEnabled =
   new URLSearchParams(window.location.search).get('experiment') === '1';
 
-/** Re-exported so a screen talks only to this module: route geometry is a service the
- * UI consumes, not a module it reaches past this boundary to import. */
-export { loadRouteGeometry };
+/**
+ * The geometry of a stored route, or null when there is none to be had.
+ *
+ * Async because the GPX is now in the record rather than in the build, and the repository
+ * is async by contract. Null rather than throwing, because every caller is a screen: a
+ * route whose source is missing or unreadable is a row without a sparkline and a summary
+ * without a profile, not an exception escaping a render.
+ */
+export async function loadRouteGeometry(routeId: string): Promise<RouteGeometry | null> {
+  await ready;
+  const result = storedRouteGeometry(await storage.routes.get(routeId));
+  return result.status === 'ok' ? result.geometry : null;
+}
 
 export const storage: Storage = createStorage();
 export const instrumentation = new Recorder({ source });
@@ -356,6 +374,15 @@ export const ready: Promise<void> = (async () => {
       settings = { ...settings, routesSeeded: true };
     }
 
+    // Repair, not seeding, which is why it is outside the marker: a route written before
+    // records carried their own GPX has none, and an install that was already seeded is
+    // exactly the one that needs filling in. It adds nothing the rider removed.
+    //
+    // What it could not fill is reported by the row itself rather than from here. A boot
+    // alert would sit in the store until the rider opened a ride screen and then surface
+    // against an unrelated route; the routes list says it where the route is.
+    await backfillRouteSources(storage.routes);
+
     const seeded = await seedWorkouts(storage.workouts, settings.workoutsSeeded);
     if (!settings.workoutsSeeded) {
       await storage.settings.put({ workoutsSeeded: true });
@@ -372,6 +399,7 @@ export const ready: Promise<void> = (async () => {
         },
       });
     }
+
     rideStore.update({
       trainerDifficulty: settings.trainerDifficulty,
       targetPowerW: settings.targetPowerW,
@@ -717,7 +745,12 @@ export async function startRide(routeId: string): Promise<void> {
   let geometry: RouteGeometry;
   try {
     stored = await storage.routes.get(routeId);
-    geometry = loadRouteGeometry(routeId);
+    const read = storedRouteGeometry(stored);
+    if (read.status !== 'ok') {
+      fault(`That route cannot be ridden: ${read.reason}.`);
+      return;
+    }
+    geometry = read.geometry;
   } catch (error) {
     fault(`Could not load that route: ${errorMessage(error)}`);
     return;
@@ -743,6 +776,10 @@ export async function startRide(routeId: string): Promise<void> {
   rideStore.update({
     routeId,
     routeName: stored?.name ?? null,
+    // Published rather than re-read by the screen. The geometry is parsed once, here,
+    // where loading it is already async, and the ride screen is handed the same object
+    // the engine is riding instead of waiting on a second read of its own.
+    routeGeometry: geometry,
     routeTotalDistanceM: geometry.totalDistanceM,
     routeTotalAscentM: geometry.totalAscentM,
     samples: [],
@@ -808,6 +845,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
   rideStore.update({
     routeId: null,
     routeName: null,
+    routeGeometry: null,
     routeTotalDistanceM: null,
     routeTotalAscentM: null,
     samples: [],
@@ -1154,12 +1192,12 @@ export async function importRides(file: File): Promise<ImportResult> {
 }
 
 /**
- * One route's GPX, handed back exactly as it is in the build.
+ * One route's GPX, handed back exactly as the record holds it.
  *
- * Nothing is generated: the file is bundled by src/ride/routes.ts and this writes those
- * same bytes out under the route's name. There is no Import to match it, and deliberately
- * so — a stored route is metadata plus a path into the build, so an import would need
- * routes to own their own GPX, which is a different feature and a later phase.
+ * Nothing is generated and nothing is read out of the build: the bytes are on the record,
+ * which is the whole of this change — a route the rider imported downloads the same way a
+ * bundled one does, because by the time either is stored there is no difference between
+ * them.
  */
 export async function exportRouteGpx(routeId: string): Promise<void> {
   await ready;
@@ -1168,14 +1206,90 @@ export async function exportRouteGpx(routeId: string): Promise<void> {
     fault('That route is no longer in the list, so there is nothing to download.');
     return;
   }
-  // Joined by id, which routes/manifest.json guarantees is stable; stored.file is the
-  // same path on the other side of that join.
-  const bundled = bundledRoute(routeId);
-  if (bundled === undefined) {
-    fault(`The GPX for ${stored.name} is not in this build, so there is nothing to download.`);
+  if (stored.gpx === undefined || stored.gpx.trim() === '') {
+    fault(`This install has no GPX for ${stored.name}, so there is nothing to download.`);
     return;
   }
-  download(new Blob([bundled.gpx], { type: 'application/gpx+xml' }), routeGpxFileName(stored.name));
+  download(new Blob([stored.gpx], { type: 'application/gpx+xml' }), routeGpxFileName(stored.name));
+}
+
+/**
+ * Every route as one GPX file, each its own <trk>.
+ *
+ * In the order the list shows them, as the workout bundle is, so the file reads the way
+ * the screen does. A route with no readable source is left out rather than aborting the
+ * download — it has nothing to contribute and the boot alert has already named it.
+ */
+export async function exportAllRoutes(): Promise<void> {
+  await ready;
+  const routes = await storage.routes.list();
+  const ordered = [...routes].sort((a, b) => a.name.localeCompare(b.name));
+
+  const tracks = ordered.flatMap((route) => {
+    const read = storedRouteGeometry(route);
+    return read.status === 'ok' ? [{ name: route.name, points: read.geometry.points }] : [];
+  });
+
+  download(
+    new Blob([buildRouteGpx(tracks)], { type: 'application/gpx+xml' }),
+    routeBundleFileName(),
+  );
+}
+
+/**
+ * A GPX is text, and a long real route is a few hundred kilobytes of it. The ceiling is
+ * here to make picking the wrong file say so rather than to express a view on route
+ * length — the same job it does on the workout bundle.
+ */
+const MAX_ROUTE_IMPORT_BYTES = 64 * 1024 * 1024;
+
+/**
+ * Imports a GPX the rider picked off disk.
+ *
+ * Every track becomes a new route with a new id. A GPX carries no ids to match on, so
+ * there is nothing here that could overwrite a route the rider already has — importing
+ * the same file twice gives two copies, visibly, on the list, which is the same trade the
+ * workout import makes and for the same reason.
+ *
+ * The reading is planRouteImport, which is pure and tested; this writes what it returns.
+ * Nothing throws: a file chosen in a picker is untrusted input and the rider gets a
+ * sentence either way. A file that will not parse writes nothing at all.
+ */
+export async function importRoutes(file: File): Promise<RouteImportResult> {
+  if (file.size > MAX_ROUTE_IMPORT_BYTES) {
+    const mb = Math.round(file.size / (1024 * 1024));
+    return {
+      status: 'failed',
+      reason: `that file is ${String(mb)} MB, larger than Contour will read — is it a GPX?`,
+    };
+  }
+
+  let text: string;
+  try {
+    text = await file.text();
+  } catch (error) {
+    return { status: 'failed', reason: errorMessage(error) };
+  }
+
+  const plan = planRouteImport(text, file.name);
+  if (plan.status === 'failed') return plan;
+
+  await ready;
+  try {
+    for (const route of plan.routes) {
+      // updatedAt is stamped by the repository on write.
+      await storage.routes.put({ id: createId(), updatedAt: '', ...route });
+    }
+  } catch (error) {
+    return { status: 'failed', reason: errorMessage(error) };
+  }
+
+  return {
+    status: 'done',
+    imported: plan.routes.length,
+    skipped: plan.reasons.length,
+    reasons: plan.reasons,
+  };
 }
 
 /**

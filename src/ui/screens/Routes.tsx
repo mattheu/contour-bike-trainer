@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useState } from 'react';
-import { loadRouteGeometry } from '../../ride/routes';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import type { AlertState } from '../../ride/types';
+import type { Route as RouteGeometry } from '../../route/types';
 import type { Ride, Route as StoredRoute } from '../../storage/types';
 import { Sparkline } from '../charts';
 import { AppHeader } from '../components/AppHeader';
@@ -28,17 +28,35 @@ import {
   type Armed,
   type DeleteResult,
 } from './ride-delete';
+import { routeImportAlert, type RouteImportResult } from './routes-import';
 import { ROUTE_DELETE_WORDING, rideCounts, riddenLabel, sortRoutes } from './routes-list';
 import { Selectable } from './Selectable';
+import { useAsync } from './use-async';
 
 const LABELS = ['Profile', 'Route', 'Distance', 'Gain', 'Ridden'] as const;
+
+/**
+ * What a row says instead of its region when this install has no GPX for it: a record
+ * written by a build that kept routes in the bundle, whose file has since left it. It
+ * keeps its name, its figures and its ride count, and it cannot be ridden.
+ */
+const NO_SOURCE = 'No GPX in this install';
 
 interface RoutesProps {
   routes: readonly StoredRoute[];
   rides: readonly Ride[];
   onSelect: (routeId: string) => void;
-  /** Emits the route's bundled GPX: see services.exportRouteGpx. */
+  /** Emits the route's stored GPX: see services.exportRouteGpx. */
   onDownload: (routeId: string) => void;
+  /** Every route as one GPX, each its own track. */
+  onExportAll: () => Promise<void>;
+  onImport: (file: File) => Promise<RouteImportResult>;
+  /**
+   * The points for one route's sparkline. A loader rather than geometry on the record,
+   * because parsing a route is thousands of points and reading its GPX is async: see
+   * services.loadRouteGeometry. Null means this install cannot read that route.
+   */
+  onLoadGeometry: (routeId: string) => Promise<RouteGeometry | null>;
   /** Takes nothing with it — a ride on this route keeps its own name and geometry. */
   onDelete: (routeId: string) => Promise<DeleteResult>;
   onNavigate: (screen: ListScreen) => void;
@@ -46,22 +64,23 @@ interface RoutesProps {
 }
 
 /**
- * design/mockups/routes.html, without the accent Import GPX button the mockup draws.
+ * design/mockups/routes.html, with the import the mockup draws — a route carries its own
+ * GPX now, so importing one is just storing a file, and the footer is the same backup and
+ * restore pair the rides and workouts lists already have.
  *
- * There is nothing to import: a stored route is metadata over a GPX that lives in the
- * build, so an import would have to make routes own their own file, which is a different
- * feature and a later phase. Download exists anyway, per row — the file is already there
- * and handing it back costs nothing. There is no Download all for the same reason there
- * is no import: every one of them is in the repository already.
- *
- * So no accent control here. DESIGN.md gives a list screen one, for the action that begins
- * something, and on this screen that is the row itself.
+ * One departure from the mockup, which draws Import as the accent control: it is grey
+ * here. DESIGN.md allows a list screen one accent, for the action that begins something,
+ * and on this screen that is the row itself — pressing a route is what starts a ride.
+ * The rides list made the same call on the same reasoning.
  */
 export function Routes({
   routes,
   rides,
   onSelect,
   onDownload,
+  onExportAll,
+  onImport,
+  onLoadGeometry,
   onDelete,
   onNavigate,
   onOpenProfile,
@@ -109,7 +128,7 @@ export function Routes({
         </div>
       )}
 
-      <div className="flex min-h-0 flex-col">
+      <div className="flex min-h-0 grow flex-col">
         <ListHeaderFrame>
           <ListHeader columns={ROUTES_COLUMNS} labels={LABELS} />
         </ListHeaderFrame>
@@ -122,6 +141,7 @@ export function Routes({
               armed={isArmed(armed, route.id)}
               onSelect={onSelect}
               onDownload={onDownload}
+              onLoadGeometry={onLoadGeometry}
               onPressDelete={() => press(route)}
               onCancelDelete={() => setRequested(cancelDelete())}
             />
@@ -132,6 +152,57 @@ export function Routes({
           )}
         </div>
       </div>
+
+      <Footer
+        empty={ordered.length === 0}
+        onExportAll={() => void onExportAll()}
+        onImport={(file) =>
+          void onImport(file).then((result) => setAlert(routeImportAlert(result)))
+        }
+      />
+    </div>
+  );
+}
+
+/**
+ * Backup and restore, below the list and outside its scrolling region — the same footer
+ * in the same place as the rides and workouts lists, because it does the same job.
+ *
+ * Nothing here is accent, which is this screen's one departure from the mockup: a list
+ * screen gets one accent control and the row already is it.
+ */
+function Footer({
+  empty,
+  onExportAll,
+  onImport,
+}: {
+  empty: boolean;
+  onExportAll: () => void;
+  onImport: (file: File) => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="border-hairline bg-ground/60 flex shrink-0 items-center gap-[16px] border-t pt-[24px]">
+      <Button onClick={onExportAll} disabled={empty}>
+        Download all routes
+      </Button>
+      <div className="grow" />
+      {/* A real button rather than a bare file input: the input carries no box, and a box
+          is the whole signal that something is pressable. */}
+      <input
+        ref={input}
+        type="file"
+        accept=".gpx,application/gpx+xml"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          // Cleared so picking the same file twice still fires a change event.
+          event.target.value = '';
+          if (file !== undefined) onImport(file);
+        }}
+      />
+      <Button onClick={() => input.current?.click()}>Import routes</Button>
     </div>
   );
 }
@@ -142,6 +213,7 @@ function RouteRow({
   armed,
   onSelect,
   onDownload,
+  onLoadGeometry,
   onPressDelete,
   onCancelDelete,
 }: {
@@ -150,12 +222,19 @@ function RouteRow({
   armed: boolean;
   onSelect: (routeId: string) => void;
   onDownload: (routeId: string) => void;
+  onLoadGeometry: (routeId: string) => Promise<RouteGeometry | null>;
   onPressDelete: () => void;
   onCancelDelete: () => void;
 }) {
-  // Parsing a route's GPX is thousands of points; the sparkline is the one thing on this
-  // screen that needs them, so it is parsed once per route and held by the memo.
-  const geometry = useMemo(() => loadRouteGeometry(route.id), [route.id]);
+  // Reading a route's GPX is async and parsing it is thousands of points; the sparkline
+  // is the one thing on this screen that needs either, so each row loads its own and the
+  // list renders without waiting on any of them. Wrapped rather than held bare, because
+  // useAsync returns null until it resolves and null is also a real answer here.
+  const loaded = useAsync(async () => ({ geometry: await onLoadGeometry(route.id) }), [route.id]);
+  const geometry = loaded?.geometry ?? null;
+  // Still loading counts as rideable: the row is not dead while it waits, and a route
+  // that turns out to have no geometry says so from services.startRide instead.
+  const rideable = loaded === null || loaded.geometry !== null;
 
   return (
     <ListRowFrame
@@ -173,8 +252,11 @@ function RouteRow({
           <ButtonGroup label={`${route.name} actions`}>
             {/* The same two glyphs as the rides list, in the same order: a list row's
                 actions should not have to be relearned per screen. */}
+            {/* Disabled where there is nothing to hand back: a route with no GPX in
+                this install has no file to download. */}
             <IconButton
               label={`Download ${route.name} as GPX`}
+              disabled={!rideable}
               onClick={() => onDownload(route.id)}
             >
               <svg
@@ -209,14 +291,18 @@ function RouteRow({
         )
       }
     >
-      <Selectable onSelect={() => onSelect(route.id)}>
+      {/* A route this install has no GPX for cannot be ridden, so its row is inert rather
+          than a link that fails once the rider is on the bike — the same treatment the
+          workouts list gives a plan that will not parse, down to saying why in the line
+          its region would use. Remove stays available, which is the way out. */}
+      <Selectable onSelect={rideable ? () => onSelect(route.id) : null}>
         <ListRow
           columns={ROUTES_COLUMNS}
-          href={`#route-${route.id}`}
-          lead={<Sparkline route={geometry} />}
+          href={rideable ? `#route-${route.id}` : undefined}
+          lead={geometry === null ? undefined : <Sparkline route={geometry} />}
           leadVariant="sparkline"
           title={route.name}
-          meta={route.region}
+          meta={rideable ? route.region : NO_SOURCE}
           cells={[
             <Figure key="distance" value={distance(route.totalDistanceM / 1000)} unit="km" />,
             <Figure key="gain" value={elevation(route.totalAscentM)} unit="m" />,

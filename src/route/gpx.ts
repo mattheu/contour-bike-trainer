@@ -36,11 +36,21 @@ interface RawTrackPoint {
   ele?: string;
 }
 
+interface RawTrack {
+  name?: unknown;
+  trkseg?: { trkpt?: RawTrackPoint[] }[];
+}
+
+interface RawRoute {
+  name?: unknown;
+  rtept?: RawTrackPoint[];
+}
+
 /** Everything under the gpx root is optional in the schema, so read it defensively. */
 interface RawGpx {
   gpx?: {
-    trk?: { trkseg?: { trkpt?: RawTrackPoint[] }[] }[];
-    rte?: { rtept?: RawTrackPoint[] }[];
+    trk?: RawTrack[];
+    rte?: RawRoute[];
   };
 }
 
@@ -60,6 +70,34 @@ function numberOrNull(value: string | undefined): number | null {
  * corrupt the gradient profile built on top of this.
  */
 export function parseGpx(xml: string): Route {
+  const root = readRoot(xml);
+
+  // A recorded ride is a <trk> of <trkpt>; a planned route is a <rte> of <rtept>. Route
+  // planners (Footpath, Komoot, RideWithGPS) commonly export the latter, so accept both.
+  // Tracks win when a file somehow carries both, being the more precise record.
+  const raw: RawTrackPoint[] = [];
+  for (const track of root.trk ?? []) {
+    for (const segment of track.trkseg ?? []) {
+      raw.push(...(segment.trkpt ?? []));
+    }
+  }
+  if (raw.length === 0) {
+    for (const route of root.rte ?? []) {
+      raw.push(...(route.rtept ?? []));
+    }
+  }
+  if (raw.length === 0) {
+    throw new Error(
+      'GPX has no usable points: expected a <trk> of <trkpt> or a <rte> of <rtept>, ' +
+        'not just waypoints',
+    );
+  }
+
+  return measure(raw);
+}
+
+/** Validation and the root element, shared by the whole-document and per-track readers. */
+function readRoot(xml: string): NonNullable<RawGpx['gpx']> {
   if (typeof xml !== 'string' || xml.trim() === '') {
     throw new Error('GPX is empty: no XML content to parse');
   }
@@ -74,26 +112,97 @@ export function parseGpx(xml: string): Route {
   if (!document.gpx) {
     throw new Error('GPX has no <gpx> root element');
   }
+  return document.gpx;
+}
 
-  // A recorded ride is a <trk> of <trkpt>; a planned route is a <rte> of <rtept>. Route
-  // planners (Footpath, Komoot, RideWithGPS) commonly export the latter, so accept both.
-  // Tracks win when a file somehow carries both, being the more precise record.
-  const raw: RawTrackPoint[] = [];
-  for (const track of document.gpx.trk ?? []) {
-    for (const segment of track.trkseg ?? []) {
-      raw.push(...(segment.trkpt ?? []));
-    }
+/** A <name> only where it is text. A name carrying attributes parses as an object, and
+ * an empty one as a blank string; neither is something to show in a list. */
+function trackName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed === '' ? null : trimmed;
+}
+
+/** One track, read on its own rather than merged into whatever sits beside it. */
+export interface GpxTrack {
+  /** Its position in the file, 1-based, as a person would count tracks in it. */
+  index: number;
+  /** Its <name>, where it has one. The rider's own label for the route. */
+  name: string | null;
+  route: Route;
+}
+
+export interface GpxTrackSkipped {
+  index: number;
+  name: string | null;
+  /** Why this one track could not be read, in a sentence that completes "because …". */
+  reason: string;
+}
+
+export interface GpxTracks {
+  tracks: GpxTrack[];
+  skipped: GpxTrackSkipped[];
+}
+
+/**
+ * Every track in a document as its own route, rather than one route of all of them.
+ *
+ * parseGpx concatenates: a file of five tracks is one route whose distance includes the
+ * jump from the end of one to the start of the next, which is right for a ride recorded
+ * in several segments and wrong for a file that carries five separate routes. This is the
+ * reader for the second case, and it is what makes a Download all round-trip — the export
+ * writes one <trk> per route and the import reads one route per <trk>.
+ *
+ * Partial by design, the way splitWorkoutDocuments is: one unreadable track is named and
+ * counted rather than costing the other four. A document that is not GPX at all still
+ * throws, because then there is nothing to be partial about.
+ */
+export function parseGpxTracks(xml: string): GpxTracks {
+  const root = readRoot(xml);
+
+  // Tracks win over routes for the same reason they do in parseGpx, and the fallback is
+  // whole-document: a file mixing one <trk> with one <rte> is a recorded ride plus its
+  // plan, not two routes.
+  const sources: { name: string | null; points: RawTrackPoint[] }[] = (root.trk ?? []).map(
+    (track) => ({
+      name: trackName(track.name),
+      points: (track.trkseg ?? []).flatMap((segment) => segment.trkpt ?? []),
+    }),
+  );
+  if (sources.length === 0) {
+    sources.push(
+      ...(root.rte ?? []).map((route) => ({
+        name: trackName(route.name),
+        points: route.rtept ?? [],
+      })),
+    );
   }
-  if (raw.length === 0) {
-    for (const route of document.gpx.rte ?? []) {
-      raw.push(...(route.rtept ?? []));
-    }
-  }
-  if (raw.length === 0) {
+  if (sources.length === 0) {
     throw new Error(
       'GPX has no usable points: expected a <trk> of <trkpt> or a <rte> of <rtept>, ' +
         'not just waypoints',
     );
+  }
+
+  const tracks: GpxTrack[] = [];
+  const skipped: GpxTrackSkipped[] = [];
+
+  for (const [position, source] of sources.entries()) {
+    const index = position + 1;
+    try {
+      tracks.push({ index, name: source.name, route: measure(source.points) });
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      skipped.push({ index, name: source.name, reason });
+    }
+  }
+
+  return { tracks, skipped };
+}
+
+function measure(raw: RawTrackPoint[]): Route {
+  if (raw.length === 0) {
+    throw new Error('GPX track has no points');
   }
 
   // Two passes: read every point, then despike the elevation series, then measure. Distance

@@ -9,6 +9,15 @@ import flatGpx from './flat-1km.gpx?raw';
 import climbGpx from './climb-10pct-1km.gpx?raw';
 import descentGpx from './descent-14pct-1km.gpx?raw';
 
+/**
+ * The fixture text itself, for the modules that take GPX rather than a parsed route —
+ * the importer and the multi-track export. ADR-0011 again: a 153 kB bundled route in a
+ * unit test is the thing these exist to avoid.
+ */
+export const flatGpxText = flatGpx;
+export const climbGpxText = climbGpx;
+export const descentGpxText = descentGpx;
+
 /** 1 km at 0 %, elevation 100 m throughout. */
 export const flatRoute = (): Route => parseGpx(flatGpx);
 

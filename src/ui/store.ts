@@ -2,6 +2,7 @@ import type { ConnectionState } from '../ble/types';
 import type { VisibilityState } from '../instrument/probe';
 import type { Summary } from '../instrument/stats';
 import type { AlertState, RideState } from '../ride/types';
+import type { Route as RouteGeometry } from '../route/types';
 import type { RideSample } from '../storage/types';
 import type { ExpandedStep } from '../workout/expand';
 import type { CadenceTarget } from '../workout/types';
@@ -72,6 +73,14 @@ export interface RideSnapshot {
 
   routeId: string | null;
   routeName: string | null;
+  /**
+   * The points the engine is riding, published at ride start rather than looked up by id
+   * on the screen. A route's GPX lives in its record now, so reading it is async and a
+   * component cannot await in render; this is the one object both sides already share,
+   * and the geometry the engine was handed is the honest answer to "what is being
+   * ridden" anyway. Held by identity for the life of the run, so it never republishes.
+   */
+  routeGeometry: RouteGeometry | null;
   routeTotalDistanceM: number | null;
   routeTotalAscentM: number | null;
 
@@ -113,6 +122,7 @@ const INITIAL: RideSnapshot = {
 
   routeId: null,
   routeName: null,
+  routeGeometry: null,
   routeTotalDistanceM: null,
   routeTotalAscentM: null,
 

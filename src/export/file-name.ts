@@ -32,9 +32,14 @@ export function contourFileName(name: string, extension: string, fallback: strin
   return `contour-${slug === '' ? fallback : slug}${extension}`;
 }
 
-/** One route's bundled GPX, exactly the file in the build. */
+/** One route's stored GPX. */
 export function routeGpxFileName(name: string): string {
   return contourFileName(name, '.gpx', 'route');
+}
+
+/** contour-routes-YYYY-MM-DD.gpx, dated in local time like the workout bundle. */
+export function routeBundleFileName(at: Date = new Date()): string {
+  return `contour-routes-${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}.gpx`;
 }
 
 /** One workout's stored YAML source. */

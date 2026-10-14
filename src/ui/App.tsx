@@ -1,7 +1,8 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ContourField } from './components/ContourField';
 import { Button } from './components/Button';
 import { SERIF } from './components/styles';
+import type { Route as RouteGeometry } from '../route/types';
 import type { Ride, RideSample, Route as StoredRoute } from '../storage/types';
 import { Experiment } from './screens/Experiment';
 import type { ListScreen } from './screens/Nav';
@@ -105,10 +106,10 @@ function RideApp() {
     heartRateBpm: snapshot.targetHeartRateBpm,
   };
 
-  const geometry = useMemo(
-    () => (snapshot.routeId === null ? null : services.loadRouteGeometry(snapshot.routeId)),
-    [snapshot.routeId],
-  );
+  // Published by services.startRide rather than looked up here: a route's GPX is on its
+  // record now, so loading geometry is async and a component cannot await in render. The
+  // store already carries what is being ridden, and this is part of it.
+  const geometry = snapshot.routeGeometry;
 
   const workouts = useAsync(() => services.listWorkouts(), [screen, workoutsVersion]);
 
@@ -157,6 +158,14 @@ function RideApp() {
   const importRides = useCallback(async (file: File) => {
     const result = await services.importRides(file);
     if (result.status === 'done' && result.restored > 0) setHistoryVersion((n) => n + 1);
+    return result;
+  }, []);
+
+  /** Same version counter as a ride import: the routes list is rendering the history
+   * that just changed under it. */
+  const importRoutes = useCallback(async (file: File) => {
+    const result = await services.importRoutes(file);
+    if (result.status === 'done' && result.imported > 0) setHistoryVersion((n) => n + 1);
     return result;
   }, []);
 
@@ -379,6 +388,9 @@ function RideApp() {
         rides={history?.rides ?? []}
         onSelect={(routeId) => void startRide(routeId)}
         onDownload={(id) => void services.exportRouteGpx(id)}
+        onExportAll={services.exportAllRoutes}
+        onImport={importRoutes}
+        onLoadGeometry={services.loadRouteGeometry}
         onDelete={deleteRoute}
         onNavigate={navigate}
         onOpenProfile={() => setProfileOpen(true)}
@@ -388,7 +400,7 @@ function RideApp() {
   );
 }
 
-type LoadedRide = { ride: Ride; samples: RideSample[] } | 'missing';
+type LoadedRide = { ride: Ride; samples: RideSample[]; route: RouteGeometry | null } | 'missing';
 
 /**
  * The summary reads two records and a route, so it loads rather than being handed its
@@ -410,24 +422,18 @@ function SummaryScreen({
   onDelete: (wasWorkout: boolean) => Promise<DeleteResult>;
   onDone: () => void;
 }) {
+  // The route loads with the ride rather than after it. Reading its geometry is async
+  // now — the GPX is on the record — and this screen was already a one-shot load, so it
+  // costs nothing to ask for the third thing in the same pass. Null where the route has
+  // since been removed or has no readable source: the aggregates still read.
   const loaded = useAsync<LoadedRide>(async () => {
     await services.ready;
     const ride = await services.storage.rides.get(rideId);
     if (ride === undefined) return 'missing';
     const stored = await services.storage.rideSamples.get(ride.id);
-    return { ride, samples: (stored?.samples ?? []) as RideSample[] };
+    const route = ride.routeId === null ? null : await services.loadRouteGeometry(ride.routeId);
+    return { ride, samples: (stored?.samples ?? []) as RideSample[], route };
   }, [rideId]);
-
-  const route = useMemo(() => {
-    const routeId = loaded === null || loaded === 'missing' ? null : loaded.ride.routeId;
-    if (routeId === null) return null;
-    try {
-      return services.loadRouteGeometry(routeId);
-    } catch {
-      // The route was removed from the manifest since this ride: the aggregates still read.
-      return null;
-    }
-  }, [loaded]);
 
   if (loaded === null) return <Loading />;
   if (loaded === 'missing') return <Missing onDone={onDone} />;
@@ -436,7 +442,7 @@ function SummaryScreen({
     <Summary
       ride={loaded.ride}
       samples={loaded.samples}
-      route={route}
+      route={loaded.route}
       origin={origin}
       onExport={() => onExport(loaded.ride.id)}
       onDelete={() => onDelete(loaded.ride.workoutId !== null)}

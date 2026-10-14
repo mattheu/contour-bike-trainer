@@ -42,7 +42,25 @@ export interface Route extends StoredRecord {
   name: string;
   region?: string; // routes list shows this
   description?: string;
-  file: string; // path under routes/
+  /**
+   * The GPX text this route is. ADR-0014's rule applied to routes: the source is the
+   * record, and the points, the gradients and the map are computed from it on read —
+   * nothing stores a parsed track. It is also what makes a route importable: a record
+   * that carries its own file does not need one in the build.
+   *
+   * Optional only because a record written before this field existed has none. Boot
+   * backfills those from the bundle; see backfillRouteSources in src/ride/routes.ts for
+   * what happens to the ones it cannot reach.
+   */
+  gpx?: string;
+  /**
+   * Which file in the build this came from, where it came from one at all. Provenance
+   * now, not a join: nothing loads geometry through it, and an imported route has none.
+   * It survives because it is the one key that can find a sourceless legacy record's GPX
+   * in the bundle, and that backfill has to keep working on an install that boots in a
+   * year's time.
+   */
+  file?: string;
   totalDistanceM: number;
   totalAscentM: number;
 }

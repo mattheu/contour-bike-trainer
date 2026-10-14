@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { routeGpxFileName, workoutBundleFileName, workoutFileName } from './file-name';
+import {
+  routeBundleFileName,
+  routeGpxFileName,
+  workoutBundleFileName,
+  workoutFileName,
+} from './file-name';
 
 describe('routeGpxFileName', () => {
   it('names the file after the route, in the house style', () => {
@@ -35,6 +40,14 @@ describe('workoutBundleFileName', () => {
     // makes the file findable, so the two exports agree on using theirs.
     expect(workoutBundleFileName(new Date(2026, 9, 14, 23, 30))).toBe(
       'contour-workouts-2026-10-14.yaml',
+    );
+  });
+});
+
+describe('routeBundleFileName', () => {
+  it('dates the bundle in local time, like the workout bundle', () => {
+    expect(routeBundleFileName(new Date(2026, 9, 14, 23, 30))).toBe(
+      'contour-routes-2026-10-14.gpx',
     );
   });
 });

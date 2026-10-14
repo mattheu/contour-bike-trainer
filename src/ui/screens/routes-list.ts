@@ -30,10 +30,14 @@ export function sortRoutes(routes: readonly StoredRoute[]): StoredRoute[] {
  * words matter because the act is not the same one.
  *
  * Deleting a ride destroys the only copy of something that cannot be reconstructed, so it
- * says "can't be undone". A route is metadata over a GPX file that lives in the build:
- * what goes is this install's record of it, nothing that references it is touched, and
- * the file itself is still in the repository. Saying "can't be undone" here would be
- * borrowing weight from the rides list that this action has not got.
+ * says "can't be undone". What goes with a route is this install's record of it: nothing
+ * that references it is touched, and the GPX is still in the build or still on the disk it
+ * was imported from. Saying "can't be undone" here would be borrowing weight from the
+ * rides list that this action has not got.
+ *
+ * Narrower than it was, now that a route carries its own GPX: an imported route the rider
+ * no longer has the file for is gone for good, and the wording does not say so. Download
+ * sits next to Remove on every row, which is the honest answer to that for now.
  *
  * "From this install" is a promise seedRoutes can now keep: the seeded marker in Settings
  * means a removed route is not written back on the next boot. It is the honest scope —
