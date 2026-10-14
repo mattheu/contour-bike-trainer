@@ -129,17 +129,21 @@ describe('planSparklineGeometry', () => {
 });
 
 describe('the zone wash', () => {
-  it('darkens with every zone, so six intensities are six shades', () => {
-    for (let zone = 2; zone <= 6; zone += 1) {
+  it('darkens with every zone above the first, so intensity reads as shade', () => {
+    for (let zone = 3; zone <= 6; zone += 1) {
       expect(ZONE_WASH_OPACITY[zone as PowerZone]).toBeGreaterThan(
         ZONE_WASH_OPACITY[(zone - 1) as PowerZone],
       );
     }
   });
 
-  it('keeps the lightest wash visible against the ground', () => {
-    // Below about 5 % of ink the wash reads as nothing, which is what a free step means.
-    expect(ZONE_WASH_OPACITY[1]).toBeGreaterThanOrEqual(0.05);
+  it('leaves zone 1 unshaded, because recovery is the absence of work', () => {
+    expect(ZONE_WASH_OPACITY[1]).toBe(0);
+  });
+
+  it('keeps the lightest shaded zone visible against the ground', () => {
+    // Below about 5 % of ink a wash reads as nothing at all.
+    expect(ZONE_WASH_OPACITY[2]).toBeGreaterThanOrEqual(0.05);
   });
 
   it('stays behind the type it sits under', () => {

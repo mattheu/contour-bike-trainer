@@ -65,19 +65,28 @@ export function planTotalSeconds(steps: readonly ExpandedStep[]): number {
  * ramps that merely look alike is exactly the drift that asking buys.
  *
  * An even ramp rather than the power strip's three tiers: the strip is a shape to glance
- * at, these are a chart and a list you read a step off, and six separable levels are what
- * let a sweet-spot block be told from a threshold one without reading the axis. The floor
- * is set by legibility rather than by the ramp — below about 5 % of ink the wash stops
- * being visible against the ground and the row reads as having no target at all, which is
- * what a free step is supposed to look like.
+ * at, these are a chart and a list you read a step off, and separable levels are what let a
+ * sweet-spot block be told from a threshold one without reading the axis.
+ *
+ * Zone 1 carries no wash at all. Recovery is the absence of work, so the absence of shading
+ * says it better than the faintest shade would, and it leaves the ramp from 2 to 6 to mean
+ * intensity rather than spending a level on "barely any".
+ *
+ * The five that remain are spaced evenly at 5 points, which is wider than they were while
+ * zone 1 held the bottom of the range. Both ends are pinned: 8 % is legibility, since below
+ * about 5 % of ink a wash stops being visible against the ground, and 28 % is the ceiling,
+ * because the wash sits under muted type and a heavier one starts to swallow it.
+ *
+ * A zone 1 row and a free row therefore look alike in the list, which is accepted — a free
+ * step reads as free from its target, and on the chart it is a gap where zone 1 is a block.
  */
 export const ZONE_WASH_OPACITY: Record<PowerZone, number> = {
-  1: 0.05,
+  1: 0,
   2: 0.08,
-  3: 0.11,
-  4: 0.15,
-  5: 0.19,
-  6: 0.23,
+  3: 0.13,
+  4: 0.18,
+  5: 0.23,
+  6: 0.28,
 };
 
 /** The wash for a zone, or null where there is no zone: absence is not zone 1. */
