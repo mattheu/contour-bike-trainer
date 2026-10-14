@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import type { ErgMode } from '../../storage/types';
 import { DEFAULT_SCALE_PCT, MAX_SCALE_PCT, MIN_SCALE_PCT } from '../../workout/runner';
 import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
 import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
@@ -15,6 +16,7 @@ import { ButtonGroup } from '../components/ButtonGroup';
 import { CONTROL_SIZE } from '../components/control';
 import { Hero } from '../components/Hero';
 import { RideHeader } from '../components/RideHeader';
+import { Segmented } from '../components/Segmented';
 import { SLIDE } from '../components/motion';
 import { Stat } from '../components/Stat';
 import { LABEL, MONO } from '../components/styles';
@@ -35,7 +37,9 @@ import {
   cadenceNote,
   canSkip,
   currentRowNumber,
+  difficultyInertReason,
   ergLabel,
+  ERG_MODE_OPTIONS,
   intervalClock,
   powerHero,
   scaleLabel,
@@ -65,6 +69,8 @@ export interface WorkoutProps {
   onPauseToggle: () => void;
   onEnd: () => void;
   onDifficultyChange: (percent: number) => void;
+  /** ERG on, or off and the rider holds the target. Takes effect at once, mid-step. */
+  onErgModeChange: (mode: ErgMode) => void;
   onSkipStep: () => void;
   /** Presses, not percentages: one press is 5 %, clamped by the runner. */
   onNudgeScale: (presses: number) => void;
@@ -96,6 +102,7 @@ export function Workout({
   onPauseToggle,
   onEnd,
   onDifficultyChange,
+  onErgModeChange,
   onSkipStep,
   onNudgeScale,
   onDismissAlert,
@@ -174,7 +181,14 @@ export function Workout({
         <RideHeader
           title={workout.name}
           pauseLabel={primaryControlLabel(snapshot.state, snapshot.elapsedS)}
-          actions={<Difficulty scalePct={workout.scalePct} onNudge={onNudgeScale} />}
+          /* The mode goes left of the difficulty, so difficulty keeps the place beside
+             the ride group it has had since it arrived: coarse choice, then fine. */
+          actions={
+            <>
+              <ErgControl mode={workout.ergMode} onChange={onErgModeChange} />
+              <Difficulty scalePct={workout.scalePct} onNudge={onNudgeScale} />
+            </>
+          }
           onPause={onPauseToggle}
           onEnd={onEnd}
           onSettings={() => setSettingsOpen(true)}
@@ -341,6 +355,7 @@ export function Workout({
         <RideSettings
           devices={devices}
           difficulty={snapshot.trainerDifficulty}
+          difficultyInertReason={difficultyInertReason(workout.ergMode)}
           targets={targets}
           onDifficultyChange={onDifficultyChange}
           onTargetsChange={onTargetsChange}
@@ -500,6 +515,27 @@ function Step({ row, ref }: { row: StepRow; ref?: React.Ref<HTMLDivElement> }) {
         {row.duration}
       </div>
     </div>
+  );
+}
+
+/**
+ * ERG on or off, beside Pause and End ride because of when it is reached for: the moment
+ * ERG starts fighting a sagging cadence, or the moment a rider wants the effort back in
+ * their own legs. One segmented choice, one ink member — the two states are both named, so
+ * neither has to be inferred from a control that renames itself.
+ *
+ * Switching is immediate, mid-step: the engine releases the trainer to simulation
+ * parameters, or hands it the target again, without waiting for the plan to move on.
+ */
+function ErgControl({ mode, onChange }: { mode: ErgMode; onChange: (mode: ErgMode) => void }) {
+  return (
+    <Segmented
+      size={48}
+      label="Trainer control"
+      options={ERG_MODE_OPTIONS}
+      value={mode}
+      onChange={onChange}
+    />
   );
 }
 

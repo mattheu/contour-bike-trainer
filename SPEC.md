@@ -589,6 +589,26 @@ Also note that mockup's zones legend reads `Z1 <55 · Z2 56–75 · Z3 76–90 �
 1. **The ghost.** The headline item, standing on its own rather than as polish: your previous ride on this route, drawn against the current one, so a route you have ridden before has something to ride against. The last ride on a route and the best one are the two candidates, and the choice between them is part of the work.
 2. Candidates still open: GPX upload, workout import, richer history and summary statistics, a real basemap.
 
+## ERG is optional
+
+A workout can be ridden with the trainer holding the target, or with the rider holding it. ERG on is the default and is what the app does today; ERG off shows the same targets and leaves the rider to hit them with gears and cadence.
+
+**Why it earns its place.** ERG's failure mode is the spiral of death: cadence sags, resistance climbs to keep the watts, the rider stalls. It has no road feel, and it cannot respond fast enough for short maximal efforts. And holding a target is a skill — ride only in ERG and you get good at pedalling while a machine paces you. This is also the honest half of the plan-over-terrain idea [ADR-0016](docs/adr/0016-no-workouts-on-routes.md) defers: a plan the rider holds themselves, with no hills yet.
+
+1. **A toggle in the ride header**, beside Pause and End ride, switchable mid-session. Changing it mid-step takes effect at once rather than at the next step: it is a statement about how you want to ride now.
+
+2. **ERG off writes simulation parameters instead of a target.** Mechanically it is a `free` step extended over the whole session — that path already exists and is already tested.
+
+3. **It simulates a flat road.** The same physics a free ride uses: resistance comes from speed and gearing, which is what makes it feel like riding rather than pushing a wall.
+
+   **Trainer difficulty is not the resistance.** Reusing it would mean the slider changes how fast you move, which [ADR-0008](docs/adr/0008-speed-uses-the-real-route-grade.md) forbids and the manual test plan checks for by name. With no route there is no gradient to scale, so the control is inert in this mode and the screen says so rather than leaving a dead slider to be discovered. A fixed drag, if ever wanted, is a separately named setting and not this one.
+
+4. **The ride records which way it was ridden**, in `RideSettings` beside `workoutScalePct` and for the same reason: a session the trainer held and one the rider held are not the same session, and without the field two rides of one workout are not comparable.
+
+5. **Everything else is unchanged.** Steps still advance on time, the scale still applies to the displayed target, a `free` step is simply a no-op, and TSS still comes from recorded power.
+
+   One thing improves. With ERG on, a ride's actual TSS is close to the planned figure by construction, because the trainer made it so. With ERG off the recorded figure measures the rider, and the plan chart's accent-over-grey stops being a formality.
+
 ## Unscheduled — FTP
 
 Not yet placed in a phase. Three features, in the order they should be built, each useful on its own:

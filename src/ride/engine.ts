@@ -3,7 +3,7 @@ import { speedFromPower, type RiderParameters } from '../physics/speed';
 import { gradeAt, trainerGrade } from '../route/grade';
 import { positionAt } from '../route/position';
 import type { Route } from '../route/types';
-import type { RideSample } from '../storage/types';
+import { DEFAULT_ERG_MODE, type ErgMode, type RideSample } from '../storage/types';
 import type { ExpandedStep } from '../workout/expand';
 import type { CadenceTarget } from '../workout/types';
 import {
@@ -14,6 +14,7 @@ import {
   type RunnerState,
   type WorkoutRun,
 } from '../workout/runner';
+import { controlWrite } from './erg';
 import type { AlertState, Clock, EngineTrainer, RideState, TickSource } from './types';
 
 /**
@@ -59,6 +60,9 @@ export interface EngineWorkout {
   ftp: number;
   /** 50-150, clamped. Defaults to 100 — the only honest starting point. */
   scalePct?: number;
+  /** Who holds the target. Defaults to ERG, which is what the app did before the control
+   * existed and what a rider who touches nothing gets. */
+  ergMode?: ErgMode;
 }
 
 export interface RideEngineOptions {
@@ -109,8 +113,13 @@ export interface EngineWorkoutSnapshot {
   totalRemainingS: number;
   /** The step after this one, for the panel's next line. Null on the last step. */
   next: ExpandedStep | null;
-  /** False on a free step: simulation parameters went to the trainer instead. */
+  /**
+   * False on a free step, and false throughout with ERG off: either way simulation
+   * parameters went to the trainer instead of a target.
+   */
   ergEngaged: boolean;
+  /** Which way the session is being ridden, which is what the header control shows. */
+  ergMode: ErgMode;
   scalePct: number;
   /**
    * The FTP the session is being ridden at, which is the workout's own where it declares
@@ -191,6 +200,8 @@ export class RideEngine {
   /** Replaced rather than mutated on a skip, so the parsed workout is never touched. */
   private workout: { name: string; ftp: number; run: WorkoutRun } | null = null;
   private workoutScalePct = DEFAULT_SCALE_PCT;
+  /** Switchable mid-session, and only meaningful with a workout to hold targets for. */
+  private ergMode: ErgMode = DEFAULT_ERG_MODE;
 
   private readonly unsubscribes: (() => void)[] = [];
   private readonly listeners = new Set<(s: EngineSnapshot) => void>();
@@ -232,6 +243,7 @@ export class RideEngine {
     if (workout !== null) {
       this.workout = { name: workout.name, ftp: workout.ftp, run: workout.run };
       this.workoutScalePct = clampScalePct(workout.scalePct ?? DEFAULT_SCALE_PCT);
+      this.ergMode = workout.ergMode ?? DEFAULT_ERG_MODE;
     }
     this.published = Object.freeze(this.build());
 
@@ -338,6 +350,23 @@ export class RideEngine {
     // Reached for in the third minute of an interval: the target follows the press
     // rather than waiting for the ramp to move it.
     this.lastWrittenTargetW = null;
+    if (this.state === 'running') this.writeControl(this.clock.now());
+    this.publish();
+  }
+
+  /**
+   * ERG on or off, which is a statement about how the rider wants to ride now rather than
+   * a plan change — so it takes effect at once rather than at the next step.
+   *
+   * Both write gates compare the last value of one command, and this changes which command
+   * is sent, so both are cleared: without that a switch mid-step would sit behind a target
+   * the trainer is no longer being given, or a gradient it has already been released to.
+   */
+  setErgMode(mode: ErgMode): void {
+    if (this.workout === null || mode === this.ergMode) return;
+    this.ergMode = mode;
+    this.lastWrittenTargetW = null;
+    this.lastWrittenGradePercent = null;
     if (this.state === 'running') this.writeControl(this.clock.now());
     this.publish();
   }
@@ -473,11 +502,12 @@ export class RideEngine {
   /**
    * Which of the two commands goes out, which is also the mode switch: a step with a
    * target drives ERG, and a free step sends simulation parameters, which releases it.
+   * With ERG off every step takes the second path — see src/ride/erg.ts.
    */
   private writeControl(nowMs: number): void {
-    const target = this.runnerState()?.targetW ?? null;
-    if (target === null) this.writeGrade(nowMs);
-    else this.writeTargetPower(target, nowMs);
+    const write = controlWrite(this.ergMode, this.runnerState()?.targetW ?? null);
+    if (write.kind === 'simulation') this.writeGrade(nowMs);
+    else this.writeTargetPower(write.watts, nowMs);
   }
 
   /**
@@ -487,7 +517,9 @@ export class RideEngine {
   private writeGrade(nowMs: number): void {
     // ADR-0008's scaled grade exists for the control point and nowhere else, so with no
     // gradient to scale there is nothing to send — unless a workout is running, where a
-    // free step has to send simulation parameters to release ERG, and flat is zero.
+    // free step, or ERG off, has to send simulation parameters to release ERG. Flat is
+    // zero: the road a routeless session simulates, not a resistance invented from the
+    // difficulty slider, which ADR-0008 keeps out of the physics.
     if (this.route === null && this.workout === null) return;
 
     const next =
@@ -595,7 +627,9 @@ export class RideEngine {
       stepRemainingS: Math.max(0, state.remainingS),
       totalRemainingS: Math.max(0, this.workout.run.totalDurationS - this.elapsedS),
       next: state.next,
-      ergEngaged: state.erg,
+      // ERG off is released whatever the step asks for: the trainer is in simulation.
+      ergEngaged: state.erg && this.ergMode === 'erg',
+      ergMode: this.ergMode,
       scalePct: this.workoutScalePct,
       ftpW: this.workout.ftp,
       finished: state.finished,

@@ -916,4 +916,95 @@ steps:
     expect(hard.workout?.targetW).toBe(338);
     expect(easy.workout?.targetW).toBe(113);
   });
+
+  /**
+   * SPEC.md > ERG is optional. ERG off is the free step's path extended over the whole
+   * session, so what proves it is what reached the trainer: simulation parameters, and no
+   * target, whatever the plan asks for.
+   */
+  describe('with ERG off', () => {
+    it('is ERG by default, which is what the app did before the control existed', () => {
+      const { engine } = harness(null, {}, workout());
+      expect(engine.getSnapshot().workout?.ergMode).toBe('erg');
+    });
+
+    it('sends no target power for the whole session, free step or not', () => {
+      const { engine, trainer, step } = harness(null, {}, { ...workout(), ergMode: 'manual' });
+      trainer.emit({ powerW: 150 });
+      engine.start();
+      // Past the first targeted step, through the free block and into the second target.
+      for (let i = 0; i < 25; i += 1) step(1);
+
+      expect(trainer.targets).toEqual([]);
+      // Flat, and written once: the road a routeless session simulates.
+      expect(trainer.grades).toEqual([0]);
+      expect(engine.getSnapshot().workout?.ergEngaged).toBe(false);
+      // The target is still there to be shown and ridden at. Only who holds it changed.
+      expect(engine.getSnapshot().workout?.targetW).toBe(100);
+    });
+
+    it('releases the trainer the moment it is switched off, mid-step', () => {
+      const { engine, trainer, step } = harness(null, {}, workout());
+      trainer.emit({ powerW: 150 });
+      engine.start();
+      step(1);
+      expect(trainer.targets).toEqual([200]);
+
+      engine.setErgMode('manual');
+
+      // No further tick: the switch is a statement about how the rider wants to ride now,
+      // and a trainer still holding 200 W for the rest of the block would contradict it.
+      expect(trainer.grades).toEqual([0]);
+      expect(engine.getSnapshot().workout?.ergMode).toBe('manual');
+      expect(engine.getSnapshot().workout?.ergEngaged).toBe(false);
+      expect(engine.getSnapshot().workout?.targetW).toBe(200);
+    });
+
+    it('holds the target again the moment it is switched back on, mid-step', () => {
+      const { engine, trainer, step } = harness(null, {}, workout());
+      trainer.emit({ powerW: 150 });
+      engine.start();
+      step(1);
+      engine.setErgMode('manual');
+      step(1);
+      engine.setErgMode('erg');
+
+      // The throttle compares the last value of one command, and the mode changes which
+      // command is sent — so the same 200 W has to go down the wire again.
+      expect(trainer.targets).toEqual([200, 200]);
+      expect(engine.getSnapshot().workout?.ergEngaged).toBe(true);
+    });
+
+    it('leaves trainer difficulty inert rather than turning it into the resistance', () => {
+      const { engine, trainer, step } = harness(
+        null,
+        { trainerDifficulty: 100 },
+        { ...workout(), ergMode: 'manual' },
+      );
+      trainer.emit({ powerW: 150 });
+      engine.start();
+      for (let i = 0; i < 5; i += 1) step(1);
+
+      engine.setTrainerDifficulty(0);
+      step(1);
+      engine.setTrainerDifficulty(100);
+      step(1);
+
+      // ADR-0008: the slider scales a route gradient, and this session has no route. Every
+      // write is still the flat road, so the slider cannot change how fast the rider moves.
+      expect([...new Set(trainer.grades)]).toEqual([0]);
+      expect(trainer.targets).toEqual([]);
+    });
+
+    it('ignores the mode on a ride with no workout, which holds no target anyway', () => {
+      const { engine, trainer, step } = harness(flatRoute());
+      trainer.emit({ powerW: 200 });
+      engine.start();
+      step(1);
+      engine.setErgMode('manual');
+
+      expect(engine.getSnapshot().workout).toBeNull();
+      expect(trainer.targets).toEqual([]);
+    });
+  });
 });

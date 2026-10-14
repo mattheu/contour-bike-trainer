@@ -35,6 +35,7 @@ function ride(patch: Partial<Ride>): Ride {
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,
+      ergMode: 'erg',
       ftp: 265,
       hrMax: 190,
       riderMassKg: 75,

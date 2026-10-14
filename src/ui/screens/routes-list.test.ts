@@ -27,6 +27,7 @@ function ride(routeId: string | null, id: string): Ride {
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,
+      ergMode: 'erg',
       ftp: 200,
       hrMax: 190,
       riderMassKg: 75,

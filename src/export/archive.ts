@@ -1,7 +1,10 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 
 import {
+  DEFAULT_ERG_MODE,
   DEFAULT_WORKOUT_SCALE_PCT,
+  isErgMode,
+  type ErgMode,
   type Ride,
   type RideSample,
   type RideSettings,
@@ -183,6 +186,7 @@ function settingsProblem(value: unknown): string | null {
   if (!absentOr(value.workoutScalePct, finite)) {
     return 'its settings have no usable workoutScalePct';
   }
+  if (!absentOr(value.ergMode, isErgMode)) return 'its settings have no usable ergMode';
   return null;
 }
 
@@ -252,6 +256,8 @@ export function validateRecord(value: unknown): { record: ArchiveRecord } | { re
           trainerDifficulty: settings.trainerDifficulty as number,
           // Likewise: a ride recorded before the scale existed was ridden at full targets.
           workoutScalePct: (settings.workoutScalePct ?? DEFAULT_WORKOUT_SCALE_PCT) as number,
+          // And one recorded before ERG could be turned off was ridden with it on.
+          ergMode: (settings.ergMode ?? DEFAULT_ERG_MODE) as ErgMode,
           ftp: settings.ftp as number,
           hrMax: settings.hrMax as number,
           riderMassKg: settings.riderMassKg as number,

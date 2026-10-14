@@ -84,6 +84,22 @@ export interface RideSample {
 export const DEFAULT_WORKOUT_SCALE_PCT = 100;
 
 /**
+ * Which way a workout was ridden: `erg` with the trainer holding the target, `manual`
+ * with the rider holding it against simulation parameters. SPEC.md > ERG is optional.
+ *
+ * Not Settings.controlMode, which is a rider preference and nothing to do with a session.
+ */
+export type ErgMode = 'erg' | 'manual';
+
+/** ERG on: what the app did before the control existed, and what every stored ride
+ * written before this field was. */
+export const DEFAULT_ERG_MODE: ErgMode = 'erg';
+
+export function isErgMode(value: unknown): value is ErgMode {
+  return value === 'erg' || value === 'manual';
+}
+
+/**
  * The settings that produced the ride, frozen at the time it was ridden. Without ftp and
  * hrMax here, raising your FTP silently re-zones every ride already in the history; without
  * the masses and the difficulty, two rides of the same route are not comparable.
@@ -96,6 +112,13 @@ export interface RideSettings {
    * this changes the work itself. Without it two rides of one workout are not comparable.
    */
   workoutScalePct: number;
+  /**
+   * Which way the session was ridden, for the same reason the scale is here: a session
+   * the trainer held and one the rider held are not the same session, and without it two
+   * rides of one workout are not comparable. `erg` where there was no workout, which had
+   * no target for anything to hold.
+   */
+  ergMode: ErgMode;
   ftp: number;
   hrMax: number;
   riderMassKg: number;

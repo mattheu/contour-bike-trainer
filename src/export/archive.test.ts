@@ -33,6 +33,7 @@ function ride(overrides: Partial<Ride> = {}): Ride {
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,
+      ergMode: 'erg',
       ftp: 265,
       hrMax: 190,
       riderMassKg: 75,
@@ -276,6 +277,7 @@ describe('readArchive, on an archive written before the workout fields existed',
     delete older.workoutId;
     delete older.workoutName;
     delete settings.workoutScalePct;
+    delete settings.ergMode;
     older.settings = settings;
     return older;
   }
@@ -296,6 +298,8 @@ describe('readArchive, on an archive written before the workout fields existed',
     expect(restored.workoutId).toBeNull();
     expect(restored.workoutName).toBeNull();
     expect(restored.settings.workoutScalePct).toBe(100);
+    // ERG could not be turned off when this was written, so it was ridden with it on.
+    expect(restored.settings.ergMode).toBe('erg');
     // Everything the older format did carry is untouched by the defaulting.
     expect(restored).toMatchObject({ id: 'ride-1', routeId: 'route-7', pausedS: 15 });
   });
@@ -378,6 +382,15 @@ describe('validateRecord', () => {
         samples: [],
       }),
     ).toContain('workoutScalePct');
+  });
+
+  it('rejects an ERG mode that is not one of the two, which is a corrupt record', () => {
+    expect(
+      reasonFor({
+        ride: { ...ride(), settings: { ...ride().settings, ergMode: 'resistance' } },
+        samples: [],
+      }),
+    ).toContain('ergMode');
   });
 
   it('rejects a ride without its frozen settings, which every screen reads', () => {

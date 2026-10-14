@@ -3,7 +3,7 @@ import type { VisibilityState } from '../instrument/probe';
 import type { Summary } from '../instrument/stats';
 import type { AlertState, RideState } from '../ride/types';
 import type { Route as RouteGeometry } from '../route/types';
-import type { RideSample } from '../storage/types';
+import type { ErgMode, RideSample } from '../storage/types';
 import type { ExpandedStep } from '../workout/expand';
 import type { CadenceTarget } from '../workout/types';
 
@@ -37,7 +37,10 @@ export interface WorkoutSnapshot {
   totalRemainingS: number;
   /** `5:00 recovery · 55 %`. Null on the last step. */
   nextLabel: string | null;
+  /** False on a free step, and false throughout with ERG off. */
   ergEngaged: boolean;
+  /** Which way this session is being ridden: the header control's value. */
+  ergMode: ErgMode;
   scalePct: number;
   /**
    * The FTP this session is ridden at: the workout's own where it declares one, the

@@ -25,7 +25,7 @@ import {
   type DeleteResult,
 } from './ride-delete';
 import { rideDate, rideTitle } from './rides-list';
-import { powerSamplesFrom } from './summary-view';
+import { ergModeNote, powerSamplesFrom } from './summary-view';
 
 /** The 1440 design width less its 64 px gutters: with no map beside it the profile
  * takes the whole row. */
@@ -69,6 +69,7 @@ export function Summary({
   const [alert, setAlert] = useState<AlertState | null>(null);
   const clearAlert = useCallback(() => setAlert(null), []);
   const words = deleteWording(origin);
+  const mode = ergModeNote(ride);
   const { title } = rideTitle(ride);
 
   const press = () => {
@@ -183,7 +184,12 @@ export function Summary({
 
       <div className="flex items-end justify-between">
         <GradientKey />
-        <div className={`${LABEL} text-micro`}>Difficulty {ride.settings.trainerDifficulty}</div>
+        {/* What the session was ridden under, read back: the mode a workout was held in,
+            and the difficulty every ride freezes. */}
+        <div className="flex items-end gap-[18px]">
+          {mode !== null && <div className={`${LABEL} text-micro`}>{mode}</div>}
+          <div className={`${LABEL} text-micro`}>Difficulty {ride.settings.trainerDifficulty}</div>
+        </div>
       </div>
     </div>
   );

@@ -128,7 +128,17 @@ Pick a workout and it rides on its own, with no route — that is the default an
 available. The trainer is held in ERG at the step's target and changes itself as the steps
 advance; you choose the gear and the cadence, the trainer handles the watts.
 
-Two controls change a session in progress:
+**ERG or manual.** By default the trainer holds the target and you choose the gear and the cadence.
+Switch to **Manual** in the header and it stops holding: the targets are still shown, and hitting
+them is down to your gears and legs on a flat road. Reach for it when ERG is fighting you — a
+cadence that sags makes it push harder, which makes the cadence sag — or when you want to practise
+pacing, which is a skill ERG does for you. You can switch either way mid-step.
+
+Trainer difficulty does nothing in manual: there is no route gradient to scale, so the control
+says so rather than sitting there inert. The ride records which way you rode it, because a session
+the trainer held and one you held are not the same session.
+
+Two more controls change a session in progress:
 
 - **Intensity** scales every target, ramps included, in 5 % presses between 50 % and 150 %.
   Reach for it when the day is not going the way the plan assumed. A `free` step has no target,

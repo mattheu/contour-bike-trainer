@@ -8,6 +8,7 @@ import { RideRecorder } from './recorder';
 const SETTINGS: RideSettings = {
   trainerDifficulty: 60,
   workoutScalePct: 100,
+  ergMode: 'erg',
   ftp: 240,
   hrMax: 186,
   riderMassKg: 75,
@@ -184,6 +185,22 @@ describe('RideRecorder', () => {
       expect(ride.settings.workoutScalePct).toBe(85);
     });
 
+    it('takes the ERG mode as the ride ended, because it is switchable mid-session', () => {
+      const r = new RideRecorder({
+        routeId: null,
+        routeName: null,
+        workoutId: 'threshold-2x20',
+        workoutName: '2x20 threshold',
+        startedAt: '2026-09-30T07:05:00.000Z',
+        settings: { ...SETTINGS, ergMode: 'erg' },
+      });
+
+      // Turned off in the second interval: the session the rider held is not the session
+      // the trainer held, and the record has to say which one happened.
+      const { ride } = r.build({ pausedS: 0, finished: false, ergMode: 'manual' });
+      expect(ride.settings.ergMode).toBe('manual');
+    });
+
     it('records full scale for a ride whose caller had no workout to scale', () => {
       const { trainerDifficulty, ftp, hrMax, riderMassKg, bikeMassKg } = SETTINGS;
       const r = new RideRecorder({
@@ -194,6 +211,8 @@ describe('RideRecorder', () => {
       });
 
       expect(r.build({ pausedS: 0, finished: false }).ride.settings.workoutScalePct).toBe(100);
+      // ...and ERG, which is what a session with no target for anything to hold was.
+      expect(r.build({ pausedS: 0, finished: false }).ride.settings.ergMode).toBe('erg');
     });
   });
 });

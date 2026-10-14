@@ -9,7 +9,9 @@ import {
   cadenceNote,
   canSkip,
   currentStep,
+  difficultyInertReason,
   ergLabel,
+  ERG_MODE_OPTIONS,
   intervalClock,
   currentRowNumber,
   powerHero,
@@ -60,6 +62,7 @@ function snapshot(patch: Partial<WorkoutSnapshot> = {}): WorkoutSnapshot {
     totalRemainingS: 1512,
     nextLabel: '5:00 Recovery · 55 %',
     ergEngaged: true,
+    ergMode: 'erg',
     scalePct: 100,
     ftpW: FTP,
     ...patch,
@@ -300,5 +303,29 @@ describe('scaleLabel', () => {
   it('reads as a percentage', () => {
     expect(scaleLabel(100)).toBe('100 %');
     expect(scaleLabel(85)).toBe('85 %');
+  });
+});
+
+describe('ERG_MODE_OPTIONS', () => {
+  it('offers both states by name, ERG first, so neither has to be inferred', () => {
+    expect(ERG_MODE_OPTIONS).toEqual([
+      { value: 'erg', label: 'ERG' },
+      { value: 'manual', label: 'Manual' },
+    ]);
+  });
+});
+
+describe('difficultyInertReason', () => {
+  it('is nothing with ERG on: the control still does what it says', () => {
+    expect(difficultyInertReason('erg')).toBeNull();
+  });
+
+  it('says why the slider does nothing with ERG off rather than leaving it dead', () => {
+    const reason = difficultyInertReason('manual');
+    expect(reason).not.toBeNull();
+    // It must not read as "this is your resistance control now": ADR-0008 forbids the
+    // slider reaching the physics, so the reason names the gradient it has lost instead.
+    expect(reason).toContain('No effect');
+    expect(reason).toContain('gradient');
   });
 });

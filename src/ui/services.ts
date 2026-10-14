@@ -37,8 +37,10 @@ import { restoreRides } from '../storage/rides';
 import { guestSession, parseSession } from '../storage/session';
 import { DEFAULT_SETTINGS } from '../storage/settings';
 import {
+  DEFAULT_ERG_MODE,
   DEFAULT_WORKOUT_SCALE_PCT,
   createId,
+  type ErgMode,
   type Ride,
   type Route,
   type Session,
@@ -677,6 +679,7 @@ function workoutSnapshot(state: EngineSnapshot['workout']): WorkoutSnapshot | nu
     totalRemainingS: Math.ceil(state.totalRemainingS),
     nextLabel: state.next === null ? null : stepLabel(state.next),
     ergEngaged: state.ergEngaged,
+    ergMode: state.ergMode,
     scalePct: state.scalePct,
     ftpW: state.ftpW,
   };
@@ -731,6 +734,14 @@ function teardown(): void {
  */
 let workoutScalePct = DEFAULT_SCALE_PCT;
 
+/**
+ * ERG on or off, held beside the scale and for the same reason: it belongs to the session,
+ * not to the rider's preferences, and the Ride freezes it. It resets to ERG when a ride
+ * starts — the default is what the app has always done, and a manual session is a decision
+ * taken for that session rather than one inherited silently by the next.
+ */
+let ergMode: ErgMode = DEFAULT_ERG_MODE;
+
 function engineSettings() {
   return {
     trainerDifficulty: settings.trainerDifficulty,
@@ -755,6 +766,7 @@ function frozenSettings(ftp: number = settings.ftp) {
   return {
     trainerDifficulty: settings.trainerDifficulty,
     workoutScalePct,
+    ergMode,
     ftp,
     hrMax: settings.hrMax,
     riderMassKg: settings.riderMassKg,
@@ -785,8 +797,10 @@ function armRide(next: RideEngine): void {
 export async function startRide(routeId: string): Promise<void> {
   await ready;
   teardown();
-  // A ride with no workout is ridden at full scale, which is the only honest default.
+  // A ride with no workout is ridden at full scale, which is the only honest default —
+  // and it holds no target, so there is no ERG for the mode to be anything but the default.
   workoutScalePct = DEFAULT_SCALE_PCT;
+  ergMode = DEFAULT_ERG_MODE;
 
   let stored: Route | undefined;
   let geometry: RouteGeometry;
@@ -851,6 +865,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
   await ready;
   teardown();
   workoutScalePct = DEFAULT_SCALE_PCT;
+  ergMode = DEFAULT_ERG_MODE;
 
   let stored;
   let run;
@@ -877,7 +892,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
     tickSource,
     route: null,
     settings: engineSettings(),
-    workout: { name, run, ftp, scalePct: workoutScalePct },
+    workout: { name, run, ftp, scalePct: workoutScalePct, ergMode },
   });
 
   recorder = new RideRecorder({
@@ -908,6 +923,15 @@ export async function startWorkout(workoutId: string): Promise<void> {
 /** Ends the current step and starts the next, shortening the session to what was ridden. */
 export function skipStep(): void {
   engine?.skipStep();
+}
+
+/**
+ * ERG on, or off and the rider holds the target. Mid-session, taking effect at once: the
+ * engine re-writes the control point rather than waiting for the next step.
+ */
+export function setErgMode(mode: ErgMode): void {
+  ergMode = mode;
+  engine?.setErgMode(mode);
 }
 
 /** One press of the difficulty control: delta is presses, 5 % each, clamped 50-150. */
@@ -984,6 +1008,9 @@ async function persistRide(): Promise<string | null> {
     // Taken from the engine as the ride ended rather than from what it started with: the
     // rider settled somewhere, and that is what the session was.
     workoutScalePct: snapshot.workout?.scalePct ?? DEFAULT_WORKOUT_SCALE_PCT,
+    // Likewise, and from the engine for the same reason: the mode is switchable mid-ride,
+    // so what the session was is what it was when it ended.
+    ergMode: snapshot.workout?.ergMode ?? DEFAULT_ERG_MODE,
   });
 
   try {

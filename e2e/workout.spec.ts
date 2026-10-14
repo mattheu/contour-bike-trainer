@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { connectDevices, openApp } from './support/app';
+import { closeRideSettings, connectDevices, openApp, openRideSettings } from './support/app';
 
 /**
  * The workout flow end to end: a plan written in the editor, ridden until it runs out,
@@ -31,6 +31,14 @@ description: A target, and then nothing to hold.
 steps:
   - { duration: 4s, power: 60%, name: Steady }
   - { duration: 40s, power: free, name: Max effort }
+`;
+
+/** One long block, so a mode switch lands in the middle of a step rather than near its end. */
+const ERG_BLOCK = `name: Spec erg
+description: One long block, to switch modes inside.
+
+steps:
+  - { duration: 2m, power: 60%, name: Long block }
 `;
 
 /** A minute to skip out of, with half a minute behind it. */
@@ -164,6 +172,40 @@ test.describe('riding a workout', () => {
     await expect(currentStep(page)).toContainText('Max effort', { timeout: 20_000 });
     await expect(page.getByTestId('workout-erg')).toContainText('released');
     await expect(page.getByTestId('workout-power')).toContainText('no target');
+  });
+
+  test('turns ERG off mid-step and back on, with the targets left where they were', async ({
+    page,
+  }) => {
+    await openWorkouts(page);
+    await authorWorkout(page, ERG_BLOCK, 'Spec erg');
+    await startWorkout(page, 'Spec erg');
+
+    const mode = page.getByRole('group', { name: 'Trainer control' });
+    const target = page.getByTestId('workout-power');
+
+    // ERG on is the default, and the trainer is holding the step's target.
+    await expect(mode.getByRole('button', { name: 'ERG' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByTestId('workout-erg')).toContainText('engaged');
+    await expect(target).toContainText(/target \d+ % FTP/);
+
+    // Off, in the middle of a minute-long block: the trainer stops being held at once
+    // rather than at the next step, and the target it is no longer holding is still shown.
+    await mode.getByRole('button', { name: 'Manual' }).click();
+    await expect(page.getByTestId('workout-erg')).toContainText('released');
+    await expect(target).toContainText(/target \d+ % FTP/);
+    await expect(currentStep(page)).toContainText('Long block');
+
+    // The slider that is not the resistance says so rather than sitting there dead.
+    const panel = await openRideSettings(page);
+    await expect(panel.getByLabel('Trainer difficulty')).toBeDisabled();
+    await expect(panel.getByText('No effect with ERG off')).toBeVisible();
+    await closeRideSettings(page, panel);
+
+    // ...and back on, still mid-step: the trainer takes the target again.
+    await mode.getByRole('button', { name: 'ERG' }).click();
+    await expect(page.getByTestId('workout-erg')).toContainText('engaged');
+    await expect(currentStep(page)).toContainText('Long block');
   });
 
   test('skips a step: the next one starts, and the session gets shorter', async ({ page }) => {

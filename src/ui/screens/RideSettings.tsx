@@ -30,6 +30,12 @@ export interface DevicesView {
 interface RideSettingsProps {
   devices: DevicesView;
   difficulty: number;
+  /**
+   * Why trainer difficulty does nothing right now, or absent while it does something. A
+   * disabled control that says why beats one that silently swallows the drag — see
+   * workout-view.difficultyInertReason, which is where the wording is decided.
+   */
+  difficultyInertReason?: string | null;
   targets: Targets;
   onDifficultyChange: (percent: number) => void;
   onTargetsChange: (targets: Targets) => void;
@@ -68,12 +74,14 @@ const DEVICES_SECTION = 'flex flex-col gap-[8px]';
 export function RideSettings({
   devices,
   difficulty,
+  difficultyInertReason = null,
   targets,
   onDifficultyChange,
   onTargetsChange,
   onEnd,
   onClose,
 }: RideSettingsProps) {
+  const difficultyInert = difficultyInertReason !== null;
   return (
     <SettingsPanel title="Ride settings" onClose={onClose}>
       <Devices devices={devices} />
@@ -91,9 +99,13 @@ export function RideSettings({
           min={0}
           max={100}
           value={difficulty}
+          disabled={difficultyInert}
+          aria-describedby={difficultyInert ? 'trainer-difficulty-note' : undefined}
           onChange={(event) => onDifficultyChange(Number(event.target.value))}
           className={[
-            'h-[44px] w-full cursor-pointer appearance-none bg-transparent',
+            'h-[44px] w-full appearance-none bg-transparent',
+            // DESIGN.md > Controls: disabled is 40 % opacity and no hover.
+            difficultyInert ? 'cursor-not-allowed opacity-40' : 'cursor-pointer',
             '[&::-webkit-slider-runnable-track]:bg-hairline [&::-webkit-slider-runnable-track]:h-px',
             '[&::-moz-range-track]:bg-hairline [&::-moz-range-track]:h-px',
             '[&::-webkit-slider-thumb]:border-ink [&::-webkit-slider-thumb]:bg-ground',
@@ -109,6 +121,11 @@ export function RideSettings({
           <div>0 · flat</div>
           <div>100 · real</div>
         </div>
+        {difficultyInert && (
+          <div id="trainer-difficulty-note" className="text-caption text-muted font-sans">
+            {difficultyInertReason}
+          </div>
+        )}
       </div>
 
       <div className={SECTION}>

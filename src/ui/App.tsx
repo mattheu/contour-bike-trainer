@@ -317,6 +317,7 @@ function RideApp() {
         onPauseToggle={togglePause}
         onEnd={() => void endRide()}
         onDifficultyChange={(percent) => void services.setTrainerDifficulty(percent)}
+        onErgModeChange={services.setErgMode}
         onSkipStep={services.skipStep}
         onNudgeScale={services.nudgeWorkoutScale}
         onDismissAlert={services.dismissAlert}

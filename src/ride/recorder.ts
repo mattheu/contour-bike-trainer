@@ -1,6 +1,8 @@
 import {
   createId,
+  DEFAULT_ERG_MODE,
   DEFAULT_WORKOUT_SCALE_PCT,
+  type ErgMode,
   type Ride,
   type RideSample,
   type RideSamples,
@@ -17,11 +19,15 @@ export interface RideRecorderOptions {
   /** ISO 8601. The wall-clock instant the ride began; sample t is relative to it. */
   startedAt: string;
   /**
-   * Frozen at the start of the ride, never re-read afterwards — except workoutScalePct,
-   * which build() takes as the ride ended. A caller with no workout to scale may leave it
-   * out of both; it is recorded as 100 either way.
+   * Frozen at the start of the ride, never re-read afterwards — except workoutScalePct and
+   * ergMode, which build() takes as the ride ended because both are switchable mid-session.
+   * A caller with no workout may leave either out of both; they are recorded as 100 and
+   * ERG, which is what a session with no target to hold was.
    */
-  settings: Omit<RideSettings, 'workoutScalePct'> & { workoutScalePct?: number };
+  settings: Omit<RideSettings, 'workoutScalePct' | 'ergMode'> & {
+    workoutScalePct?: number;
+    ergMode?: ErgMode;
+  };
 }
 
 export interface RideSummary {
@@ -38,6 +44,12 @@ export interface RideSummary {
    * they did. Absent leaves whatever the ride started with.
    */
   workoutScalePct?: number;
+  /**
+   * Which way the session was ridden as it ended, and not frozen at the start for the
+   * same reason the scale is not: the control exists to be switched mid-session. One
+   * value for something that may have moved, which is the same trade.
+   */
+  ergMode?: ErgMode;
 }
 
 /** Averages ignore absent readings rather than counting them as zero. */
@@ -140,6 +152,7 @@ export class RideRecorder {
           summary.workoutScalePct ??
           this.options.settings.workoutScalePct ??
           DEFAULT_WORKOUT_SCALE_PCT,
+        ergMode: summary.ergMode ?? this.options.settings.ergMode ?? DEFAULT_ERG_MODE,
       },
     };
 

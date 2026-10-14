@@ -1,3 +1,4 @@
+import type { ErgMode } from '../../storage/types';
 import type { ExpandedStep } from '../../workout/expand';
 import type { CadenceTarget } from '../../workout/types';
 import { stepZone, zoneWash } from '../charts';
@@ -188,11 +189,37 @@ export function workoutClock(elapsedS: number, totalRemainingS: number): Clock {
 }
 
 /**
- * ERG is engaged whenever there is a target to hold. A free block releases it, and the
- * indicator is the only place on the screen that says the trainer stopped pushing back.
+ * ERG is engaged whenever there is a target the trainer is holding. A free block releases
+ * it, so does turning it off, and the indicator is the only place on the screen that says
+ * the trainer stopped pushing back.
  */
 export function ergLabel(ergEngaged: boolean): 'engaged' | 'released' {
   return ergEngaged ? 'engaged' : 'released';
+}
+
+/**
+ * The header's mode control: one choice with two members, not a button that renames
+ * itself. design/DESIGN.md > Controls gives a two-state choice to a segmented group with
+ * exactly one ink member, and it is the honest shape here — a button reading "Manual"
+ * cannot say whether that is the state or the thing it will do, which is a guess nobody
+ * should have to make three minutes into an interval.
+ */
+export const ERG_MODE_OPTIONS: readonly { value: ErgMode; label: string }[] = [
+  { value: 'erg', label: 'ERG' },
+  { value: 'manual', label: 'Manual' },
+];
+
+/**
+ * Why trainer difficulty does nothing in this mode, or null while it still does.
+ *
+ * It is not the resistance and must not become it: ADR-0008 keeps the slider out of the
+ * physics, so repurposing it would make a UI control change how fast the rider moves. With
+ * ERG off and no route there is no gradient left for it to scale, and a control that
+ * silently does nothing is worse than one that says why it cannot.
+ */
+export function difficultyInertReason(mode: ErgMode): string | null {
+  if (mode === 'erg') return null;
+  return 'No effect with ERG off: there is no route gradient to scale. Resistance comes from your gears and the flat road being simulated.';
 }
 
 /** The figure in the middle of the difficulty control. */
