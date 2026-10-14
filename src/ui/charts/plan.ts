@@ -68,25 +68,25 @@ export function planTotalSeconds(steps: readonly ExpandedStep[]): number {
  * at, these are a chart and a list you read a step off, and separable levels are what let a
  * sweet-spot block be told from a threshold one without reading the axis.
  *
- * Six evenly spaced steps of 4 points, from nothing at zone 1 to 20 % at zone 6. Zone 1
+ * Six evenly spaced steps of 3 points, from nothing at zone 1 to 15 % at zone 6. Zone 1
  * carries no wash because recovery is the absence of work, and the absence of shading says
- * that better than the faintest shade would. 20 % is the ceiling: the wash sits under muted
- * type on the rows ahead of the rider, and a heavier one starts to swallow it.
+ * that better than the faintest shade would.
  *
- * Zone 2's 4 % is faint — below the roughly 5 % of ink at which a wash stops being clearly
- * visible against the ground — which is the price of an even distribution that starts at
- * nothing. It is deliberate, not an oversight.
+ * 15 % is the ceiling because the hairline rule is itself ink at about 15 % over the
+ * ground. A wash brighter than the rule leaves it with no contrast against the fill it
+ * touches, and the boundary between two rows reads as a blurred edge rather than a line.
+ * Keeping the scale within the rule's own value is what keeps the list crisp.
  *
  * A zone 1 row and a free row therefore look alike in the list, which is accepted — a free
  * step reads as free from its target, and on the chart it is a gap where zone 1 is a block.
  */
 export const ZONE_WASH_OPACITY: Record<PowerZone, number> = {
   1: 0,
-  2: 0.04,
-  3: 0.08,
-  4: 0.12,
-  5: 0.16,
-  6: 0.2,
+  2: 0.03,
+  3: 0.06,
+  4: 0.09,
+  5: 0.12,
+  6: 0.15,
 };
 
 /** The wash for a zone, or null where there is no zone: absence is not zone 1. */

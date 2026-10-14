@@ -151,8 +151,9 @@ describe('the zone wash', () => {
   });
 
   it('stays behind the type it sits under', () => {
-    // The wash is under muted type on the rows ahead; heavier starts to swallow it.
-    expect(ZONE_WASH_OPACITY[6]).toBeCloseTo(0.2, 10);
+    // The hairline rule is itself ink at about 15 % over the ground; a brighter wash
+    // leaves the rule with no contrast against the fill it touches.
+    expect(ZONE_WASH_OPACITY[6]).toBeCloseTo(0.15, 10);
   });
 
   it('has nothing for an absent zone, rather than the lightest one', () => {
