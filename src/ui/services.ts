@@ -28,7 +28,7 @@ import {
   type BundledRoute,
 } from '../ride/routes';
 import { builtInWorkoutIds, seedWorkouts } from '../ride/workouts';
-import { planRouteImport } from '../route/import';
+import { planRouteImport, routeFingerprint, type RouteFingerprint } from '../route/import';
 import type { Route as RouteGeometry } from '../route/types';
 import { TrainerTickSource } from '../ride/tick';
 import type { EngineTrainer } from '../ride/types';
@@ -45,6 +45,7 @@ import {
   type Workout as StoredWorkout,
 } from '../storage/types';
 import { expandWorkout } from '../workout/expand';
+import { planWorkoutImport } from '../workout/import';
 import { parseWorkout } from '../workout/parse';
 import { DEFAULT_SCALE_PCT, nudgeScalePct, startRun, workoutFtp } from '../workout/runner';
 import { smoothPower, stepLabel } from './format';
@@ -1295,12 +1296,28 @@ export async function exportAllRoutes(): Promise<void> {
 const MAX_ROUTE_IMPORT_BYTES = 64 * 1024 * 1024;
 
 /**
+ * Every stored route's geometry, for planRouteImport to match an incoming track against.
+ *
+ * The whole list, built-ins included: the likeliest duplicate of all is a route the build
+ * already ships. A record whose GPX will not parse contributes nothing — it has no
+ * geometry to compare, and the boot alert has already named it.
+ */
+async function storedRouteFingerprints(): Promise<RouteFingerprint[]> {
+  const stored = await storage.routes.list();
+  return stored.flatMap((route) => {
+    const read = storedRouteGeometry(route);
+    return read.status === 'ok' ? [routeFingerprint(read.geometry)] : [];
+  });
+}
+
+/**
  * Imports a GPX the rider picked off disk.
  *
- * Every track becomes a new route with a new id. A GPX carries no ids to match on, so
- * there is nothing here that could overwrite a route the rider already has — importing
- * the same file twice gives two copies, visibly, on the list, which is the same trade the
- * workout import makes and for the same reason.
+ * Every track the rider does not already have becomes a new route with a new id. A GPX
+ * carries no ids to match on, so sameness is geometry rather than identity: a track whose
+ * start, end, distance and ascent match a stored route is skipped and counted. Skipped
+ * rather than overwritten, because a route is not editable — the stored copy is the same
+ * route, and rewriting it would churn an id that rides reference.
  *
  * The reading is planRouteImport, which is pure and tested; this writes what it returns.
  * Nothing throws: a file chosen in a picker is untrusted input and the rider gets a
@@ -1322,10 +1339,15 @@ export async function importRoutes(file: File): Promise<RouteImportResult> {
     return { status: 'failed', reason: errorMessage(error) };
   }
 
-  const plan = planRouteImport(text, file.name);
+  await ready;
+  let plan;
+  try {
+    plan = planRouteImport(text, file.name, await storedRouteFingerprints());
+  } catch (error) {
+    return { status: 'failed', reason: errorMessage(error) };
+  }
   if (plan.status === 'failed') return plan;
 
-  await ready;
   try {
     for (const route of plan.routes) {
       // updatedAt is stamped by the repository on write.
@@ -1338,7 +1360,8 @@ export async function importRoutes(file: File): Promise<RouteImportResult> {
   return {
     status: 'done',
     imported: plan.routes.length,
-    skipped: plan.reasons.length,
+    skippedExisting: plan.duplicates,
+    skippedInvalid: plan.reasons.length,
     reasons: plan.reasons,
   };
 }
@@ -1387,10 +1410,11 @@ const MAX_WORKOUT_IMPORT_BYTES = 8 * 1024 * 1024;
 /**
  * Imports a YAML bundle the rider picked off disk.
  *
- * Every document becomes a new workout with a new id. The file carries no ids to match
- * on — it is a bundle of workouts, not an app archive — so there is nothing here that
- * could overwrite a workout the rider has edited, which is the property worth having.
- * Importing the same file twice gives two copies, visibly, on the list.
+ * Every document the rider does not already have becomes a new workout with a new id. The
+ * file carries no ids to match on — it is a bundle of workouts, not an app archive — but
+ * ADR-0014 makes the source text the record, so a document whose text is already in the
+ * library is skipped and counted. Skipped rather than overwritten: nothing here can touch
+ * a workout the rider has edited, which is the property worth having.
  *
  * A document that will not parse is counted and named rather than aborting the rest, the
  * way readArchive treats a bad record and bundledWorkouts a bad starter. Nothing throws:
@@ -1405,18 +1429,29 @@ export async function importWorkouts(file: File): Promise<WorkoutImportResult> {
     };
   }
 
-  let documents;
+  let text: string;
   try {
-    documents = splitWorkoutDocuments(await file.text());
+    text = await file.text();
   } catch (error) {
     return { status: 'failed', reason: errorMessage(error) };
   }
 
   await ready;
+  let plan;
+  try {
+    const stored = await storage.workouts.list();
+    plan = planWorkoutImport(
+      splitWorkoutDocuments(text),
+      stored.map((workout) => workout.source),
+    );
+  } catch (error) {
+    return { status: 'failed', reason: errorMessage(error) };
+  }
+
   let imported = 0;
   const reasons: string[] = [];
 
-  for (const document of documents) {
+  for (const document of plan.documents) {
     // saveWorkout is the one path that writes a workout, and it parses on the way in to
     // fill the name and description. A document that will not parse fails there, which is
     // also what keeps an unreadable one out of the library.
@@ -1425,5 +1460,11 @@ export async function importWorkouts(file: File): Promise<WorkoutImportResult> {
     else reasons.push(`Document ${String(document.index)} was skipped because ${result.reason}`);
   }
 
-  return { status: 'done', imported, skipped: reasons.length, reasons };
+  return {
+    status: 'done',
+    imported,
+    skippedExisting: plan.duplicates,
+    skippedInvalid: reasons.length,
+    reasons,
+  };
 }

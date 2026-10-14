@@ -5,20 +5,21 @@ import type { AlertLevel } from '../components/Alert';
  * arrangement as rides-import.ts and for the same reason: the counts have a right answer
  * and the sentence is the only report anyone ever gets.
  *
- * One count fewer than the rides version, because there is nothing to skip as already
- * present. The exported file carries no ids — it is a bundle of workouts, not an app
- * archive — so an import mints new ones and importing the same file twice gives you two
- * copies. Predictable and visible on the list, which is the trade for never silently
- * overwriting a workout the rider has spent an evening editing.
+ * Three counts, as rides-import.ts has. The file carries no ids — it is a bundle of
+ * workouts, not an app archive — but it carries the source text, and ADR-0014 makes that
+ * the record, so a document identical to one already in the library is skipped rather
+ * than stored again. Skipped, never overwritten: see planWorkoutImport.
  */
 export type WorkoutImportResult =
   | {
       status: 'done';
       /** Written as new workouts, with new ids. */
       imported: number;
+      /** Already in the library, so left untouched. */
+      skippedExisting: number;
       /** In the file but not a workout this build can read. */
-      skipped: number;
-      /** One line per skipped document, in the order they appeared. */
+      skippedInvalid: number;
+      /** One line per unreadable document, in the order they appeared. */
       reasons: string[];
     }
   | { status: 'failed'; reason: string };
@@ -37,14 +38,20 @@ export function workoutImportAlert(result: WorkoutImportResult): {
     return { level: 'fault', message: `That file could not be read: ${result.reason}` };
   }
 
-  const { imported, skipped } = result;
+  const { imported, skippedExisting, skippedInvalid } = result;
   const parts = [imported === 0 ? 'Imported no workouts.' : `Imported ${workouts(imported)}.`];
-  if (skipped > 0) {
-    const documents = skipped === 1 ? '1 document' : `${String(skipped)} documents`;
+  if (skippedExisting > 0) {
+    parts.push(`Skipped ${workouts(skippedExisting)} already in your library.`);
+  }
+  if (skippedInvalid > 0) {
+    const documents = skippedInvalid === 1 ? '1 document' : `${String(skippedInvalid)} documents`;
     parts.push(`Skipped ${documents} that could not be read.`);
   }
 
   // Anything skipped is something the rider expected to arrive and did not, so it stays
-  // on screen until dismissed rather than clearing itself after five seconds.
+  // on screen until dismissed rather than clearing itself after five seconds. A file that
+  // was entirely duplicates reads as a sentence about what is already there rather than
+  // as nothing having happened, which is the whole point of counting them.
+  const skipped = skippedExisting + skippedInvalid;
   return { level: skipped > 0 ? 'warning' : 'info', message: parts.join(' ') };
 }

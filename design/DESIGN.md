@@ -127,6 +127,7 @@ The reference sequence is the interval change in `mockups/animation-guide.html`:
 
 ## Screen rules
 
+- Login: the primary lockup at hero size (mark 108 px desktop, 72 px phone) centred, with rings; below it a 360 px column (full width on phones) of username and password fields and an accent Start button. The trainer connects after sign in, not here.
 - Every screen fits one viewport with no scrolling. Header, stats and bottom band are fixed rows; the chart row flexes.
 - Ride: three primary readings (power, cadence, heart rate) with zone ladders on power and heart rate; five secondary readings (elapsed, distance of total, climbed of total, speed, gradient); profile beside the map, each with a zoom toggle (Route | 5 km, Route | 500 m); power-so-far strip under the profile, zone-shaded in accent.
 - Workout: no route in version 1. The same primaries with targets ("246 / 239 W", label row "target 90 % FTP", accent target window over the zone ladder). Secondary readings are interval, workout, distance and speed. The plan chart shows actual power as an accent line, the plan as grey steps and the historic plan behind the actual. The step list beside it shows number, name, target and duration. Each row carries an ink wash at its zone's opacity, matching the chart; completed steps are muted and the whole row drops to 45 % opacity. Accent is reserved for the chart. The current step is solid ink with ground text (the hover treatment), an accent left edge and its remaining time.
