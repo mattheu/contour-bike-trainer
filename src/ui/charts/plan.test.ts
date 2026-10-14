@@ -141,13 +141,18 @@ describe('the zone wash', () => {
     expect(ZONE_WASH_OPACITY[1]).toBe(0);
   });
 
-  it('keeps the lightest shaded zone visible against the ground', () => {
-    // Below about 5 % of ink a wash reads as nothing at all.
-    expect(ZONE_WASH_OPACITY[2]).toBeGreaterThanOrEqual(0.05);
+  it('spaces the zones evenly, so a step up in zone is a step up in shade', () => {
+    const step = ZONE_WASH_OPACITY[2] - ZONE_WASH_OPACITY[1];
+    for (let zone = 2; zone <= 6; zone += 1) {
+      const rise =
+        ZONE_WASH_OPACITY[zone as PowerZone] - ZONE_WASH_OPACITY[(zone - 1) as PowerZone];
+      expect(rise).toBeCloseTo(step, 10);
+    }
   });
 
   it('stays behind the type it sits under', () => {
-    expect(ZONE_WASH_OPACITY[6]).toBeLessThan(0.3);
+    // The wash is under muted type on the rows ahead; heavier starts to swallow it.
+    expect(ZONE_WASH_OPACITY[6]).toBeCloseTo(0.2, 10);
   });
 
   it('has nothing for an absent zone, rather than the lightest one', () => {

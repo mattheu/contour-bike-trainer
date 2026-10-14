@@ -68,25 +68,25 @@ export function planTotalSeconds(steps: readonly ExpandedStep[]): number {
  * at, these are a chart and a list you read a step off, and separable levels are what let a
  * sweet-spot block be told from a threshold one without reading the axis.
  *
- * Zone 1 carries no wash at all. Recovery is the absence of work, so the absence of shading
- * says it better than the faintest shade would, and it leaves the ramp from 2 to 6 to mean
- * intensity rather than spending a level on "barely any".
+ * Six evenly spaced steps of 4 points, from nothing at zone 1 to 20 % at zone 6. Zone 1
+ * carries no wash because recovery is the absence of work, and the absence of shading says
+ * that better than the faintest shade would. 20 % is the ceiling: the wash sits under muted
+ * type on the rows ahead of the rider, and a heavier one starts to swallow it.
  *
- * The five that remain are spaced evenly at 5 points, which is wider than they were while
- * zone 1 held the bottom of the range. Both ends are pinned: 8 % is legibility, since below
- * about 5 % of ink a wash stops being visible against the ground, and 28 % is the ceiling,
- * because the wash sits under muted type and a heavier one starts to swallow it.
+ * Zone 2's 4 % is faint — below the roughly 5 % of ink at which a wash stops being clearly
+ * visible against the ground — which is the price of an even distribution that starts at
+ * nothing. It is deliberate, not an oversight.
  *
  * A zone 1 row and a free row therefore look alike in the list, which is accepted — a free
  * step reads as free from its target, and on the chart it is a gap where zone 1 is a block.
  */
 export const ZONE_WASH_OPACITY: Record<PowerZone, number> = {
   1: 0,
-  2: 0.08,
-  3: 0.13,
-  4: 0.18,
-  5: 0.23,
-  6: 0.28,
+  2: 0.04,
+  3: 0.08,
+  4: 0.12,
+  5: 0.16,
+  6: 0.2,
 };
 
 /** The wash for a zone, or null where there is no zone: absence is not zone 1. */
