@@ -23,6 +23,7 @@ Consequences. They are written for someone joining in a year who wants to know _
 | [0015](0015-tss-is-the-only-load-figure.md)                | TSS is the only load figure shown                             | Accepted           |
 | [0016](0016-no-workouts-on-routes.md)                      | No workouts ridden on routes                                  | Accepted           |
 | [0017](0017-changing-ftp-never-rewrites-history.md)        | Changing FTP never rewrites history                           | Accepted           |
+| [0018](0018-hash-routing.md)                               | Hash routing, reversing "no router"                           | Accepted           |
 
 ## Process
 

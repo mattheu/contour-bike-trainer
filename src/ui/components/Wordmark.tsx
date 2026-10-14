@@ -34,6 +34,32 @@ export function Wordmark({ className = '' }: { className?: string }) {
   );
 }
 
+/**
+ * The same primary lockup at hero size, for the login screen and nothing else.
+ *
+ * The box hugs the mark rather than measuring it: 0.28 em at the sides and 0.12 em top
+ * and bottom, per the logo guide, so one size token moves the whole lockup. 72 px on
+ * phones, 108 on desktop.
+ *
+ * The rings are the contour field masked to ground: the only contour artwork in the
+ * build is drawn in ink, and using it as a mask is what lets the rings take a colour
+ * from the theme instead of a second 65 kB file with the colour baked in.
+ */
+export function Lockup() {
+  return (
+    <div className="bg-accent text-ground text-hero-tablet sm:text-hero relative overflow-hidden px-[0.28em] py-[0.12em]">
+      <div
+        aria-hidden="true"
+        className="bg-ground absolute inset-0 [mask-image:url(/contour-field.svg)] [mask-position:-80px_-60px] [mask-repeat:no-repeat]"
+      />
+      {/* The mark sits a touch high in its box without this: the serif's baseline. */}
+      <span className="relative block pb-[0.06em] leading-none">
+        <Wordmark />
+      </span>
+    </div>
+  );
+}
+
 export type LogoVariant = 'primary' | 'inverted';
 
 /**

@@ -1,4 +1,5 @@
 import { CascadingRideRepository } from '../rides';
+import { StoredSessionRepository } from '../session';
 import { createMemoryKeyValueStore, StoredSettingsRepository } from '../settings';
 import { stampUpdatedAt } from '../types';
 import type {
@@ -7,6 +8,7 @@ import type {
   Ride,
   RideSamples,
   Route,
+  SessionRepository,
   SettingsRepository,
   Storage,
   Workout,
@@ -53,6 +55,9 @@ export class MemoryStorage implements Storage {
   );
   readonly workouts = new MemoryRepository<Workout>();
   readonly settings: SettingsRepository = new StoredSettingsRepository(createMemoryKeyValueStore());
+  /** In memory with everything else, so a seeded run starts on the login screen unless
+   * the suite seeds a session too. */
+  readonly session: SessionRepository = new StoredSessionRepository(createMemoryKeyValueStore());
 }
 
 export function createMemoryStorage(): Storage {

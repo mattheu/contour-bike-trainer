@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ContourField } from './components/ContourField';
 import { Button } from './components/Button';
 import { SERIF } from './components/styles';
 import type { Route as RouteGeometry } from '../route/types';
-import type { Ride, RideSample, Route as StoredRoute } from '../storage/types';
+import type { Ride, RideSample, Session, Route as StoredRoute } from '../storage/types';
 import { Experiment } from './screens/Experiment';
+import { Login } from './screens/Login';
 import type { ListScreen } from './screens/Nav';
 import { Ride as RideScreen } from './screens/Ride';
 import { Workout as WorkoutScreen } from './screens/Workout';
@@ -17,6 +18,7 @@ import { returnToAfterDelete, type DeleteOrigin, type DeleteResult } from './scr
 import type { Targets } from './screens/RideSettings';
 import { RiderProfile } from './screens/RiderProfile';
 import { useAsync } from './screens/use-async';
+import { rideAtRisk } from './ride-guard';
 import * as services from './services';
 import { useRideStore } from './useRideStore';
 
@@ -43,9 +45,37 @@ export function App() {
   return (
     <>
       <ContourField />
-      {services.experimentEnabled ? <Experiment /> : <RideApp />}
+      {services.experimentEnabled ? <Experiment /> : <SessionGate />}
     </>
   );
+}
+
+/**
+ * The login screen until this install has a session, and the app after.
+ *
+ * Its own component because the gate has to resolve before RideApp's hooks run: a screen
+ * cannot be chosen conditionally inside a component that already called twenty hooks.
+ * The experiment is outside it — ?experiment=1 is a diagnostic harness, not the app, and
+ * ADR-0000 is decided by measuring it rather than by signing into it.
+ *
+ * 'none' rather than null for a fresh install: useAsync's null already means "still
+ * loading", and showing the login screen for a frame before the read lands would be the
+ * one flicker a rider sees every launch.
+ */
+function SessionGate() {
+  const [started, setStarted] = useState(0);
+  const session = useAsync<Session | 'none'>(async () => {
+    await services.ready;
+    return services.currentSession() ?? 'none';
+  }, [started]);
+
+  const start = useCallback(() => {
+    void services.startGuestSession().then(() => setStarted((n) => n + 1));
+  }, []);
+
+  if (session === null) return <Loading />;
+  if (session === 'none') return <Login onStart={start} />;
+  return <RideApp />;
 }
 
 function RideApp() {
@@ -85,6 +115,30 @@ function RideApp() {
     requested === 'ride' && snapshot.state === 'finished' && snapshot.savedRideId !== null
       ? 'summary'
       : requested;
+
+  /**
+   * A ride lives in memory until it is saved, so a reload or a closed tab destroys it.
+   * The handler exists only while there is something to lose — see rideAtRisk — because
+   * an always-on one would nag on the routes list and on the login screen, where nothing
+   * is at stake and the rider learns to dismiss it. The browser owns the wording; the
+   * handler cancels the event and nothing more.
+   */
+  const atRisk = rideAtRisk({
+    state: snapshot.state,
+    sampleCount: snapshot.samples.length,
+    savedRideId: snapshot.savedRideId,
+  });
+
+  useEffect(() => {
+    if (!atRisk) return;
+    const warn = (event: BeforeUnloadEvent): void => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', warn);
+    return () => {
+      window.removeEventListener('beforeunload', warn);
+    };
+  }, [atRisk]);
 
   const settings = useAsync(() => services.ready.then(services.currentSettings), [settingsVersion]);
 

@@ -1,5 +1,6 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 import { CascadingRideRepository } from '../rides';
+import { createLocalSessionRepository } from '../session';
 import { createLocalSettingsRepository } from '../settings';
 import { stampUpdatedAt } from '../types';
 import type {
@@ -8,6 +9,7 @@ import type {
   Ride,
   RideSamples,
   Route,
+  SessionRepository,
   SettingsRepository,
   Storage,
   Workout,
@@ -87,6 +89,8 @@ export class IndexedDbStorage implements Storage {
   readonly workouts: Repository<Workout> = new IndexedDbRepository<Workout>(this.db, 'workouts');
   // Settings stay in localStorage: a handful of scalars, read on every tick.
   readonly settings: SettingsRepository = createLocalSettingsRepository();
+  // Beside them, and for the same reason: two strings read once, before anything else.
+  readonly session: SessionRepository = createLocalSessionRepository();
 }
 
 export function createIndexedDbStorage(): Storage {

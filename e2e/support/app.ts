@@ -60,18 +60,50 @@ function appUrl({ fake, memoryStorage }: OpenOptions): string {
   return `/?${params.toString()}`;
 }
 
+/** Matches SESSION_KEY in src/storage/session.ts. */
+const SESSION_KEY = 'contour.session';
+
+/**
+ * A signed-in install, seeded like the routes are: every spec but login.spec.ts is about
+ * what a rider does after that first press, and pressing Start in each of them would
+ * test the same two clicks sixteen times.
+ *
+ * Two places because the session is stored wherever the install keeps it: localStorage
+ * under IndexedDB, and in memory under ?storage=memory, where only the app's own seed
+ * hook can reach it.
+ */
+async function seedSession(page: Page): Promise<void> {
+  await page.addInitScript(
+    ([key, session]) => {
+      window.localStorage.setItem(key, session);
+      const seeded = window as unknown as { __contourSeed?: Record<string, unknown> };
+      seeded.__contourSeed = { ...seeded.__contourSeed, session: JSON.parse(session) };
+    },
+    [SESSION_KEY, JSON.stringify({ mode: 'guest', startedAt: new Date().toISOString() })] as const,
+  );
+}
+
 /** Boots the app on the Routes list, which is now the cold start: pairing lives in the
  * ride settings panel, so there is nothing to do before choosing something to ride.
  * Seeded routes are installed before any app code runs, so the boot-time route seeding
  * picks them up. */
 export async function openApp(page: Page, options: OpenOptions = {}): Promise<void> {
+  await seedSession(page);
   if (options.seedRoutes !== undefined) {
+    // Merged rather than assigned: the session was seeded into the same payload above.
     await page.addInitScript((routes) => {
-      (window as unknown as { __contourSeed?: unknown }).__contourSeed = { routes };
+      const seeded = window as unknown as { __contourSeed?: Record<string, unknown> };
+      seeded.__contourSeed = { ...seeded.__contourSeed, routes };
     }, options.seedRoutes);
   }
   await page.goto(appUrl(options));
   await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+}
+
+/** The same app with no session seeded: what a rider sees the first time they open it. */
+export async function openFreshInstall(page: Page, options: OpenOptions = {}): Promise<void> {
+  await page.goto(appUrl(options));
+  await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
 }
 
 /** A device row inside the settings panel. */

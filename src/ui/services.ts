@@ -34,12 +34,14 @@ import { TrainerTickSource } from '../ride/tick';
 import type { EngineTrainer } from '../ride/types';
 import { createStorage, storageKindFromSearch } from '../storage';
 import { restoreRides } from '../storage/rides';
+import { guestSession, parseSession } from '../storage/session';
 import { DEFAULT_SETTINGS } from '../storage/settings';
 import {
   DEFAULT_WORKOUT_SCALE_PCT,
   createId,
   type Ride,
   type Route,
+  type Session,
   type Settings,
   type Storage,
   type Workout as StoredWorkout,
@@ -339,12 +341,24 @@ if (warning !== null) rideStore.update({ alert: { level: 'warning', message: war
  */
 interface SeedPayload {
   routes?: BundledRoute[];
+  /**
+   * A signed-in install, which is seeded state like the routes beside it: every spec but
+   * the login one is testing what a rider does after the first press, not the press.
+   *
+   * Only in-memory storage needs it here. Against IndexedDB the session is a localStorage
+   * key, which Playwright can write before the page boots without the app's help.
+   */
+  session?: unknown;
 }
+
+/** Null unless a seeded, valid session arrived; written by `ready` before it reads one. */
+let seededSession: Session | null = null;
 
 function applySeed(): void {
   if (storageKindFromSearch(window.location.search) !== 'memory') return;
   const payload = (window as unknown as { __contourSeed?: SeedPayload }).__contourSeed;
   for (const route of payload?.routes ?? []) registerRoute(route);
+  seededSession = parseSession(payload?.session ?? null);
 }
 
 applySeed();
@@ -366,6 +380,34 @@ export function currentSettings(): Readonly<Settings> {
 }
 
 /**
+ * Whether this install has been started, cached beside the settings and for the same
+ * reason: it is read on every render of the gate and it changes once, here.
+ */
+let session: Session | null = null;
+
+export function currentSession(): Session | null {
+  return session;
+}
+
+/**
+ * What pressing Start does. A guest session until phase 5 has a server to authenticate
+ * against, written so the screen is not shown again on this install.
+ *
+ * A write that fails still lets the rider ride: the record describes the install, and
+ * refusing to open the app over it would be the one failure mode worse than asking again
+ * next launch.
+ */
+export async function startGuestSession(): Promise<void> {
+  const next = guestSession();
+  session = next;
+  try {
+    await storage.session.put(next);
+  } catch (error) {
+    fault(`Could not remember this session, so you may be asked again: ${errorMessage(error)}`);
+  }
+}
+
+/**
  * Start-up work the screens await before reading storage.
  *
  * Both passes run on every boot and neither keeps a marker, because neither needs one: a
@@ -379,6 +421,10 @@ export function currentSettings(): Readonly<Settings> {
 export const ready: Promise<void> = (async () => {
   try {
     settings = await storage.settings.get();
+    // Seeded first where the suite asked for one, so the read below is the same read a
+    // rider's second launch makes rather than a branch of its own.
+    if (seededSession !== null) await storage.session.put(seededSession);
+    session = await storage.session.get();
 
     await seedRoutes(storage.routes);
     const seeded = await seedWorkouts(storage.workouts);

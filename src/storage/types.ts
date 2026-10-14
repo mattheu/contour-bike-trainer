@@ -29,6 +29,7 @@ export interface Storage {
   rideSamples: Repository<RideSamples>;
   workouts: Repository<Workout>;
   settings: SettingsRepository;
+  session: SessionRepository;
 }
 
 /**
@@ -174,6 +175,30 @@ export interface SettingsRepository {
   get(): Promise<Settings>;
   /** Merges over what is stored; a slider moved mid-ride writes one key. */
   put(patch: Partial<Settings>): Promise<void>;
+}
+
+/** Phase 5 adds `'account'`; until there is a server to authenticate against, every
+ * session is a guest's. */
+export type SessionMode = 'guest';
+
+/**
+ * Who is using this install, and since when. Deliberately not a key in Settings: those
+ * describe the rider and follow them to the next install, this describes this install
+ * and is what the login screen asks about. Phase 5 adds `token` and `expiresAt` beside
+ * these two rather than replacing them.
+ */
+export interface Session {
+  mode: SessionMode;
+  startedAt: string; // ISO 8601
+}
+
+/**
+ * One record or none, so it gets its own shape rather than a Repository, exactly as
+ * Settings does. `null` is the whole question the login screen asks.
+ */
+export interface SessionRepository {
+  get(): Promise<Session | null>;
+  put(session: Session): Promise<void>;
 }
 
 /** The only place ids are minted. No uuid package: this is built into browsers and Node. */
