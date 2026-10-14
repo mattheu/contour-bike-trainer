@@ -204,13 +204,10 @@ function WorkoutRowView({
           </ButtonGroup>
         ) : (
           <ButtonGroup label={`${row.name} actions`}>
-            {/* A workout that will not parse cannot be ridden, and the control says so
-                rather than failing once the rider is on the bike. Editing it still works,
-                which is the way out — and is a named control rather than only the row,
-                so a broken workout is reachable by the thing that fixes it. */}
-            <Button onClick={() => onStart(row.id)} disabled={!readable}>
-              Ride
-            </Button>
+            {/* No Ride control: the row is the button, as it is on the routes list. Edit
+                is the only named action because it is the only one the row cannot be —
+                and it is how a workout that will not parse is reached, since such a row
+                is deliberately not selectable. */}
             <Button onClick={() => onOpen(row.id)}>Edit</Button>
             <IconButton label={`Delete ${row.name}`} onClick={onPressDelete}>
               <svg
@@ -229,10 +226,12 @@ function WorkoutRowView({
         )
       }
     >
-      <Selectable onSelect={() => onOpen(row.id)}>
+      {/* A workout that will not parse has nothing to ride, so its row is inert rather
+          than a link that fails once the rider is on the bike. Edit is how it is reached. */}
+      <Selectable onSelect={readable ? () => onStart(row.id) : null}>
         <ListRow
           columns={WORKOUTS_COLUMNS}
-          href={`#workout-${row.id}`}
+          href={readable ? `#workout-${row.id}` : undefined}
           lead={
             row.status === 'ok' ? <PlanSparkline steps={row.steps} ftpW={row.ftpW} /> : undefined
           }

@@ -82,7 +82,12 @@ export function ListHeader({ columns, labels }: ListHeaderProps) {
 
 interface ListRowProps {
   columns: ListColumns;
-  href: string;
+  /**
+   * Absent for a row that cannot be selected — a workout whose plan will not parse. An
+   * anchor with no href is not a link and not focusable, which is the honest rendering of
+   * a row that goes nowhere; its actions are still reachable beside it.
+   */
+  href?: string;
   /**
    * Text on the rides list (the date), a sparkline on the routes list. The chart itself
    * belongs to src/ui/charts; this only holds the 120 × 28 slot open for it.

@@ -2,7 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { expandWorkout } from '../../workout/expand';
 import { parseWorkout } from '../../workout/parse';
 import type { ExpandedStep } from '../../workout/expand';
-import { PLAN_SPARKLINE_HEIGHT, PLAN_SPARKLINE_WIDTH, planSparklineGeometry } from './plan';
+import type { PowerZone } from '../../zones/power';
+import {
+  PLAN_SPARKLINE_HEIGHT,
+  PLAN_SPARKLINE_WIDTH,
+  ZONE_WASH_OPACITY,
+  planSegments,
+  planSparklineGeometry,
+  stepZone,
+  zoneWash,
+} from './plan';
 
 const FTP = 250;
 
@@ -116,5 +125,71 @@ describe('planSparklineGeometry', () => {
 
   it('draws nothing for a plan with no steps', () => {
     expect(geometry([]).paths).toEqual([]);
+  });
+});
+
+describe('the zone wash', () => {
+  it('darkens with every zone, so six intensities are six shades', () => {
+    for (let zone = 2; zone <= 6; zone += 1) {
+      expect(ZONE_WASH_OPACITY[zone as PowerZone]).toBeGreaterThan(
+        ZONE_WASH_OPACITY[(zone - 1) as PowerZone],
+      );
+    }
+  });
+
+  it('keeps the lightest wash visible against the ground', () => {
+    // Below about 5 % of ink the wash reads as nothing, which is what a free step means.
+    expect(ZONE_WASH_OPACITY[1]).toBeGreaterThanOrEqual(0.05);
+  });
+
+  it('stays behind the type it sits under', () => {
+    expect(ZONE_WASH_OPACITY[6]).toBeLessThan(0.3);
+  });
+
+  it('has nothing for an absent zone, rather than the lightest one', () => {
+    expect(zoneWash(null)).toBeNull();
+    expect(zoneWash(1)).toBe(ZONE_WASH_OPACITY[1]);
+  });
+});
+
+describe('stepZone', () => {
+  it('classes a step by the target it asks for', () => {
+    expect(stepZone(step(600, 60), FTP)).toBe(2);
+    expect(stepZone(step(600, 95), FTP)).toBe(4);
+  });
+
+  it('classes a ramp by its mean, which is the effort it averages out to', () => {
+    const warmup: ExpandedStep = {
+      kind: 'step',
+      durationS: 600,
+      power: {
+        kind: 'ramp',
+        from: { unit: 'ftpPercent', value: 50 },
+        to: { unit: 'ftpPercent', value: 70 },
+      },
+    };
+    expect(stepZone(warmup, FTP)).toBe(2);
+  });
+
+  it('follows workout difficulty, so the row agrees with the chart block above it', () => {
+    expect(stepZone(step(600, 95), FTP, 70)).toBe(2);
+  });
+
+  it('has no zone for a free step: an absence, not zone 1', () => {
+    expect(stepZone(step(600, 'free'), FTP)).toBeNull();
+  });
+});
+
+describe('planSegments', () => {
+  it('leaves a free step out, so a gap in the list is a gap in the plan', () => {
+    const segments = planSegments([step(600, 60), step(300, 'free'), step(600, 90)], FTP);
+    expect(segments).toHaveLength(2);
+    expect(segments[0]?.endS).toBe(600);
+    expect(segments[1]?.startS).toBe(900);
+  });
+
+  it('is contiguous where the plan is', () => {
+    const segments = planSegments([step(600, 60), step(600, 90)], FTP);
+    expect(segments[1]?.startS).toBe(segments[0]?.endS);
   });
 });

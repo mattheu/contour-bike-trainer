@@ -50,10 +50,11 @@ export function RideHeader({
             in front of you — so they share an edge. The gear is a different kind of thing
             and keeps its gap: a group says "these go together", and a gap too small to
             read as deliberate says nothing at all. */}
+        {/* Grey, not accent. DESIGN.md gives accent to an action that *begins* something —
+            Start on a route, New workout — and takes it away once the ride is under way:
+            the data owns the colour from then on, so Pause and End ride are both grey. */}
         <ButtonGroup label="Ride">
-          <Button tone="accent" onClick={onPause}>
-            {pauseLabel}
-          </Button>
+          <Button onClick={onPause}>{pauseLabel}</Button>
           <Button onClick={onEnd}>End ride</Button>
         </ButtonGroup>
         <IconButton label="Settings" onClick={onSettings}>

@@ -137,6 +137,105 @@ export function chartStackHeights(availableHeight: number | null): {
   };
 }
 
+/**
+ * design/mockups/workout.html draws the lower row as `minmax(0, 1fr) 320px` with the same
+ * 48 px gap, and keeps 32 px clear inside the chart column for the zone figures.
+ */
+export const MOCKUP_STEPS_WIDTH = 320;
+export const PLAN_LABEL_GUTTER_PX = 32;
+
+/**
+ * The Steps panel is the instrument you can ride the session from — number, target and a
+ * countdown — so it is the one that survives, which is the opposite of the ride row where
+ * the profile keeps the space. It gives width up only once the chart would otherwise be
+ * unreadable, and never below this.
+ */
+export const MIN_STEPS_WIDTH = 248;
+
+/**
+ * Narrower than this and the chart stops being a chart: a 60-minute session would get a
+ * tick every 9 px, and the six zone bands are no longer separable from each other at any
+ * useful block width. Below it the honest thing is to drop it and give the list the row.
+ */
+export const MIN_PLAN_WIDTH = 480;
+
+export interface PlanRowLayout {
+  /** The chart column, gutter included. Zero when the chart is dropped. */
+  planWidth: number;
+  /** What the SVG itself is drawn at: the column less the zone-figure gutter. */
+  chartWidth: number;
+  stepsWidth: number;
+  showPlan: boolean;
+}
+
+/** The mockup row, for a container that has not been measured yet. */
+const DEFAULT_PLAN_ROW: PlanRowLayout = {
+  planWidth: MOCKUP_PROFILE_WIDTH,
+  chartWidth: MOCKUP_PROFILE_WIDTH - PLAN_LABEL_GUTTER_PX,
+  stepsWidth: MOCKUP_STEPS_WIDTH,
+  showPlan: true,
+};
+
+/**
+ * Splits the workout screen's lower row into a plan chart and the Steps panel.
+ *
+ * The panel is a fixed column rather than a share of the row, which is what the mockup
+ * draws and what a list of short rows wants: widening it past 320 px only stretches the
+ * gap between a step's name and its duration. So the chart takes everything else, and
+ * growing the window grows the chart.
+ */
+export function planRowLayout(availableWidth: number | null): PlanRowLayout {
+  if (availableWidth === null || !Number.isFinite(availableWidth) || availableWidth <= 0) {
+    return DEFAULT_PLAN_ROW;
+  }
+
+  const available = Math.floor(availableWidth);
+  const forColumns = available - CHART_ROW_GAP_PX;
+  const stepsWidth = Math.min(
+    MOCKUP_STEPS_WIDTH,
+    Math.max(MIN_STEPS_WIDTH, forColumns - MIN_PLAN_WIDTH),
+  );
+  const planWidth = forColumns - stepsWidth;
+
+  if (planWidth >= MIN_PLAN_WIDTH && stepsWidth >= MIN_STEPS_WIDTH) {
+    return {
+      planWidth,
+      chartWidth: planWidth - PLAN_LABEL_GUTTER_PX,
+      stepsWidth,
+      showPlan: true,
+    };
+  }
+
+  return { planWidth: 0, chartWidth: 0, stepsWidth: available, showPlan: false };
+}
+
+/**
+ * The chart's own height inside the measured row, after its heading and axis have taken
+ * theirs. The heading row is the Steps panel's, which carries a 48 px control — the two
+ * columns have to start their charts on the same line, so the taller of the two sets it.
+ */
+export const PLAN_HEADING_PX = 48;
+export const PLAN_HEADING_GAP_PX = 10;
+/** The tick figures and the total hang below the baseline, outside the SVG's own box. */
+export const PLAN_AXIS_PX = 26;
+
+/**
+ * Below this the six zone bands stop being separable: zone 4 is 15 % of FTP against a
+ * ceiling of 160 %, so it gets under 12 px of the chart and the band a threshold block
+ * sits in can no longer be told from the one above it.
+ */
+export const MIN_PLAN_HEIGHT = 120;
+
+/**
+ * No ceiling, for the reason chartStackHeights gives: a turbo screen is further away than
+ * a desk one, so a taller chart is the point rather than a band of centred whitespace.
+ */
+export function planChartHeight(availableHeight: number | null): number {
+  if (availableHeight === null || !Number.isFinite(availableHeight)) return MOCKUP_PROFILE_HEIGHT;
+  const chrome = PLAN_HEADING_PX + PLAN_HEADING_GAP_PX + PLAN_AXIS_PX;
+  return Math.max(MIN_PLAN_HEIGHT, Math.floor(availableHeight) - chrome);
+}
+
 export function chartRowLayout(availableWidth: number | null): ChartRowLayout {
   if (availableWidth === null || !Number.isFinite(availableWidth) || availableWidth <= 0) {
     return DEFAULT_LAYOUT;

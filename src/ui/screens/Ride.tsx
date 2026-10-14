@@ -3,6 +3,8 @@ import type { Climb } from '../../route/climbs';
 import { detectClimbs } from '../../route/climbs';
 import { WINDOW_WIDE_M, buildProfile, projectWindow } from '../../route/profile';
 import type { Route } from '../../route/types';
+import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
+import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
 import {
   CHART_ROW_GAP_PX,
   ElevationProfile,
@@ -209,7 +211,7 @@ export function Ride({
             figure={share === null ? undefined : percent(share, 0)}
             figureUnit={share === null ? undefined : '% FTP'}
           />
-          <Ladder view={power} label="Power zone" />
+          <Ladder view={power} label="Power zone" count={POWER_ZONE_COUNT} />
         </Primary>
         <Primary divided>
           <Hero
@@ -219,7 +221,9 @@ export function Ride({
             unit="rpm"
             tone={trainerTone}
           />
-          <Ladder view={null} label="Cadence" />
+          {/* Cadence has no zones, so it gets the rule alone rather than a count it
+              would have to invent. */}
+          <Rule />
         </Primary>
         <Primary divided>
           <Hero
@@ -230,7 +234,7 @@ export function Ride({
             tone={heartRateTone}
             figure={heart === null ? undefined : `Z${heart.zone}`}
           />
-          <Ladder view={heart} label="Heart rate zone" />
+          <Ladder view={heart} label="Heart rate zone" count={HR_ZONE_COUNT} />
         </Primary>
       </div>
 
@@ -458,17 +462,37 @@ function Secondary({
   return <div className={divided ? 'border-hairline border-l pl-[32px]' : ''}>{children}</div>;
 }
 
-/** Cadence has no zones, but it keeps the rule so the three heroes share a baseline. */
-function Ladder({ view, label }: { view: ReturnType<typeof powerLadder>; label: string }) {
+/** A reading with no zones to measure it against still keeps the row's baseline. */
+function Rule() {
   return (
     <div className="mt-[14px]">
-      {view === null ? (
-        <div className="relative h-[30px]">
-          <div className="bg-hairline absolute top-[5px] right-0 left-0 h-px" />
-        </div>
-      ) : (
-        <ZoneLadder zone={view.zone} marker={view.marker} target={view.target} label={label} />
-      )}
+      <div className="relative h-[30px]">
+        <div className="bg-hairline absolute top-[5px] right-0 left-0 h-px" />
+      </div>
+    </div>
+  );
+}
+
+/** The count is the caller's: power has six zones and heart rate five. */
+function Ladder({
+  view,
+  label,
+  count,
+}: {
+  view: ReturnType<typeof powerLadder>;
+  label: string;
+  count: number;
+}) {
+  if (view === null) return <Rule />;
+  return (
+    <div className="mt-[14px]">
+      <ZoneLadder
+        count={count}
+        zone={view.zone}
+        marker={view.marker}
+        target={view.target}
+        label={label}
+      />
     </div>
   );
 }

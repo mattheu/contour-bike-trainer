@@ -12,7 +12,7 @@ This file holds the rules. The mockups in `design/mockups/*.html` hold the layou
 | ink      | `#E8E4DA` | primary text, current values, marker tick |
 | muted    | `#8A867C` | labels, secondary figures, the route or plan ahead |
 | hairline | `#2E2D2A` | rules, dividers, button borders, slashes |
-| accent   | `#FF5A1F` | distance ridden, targets, the one primary control |
+| accent   | `#FF5A1F` | distance ridden, targets, the one control that begins something |
 | alert    | `#F2C14E` | alerts only: warning edge, fault fill |
 
 Accent marks what the rider has done or is aiming at. Muted marks the route or plan ahead. Use accent for one element per screen. Use no other colours.
@@ -78,7 +78,7 @@ Anything with a 1 px box is pressable; nothing else has one. Buttons are 48 px t
 
 ### Tones
 
-- **Accent** — the one action the screen exists for: Pause on a ride, Start on a route, New workout. One per screen.
+- **Accent** — an action that begins something: Start on a route, New workout, Import. One per screen. During a ride or workout no control is accent; the ride data owns it, so Pause and End ride are grey.
 - **Ink** — selected: the active tab in a segmented group, or the single committing action in a panel (End ride in settings, Save).
 - **Grey** — everything else: secondary actions, unselected tabs, icon buttons (ink glyph, grey box), Dismiss.
 
@@ -129,7 +129,7 @@ The reference sequence is the interval change in `mockups/animation-guide.html`:
 
 - Every screen fits one viewport with no scrolling. Header, stats and bottom band are fixed rows; the chart row flexes.
 - Ride: three primary readings (power, cadence, heart rate) with zone ladders on power and heart rate; five secondary readings (elapsed, distance of total, climbed of total, speed, gradient); profile beside the map, each with a zoom toggle (Route | 5 km, Route | 500 m); power-so-far strip under the profile, zone-shaded in accent.
-- Workout: no route in version 1. The same primaries with targets ("246 / 239 W", label row "target 90 % FTP", accent target window over the zone ladder). Secondary readings are interval, workout, distance and speed. The plan chart shows actual power as an accent line, the plan as grey steps and the historic plan behind the actual. The step list beside it shows number, name, target and duration; completed steps are muted; the current step has an accent edge and its remaining time.
+- Workout: no route in version 1. The same primaries with targets ("246 / 239 W", label row "target 90 % FTP", accent target window over the zone ladder). Secondary readings are interval, workout, distance and speed. The plan chart shows actual power as an accent line, the plan as grey steps and the historic plan behind the actual. The step list beside it shows number, name, target and duration. Each row carries an ink wash at its zone's opacity, matching the chart; completed steps are muted and the whole row drops to 45 % opacity. Accent is reserved for the chart. The current step is solid ink with ground text (the hover treatment), an accent left edge and its remaining time.
 - Workouts library: no import in version 1. Columns are plan thumbnail, name, length and load (Training Stress Score, computed from the plan and FTP). Filters are length and load. There is no intensity column.
 - Phones: portrait shows the three primaries in one row, three secondaries, then Profile | Map (one at a time) over the power strip. Landscape shows primaries and secondaries on top, profile and strip below.
 - Lists: Rides, Routes and Workouts share one header with the segmented nav and one accent import button.

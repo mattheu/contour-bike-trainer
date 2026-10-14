@@ -1,8 +1,45 @@
 import { MONO } from './styles';
 import { SLIDE } from './motion';
 
-const ZONES = [1, 2, 3, 4, 5] as const;
-const SEGMENT = 100 / ZONES.length;
+export interface LadderSegment {
+  zone: number;
+  /** Percentages across the ladder, ready for a style attribute. */
+  leftPct: number;
+  widthPct: number;
+  centrePct: number;
+  lit: boolean;
+}
+
+/**
+ * The segments, as a pure function of how many there are and which one is lit.
+ *
+ * Split out of the render because the count is the thing that went wrong: the ladder
+ * drew five segments while src/zones/power.ts computed the marker against six, so above
+ * zone 1 the tick and the lit segment disagreed and zone 6 lit nothing at all. Pure, so
+ * the count can be asserted against the modules that own it rather than in a browser.
+ *
+ * At least one segment: a zero count is a caller bug, and dividing by it would render
+ * NaN percentages rather than fail.
+ */
+export function ladderSegments(count: number, zone: number): LadderSegment[] {
+  const segments = Math.max(1, Math.floor(Number.isFinite(count) ? count : 1));
+  const width = 100 / segments;
+  return Array.from({ length: segments }, (_, index) => {
+    const z = index + 1;
+    return {
+      zone: z,
+      leftPct: index * width,
+      widthPct: width,
+      centrePct: (z - 0.5) * width,
+      lit: z === zone,
+    };
+  });
+}
+
+/** `Zone 4 of 6`, counted against the caller's zones rather than the ladder's own idea. */
+export function ladderLabel(zone: number, count: number): string {
+  return `Zone ${String(zone)} of ${String(ladderSegments(count, zone).length)}`;
+}
 
 interface TargetBand {
   /** Fraction of the ladder, 0–1. */
@@ -11,7 +48,12 @@ interface TargetBand {
 }
 
 interface ZoneLadderProps {
-  /** The lit zone, 1–5. */
+  /**
+   * How many segments the ladder has. No default: power has six zones and heart rate
+   * five, and the caller passes its own module's ZONE_COUNT so the two cannot drift.
+   */
+  count: number;
+  /** The lit zone, 1–count. */
   zone: number;
   /** Where the tick sits, 0–1. src/zones supplies this; the ladder does not compute it. */
   marker: number;
@@ -25,38 +67,35 @@ const clamp = (n: number) => (Number.isFinite(n) ? Math.min(1, Math.max(0, n)) :
 const pct = (fraction: number) => `${(fraction * 100).toFixed(4)}%`;
 
 /**
- * Five equal segments over a hairline, one lit. Absolutely-positioned divs rather than
+ * Equal segments over a hairline, one lit. Absolutely-positioned divs rather than
  * SVG: the ladder sits in the text flow beside a hero and has to share its width.
  * Marker and band slide by transform, so nothing animates layout.
  */
-export function ZoneLadder({ zone, marker, target, label }: ZoneLadderProps) {
+export function ZoneLadder({ count, zone, marker, target, label }: ZoneLadderProps) {
   const tick = clamp(marker);
   const from = target ? clamp(target.from) : 0;
   const width = target ? Math.max(0, clamp(target.to) - from) : 0;
+  const segments = ladderSegments(count, zone);
 
   return (
-    <div
-      className="relative h-[30px]"
-      role="img"
-      aria-label={label ?? `Zone ${zone} of ${ZONES.length}`}
-    >
+    <div className="relative h-[30px]" role="img" aria-label={label ?? ladderLabel(zone, count)}>
       <div className="bg-hairline absolute top-[5px] right-0 left-0 h-px" />
 
-      {ZONES.map((z) => (
-        <div key={z}>
+      {segments.map((segment) => (
+        <div key={segment.zone}>
           <div
             className="bg-ink absolute top-[4px] h-[3px]"
             style={{
-              left: `${(z - 1) * SEGMENT}%`,
-              width: `${SEGMENT}%`,
-              opacity: z === zone ? 0.45 : 0.1,
+              left: `${String(segment.leftPct)}%`,
+              width: `${String(segment.widthPct)}%`,
+              opacity: segment.lit ? 0.45 : 0.1,
             }}
           />
           <div
             className={`${MONO} text-micro text-muted absolute top-[17px] -translate-x-1/2`}
-            style={{ left: `${(z - 0.5) * SEGMENT}%`, opacity: z === zone ? 0.9 : 0.45 }}
+            style={{ left: `${String(segment.centrePct)}%`, opacity: segment.lit ? 0.9 : 0.45 }}
           >
-            {z}
+            {segment.zone}
           </div>
         </div>
       ))}

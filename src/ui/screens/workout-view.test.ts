@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ExpandedStep } from '../../workout/expand';
+import { zoneWash } from '../charts';
 import type { WorkoutSnapshot } from '../store';
 import {
   CADENCE_MAX_RPM,
@@ -19,6 +20,9 @@ import {
 } from './workout-view';
 
 const ftpPercent = (value: number) => ({ unit: 'ftpPercent' as const, value });
+
+/** The rider's, which every stepRows call needs to put a zone behind a row. */
+const FTP = 250;
 
 const STEPS: ExpandedStep[] = [
   {
@@ -73,11 +77,11 @@ describe('currentStep', () => {
 
 describe('stepRows', () => {
   it('numbers every step in the session, not only what remains', () => {
-    expect(stepRows(snapshot()).map((row) => row.number)).toEqual([1, 2, 3, 4, 5]);
+    expect(stepRows(snapshot(), FTP).map((row) => row.number)).toEqual([1, 2, 3, 4, 5]);
   });
 
   it('marks what is behind, what is current and what is ahead', () => {
-    expect(stepRows(snapshot({ stepIndex: 2 })).map((row) => row.state)).toEqual([
+    expect(stepRows(snapshot({ stepIndex: 2 }), FTP).map((row) => row.state)).toEqual([
       'done',
       'done',
       'current',
@@ -87,57 +91,76 @@ describe('stepRows', () => {
   });
 
   it('counts the current step down in place, so it matches the interval clock', () => {
-    const rows = stepRows(snapshot());
+    const rows = stepRows(snapshot(), FTP);
     expect(rows[1]?.duration).toBe('6:42');
     expect(rows[1]?.duration).toBe(intervalClock(snapshot()).value);
   });
 
   it('shows the plan length for every step that is not current', () => {
-    const rows = stepRows(snapshot());
+    const rows = stepRows(snapshot(), FTP);
     expect(rows[0]?.duration).toBe('10:00');
     expect(rows[2]?.duration).toBe('5:00');
   });
 
   it('reads a step as name, target and duration', () => {
-    expect(stepRows(snapshot())[1]).toEqual({
+    expect(stepRows(snapshot(), FTP)[1]).toEqual({
       number: 2,
       name: 'Sweet spot',
       target: '90 %',
       duration: '6:42',
       state: 'current',
+      wash: zoneWash(4),
     });
   });
 
   it('leaves the name blank where the author wrote none, rather than guessing one', () => {
-    const row = stepRows(snapshot())[3];
+    const row = stepRows(snapshot(), FTP)[3];
     expect(row?.name).toBe('');
     expect(row?.target).toBe('65 %');
   });
 
   it('keeps a ramp and a free block in the form they were written', () => {
-    const rows = stepRows(snapshot());
+    const rows = stepRows(snapshot(), FTP);
     expect(rows[0]?.target).toBe('50 → 75 %');
     expect(rows[4]?.target).toBe('free');
   });
 
+  it('washes each row at its zone, which is the plan chart own block scale', () => {
+    const rows = stepRows(snapshot(), FTP);
+    // Sweet spot at 90 % is zone 4; recovery at 55 % is zone 2, and lighter for it.
+    expect(rows[1]?.wash).toBe(zoneWash(4));
+    expect(rows[2]?.wash).toBe(zoneWash(2));
+    expect(rows[2]?.wash).toBeLessThan(rows[1]?.wash as number);
+  });
+
+  it('leaves a free step unwashed: no target is an absence, not zone 1', () => {
+    expect(stepRows(snapshot(), FTP)[4]?.wash).toBeNull();
+  });
+
+  it('lightens every wash when the rider takes the difficulty down', () => {
+    const full = stepRows(snapshot(), FTP);
+    const easier = stepRows(snapshot({ scalePct: 70 }), FTP);
+    expect(easier[1]?.wash).toBeLessThan(full[1]?.wash as number);
+  });
+
   it('has everything behind it once the session has finished', () => {
-    const states = stepRows(snapshot({ stepIndex: STEPS.length })).map((row) => row.state);
+    const states = stepRows(snapshot({ stepIndex: STEPS.length }), FTP).map((row) => row.state);
     expect(states).toEqual(['done', 'done', 'done', 'done', 'done']);
   });
 });
 
 describe('currentRowNumber', () => {
   it('is the row the rider is on, which is what the panel scrolls to', () => {
-    expect(currentRowNumber(stepRows(snapshot({ stepIndex: 2 })))).toBe(3);
+    expect(currentRowNumber(stepRows(snapshot({ stepIndex: 2 }), FTP))).toBe(3);
   });
 
   it('holds still while a step counts down, so the panel does not move on every tick', () => {
-    const before = currentRowNumber(stepRows(snapshot({ stepRemainingS: 402 })));
-    expect(currentRowNumber(stepRows(snapshot({ stepRemainingS: 61 })))).toBe(before);
+    const before = currentRowNumber(stepRows(snapshot({ stepRemainingS: 402 }), FTP));
+    expect(currentRowNumber(stepRows(snapshot({ stepRemainingS: 61 }), FTP))).toBe(before);
   });
 
   it('has nothing to hold once the plan has run out', () => {
-    expect(currentRowNumber(stepRows(snapshot({ stepIndex: STEPS.length })))).toBeNull();
+    expect(currentRowNumber(stepRows(snapshot({ stepIndex: STEPS.length }), FTP))).toBeNull();
   });
 });
 

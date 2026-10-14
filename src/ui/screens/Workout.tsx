@@ -1,5 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
-import { MAX_SCALE_PCT, MIN_SCALE_PCT } from '../../workout/runner';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { DEFAULT_SCALE_PCT, MAX_SCALE_PCT, MIN_SCALE_PCT } from '../../workout/runner';
+import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
+import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
+import {
+  CHART_ROW_GAP_PX,
+  PLAN_HEADING_GAP_PX,
+  PLAN_HEADING_PX,
+  PlanChart,
+  planChartHeight,
+  planRowLayout,
+} from '../charts';
 import { Button } from '../components/Button';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { CONTROL_SIZE } from '../components/control';
@@ -35,6 +45,7 @@ import {
   type CadenceBandView,
   type StepRow,
 } from './workout-view';
+import { useElementHeight, useElementWidth } from './use-element-width';
 
 export interface WorkoutProps {
   snapshot: RideSnapshot;
@@ -121,11 +132,20 @@ export function Workout({
     targetMarginPct,
   );
 
+  // The chart is re-projected to the row it is given rather than scaled into it, the way
+  // the ride screen's are: strokes and tick type stay at their token sizes at every width.
+  const rowRef = useRef<HTMLDivElement>(null);
+  const chartAreaRef = useRef<HTMLDivElement>(null);
+  const rowWidth = useElementWidth(rowRef);
+  const chartAreaHeight = useElementHeight(chartAreaRef);
+  const layout = useMemo(() => planRowLayout(rowWidth), [rowWidth]);
+  const chartHeight = useMemo(() => planChartHeight(chartAreaHeight), [chartAreaHeight]);
+
   const hero = powerHero(workout.targetW, ftpW);
   const cadence = cadenceBand(workout.cadence, snapshot.cadenceRpm);
   const interval = intervalClock(workout);
   const clock = workoutClock(snapshot.elapsedS, workout.totalRemainingS);
-  const rows = stepRows(workout);
+  const rows = stepRows(workout, ftpW);
 
   const devices: DevicesView = {
     source,
@@ -172,6 +192,7 @@ export function Workout({
               <Rule />
             ) : (
               <ZoneLadder
+                count={POWER_ZONE_COUNT}
                 zone={power.zone}
                 marker={power.marker}
                 target={power.target}
@@ -207,6 +228,7 @@ export function Workout({
               <Rule />
             ) : (
               <ZoneLadder
+                count={HR_ZONE_COUNT}
                 zone={heart.zone}
                 marker={heart.marker}
                 target={heart.target}
@@ -251,12 +273,52 @@ export function Workout({
         </Secondary>
       </div>
 
-      <Steps
-        rows={rows}
-        heading={stepsHeading(workout.steps)}
-        skippable={canSkip(workout)}
-        onSkip={onSkipStep}
-      />
+      {/* min-h-0: a grow child will not shrink below its content without it, so the area
+          would measure what it contains rather than the space that content has. */}
+      <div ref={chartAreaRef} className="mt-[32px] flex min-h-0 grow flex-col px-[64px]">
+        <div
+          ref={rowRef}
+          className="grid min-h-0 grow"
+          style={{
+            gridTemplateColumns: layout.showPlan
+              ? `${String(layout.planWidth)}px ${String(layout.stepsWidth)}px`
+              : `${String(layout.stepsWidth)}px`,
+            columnGap: `${String(CHART_ROW_GAP_PX)}px`,
+          }}
+        >
+          {layout.showPlan && (
+            <div className="flex min-h-0 flex-col">
+              {/* The figure only appears off 100 %, which is also the only time the
+                  unscaled plan is drawn behind: it says what the faint line is. */}
+              <PanelHeading
+                label="Plan"
+                note={
+                  workout.scalePct === DEFAULT_SCALE_PCT ? undefined : (
+                    <div className={`${MONO} text-micro text-muted`}>
+                      {`${scaleLabel(workout.scalePct)} of plan`}
+                    </div>
+                  )
+                }
+              />
+              <PlanChart
+                steps={workout.steps}
+                samples={snapshot.samples}
+                ftpW={ftpW}
+                scalePct={workout.scalePct}
+                elapsedS={snapshot.elapsedS}
+                width={layout.chartWidth}
+                height={chartHeight}
+              />
+            </div>
+          )}
+          <Steps
+            rows={rows}
+            heading={stepsHeading(workout.steps)}
+            skippable={canSkip(workout)}
+            onSkip={onSkipStep}
+          />
+        </div>
+      </div>
 
       <div className="mt-[24px] flex items-end justify-between px-[64px] pb-[36px]">
         <div className={`${MONO} text-label text-muted`}>
@@ -312,21 +374,23 @@ function Steps({
   }, [current]);
 
   return (
-    <div className="mt-[32px] flex min-h-0 grow flex-col px-[64px]">
-      <div className="flex shrink-0 items-center justify-between pb-[10px]">
-        <div className="flex items-baseline gap-[18px]">
-          <div className={`${LABEL} text-micro`}>Steps</div>
+    <div className="flex min-h-0 flex-col">
+      <PanelHeading
+        label="Steps"
+        note={
           <div className={`${MONO} text-micro text-muted`} data-testid="workout-steps-heading">
             {heading}
           </div>
-        </div>
-        {/* One control, not one per row: only one step is ever current, so there is
-            nothing to choose between. No confirmation — it is not destructive, and a
-            dialogue three minutes into an interval is worse than an occasional mis-tap. */}
-        <Button onClick={onSkip} disabled={!skippable}>
-          Skip step
-        </Button>
-      </div>
+        }
+        /* One control, not one per row: only one step is ever current, so there is nothing
+           to choose between. No confirmation — it is not destructive, and a dialogue three
+           minutes into an interval is worse than an occasional mis-tap. */
+        action={
+          <Button onClick={onSkip} disabled={!skippable}>
+            Skip step
+          </Button>
+        }
+      />
       {/* bg-ground/60 rather than solid ground, because the contour field runs behind it. */}
       <div className="bg-ground/60 min-h-0 grow overflow-y-auto" data-testid="workout-steps">
         {rows.map((row) => (
@@ -338,9 +402,47 @@ function Steps({
 }
 
 /**
- * design/DESIGN.md > Screen rules: completed steps are muted, and so is the plan ahead. The
- * current step is ink with an accent edge and the faint fill that means "current" everywhere
- * else in the app — so accent says one thing on this screen, which is where you are now.
+ * The heading over each column of the lower row.
+ *
+ * One height for both, set from the figures planChartHeight budgets for rather than from
+ * whatever each column happens to contain: the Skip control makes the Steps heading 48 px
+ * tall and the Plan heading would otherwise sit 10 px shorter, which starts the two
+ * columns on different lines.
+ */
+function PanelHeading({
+  label,
+  note,
+  action,
+}: {
+  label: string;
+  note?: React.ReactNode;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div
+      className="flex shrink-0 items-center justify-between"
+      style={{
+        height: PLAN_HEADING_PX + PLAN_HEADING_GAP_PX,
+        paddingBottom: PLAN_HEADING_GAP_PX,
+      }}
+    >
+      <div className="flex items-baseline gap-[18px]">
+        <div className={`${LABEL} text-micro`}>{label}</div>
+        {note}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+/**
+ * design/DESIGN.md > Screen rules. The plan ahead is muted; a completed step is muted and
+ * the whole row drops to 45 %; the current step takes the Controls section's hover
+ * treatment — solid ink, ground text — with an accent left edge.
+ *
+ * That edge is the only accent in the panel: accent is reserved for the chart beside it,
+ * so the current step's countdown reads in ground like the rest of its row rather than
+ * competing with the marker for what orange means.
  */
 const QUIET = {
   frame: 'border-hairline border-t pl-[14px]',
@@ -354,16 +456,26 @@ const ROW_TONE: Record<
   StepRow['state'],
   { frame: string; number: string; name: string; target: string; duration: string }
 > = {
-  done: QUIET,
+  done: { ...QUIET, frame: `${QUIET.frame} opacity-45` },
   current: {
-    frame: 'border-hairline border-accent bg-ink/10 border-t border-l-2 pl-[12px]',
-    number: 'text-accent',
-    name: 'text-ink font-medium',
-    target: 'text-ink',
-    duration: 'text-accent',
+    frame: 'border-hairline border-l-accent bg-ink border-t border-l-2 pl-[12px]',
+    number: 'text-ground',
+    name: 'text-ground font-medium',
+    target: 'text-ground',
+    duration: 'text-ground',
   },
   ahead: QUIET,
 };
+
+/**
+ * The row's wash is the plan chart's block wash: one scale, so the list shows intensity
+ * at the shade the chart already drew it at. Mixed from the ink token rather than written
+ * as a colour, and left off the current row, where solid ink has already taken the space.
+ */
+function washColour(wash: number | null): string | undefined {
+  if (wash === null) return undefined;
+  return `color-mix(in srgb, var(--color-ink) ${String(wash * 100)}%, transparent)`;
+}
 
 function Step({ row, ref }: { row: StepRow; ref?: React.Ref<HTMLDivElement> }) {
   const tone = ROW_TONE[row.state];
@@ -371,6 +483,7 @@ function Step({ row, ref }: { row: StepRow; ref?: React.Ref<HTMLDivElement> }) {
     <div
       ref={ref}
       className={`flex items-baseline gap-[14px] py-[9px] pr-[10px] ${tone.frame}`}
+      style={row.state === 'current' ? undefined : { backgroundColor: washColour(row.wash) }}
       aria-current={row.state === 'current' ? 'step' : undefined}
     >
       <div className={`${MONO} text-micro w-[16px] ${tone.number}`}>{row.number}</div>

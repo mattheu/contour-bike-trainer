@@ -7,13 +7,23 @@ import {
   MIN_MAP_WIDTH,
   MIN_PROFILE_HEIGHT,
   MIN_STRIP_HEIGHT,
+  MIN_PLAN_HEIGHT,
+  MIN_PLAN_WIDTH,
   MIN_PROFILE_WIDTH,
+  MIN_STEPS_WIDTH,
   MOCKUP_MAP_WIDTH,
   MOCKUP_PROFILE_HEIGHT,
   MOCKUP_PROFILE_WIDTH,
+  MOCKUP_STEPS_WIDTH,
+  PLAN_AXIS_PX,
+  PLAN_HEADING_GAP_PX,
+  PLAN_HEADING_PX,
+  PLAN_LABEL_GUTTER_PX,
   POWER_STRIP_HEIGHT,
   chartRowLayout,
   chartStackHeights,
+  planChartHeight,
+  planRowLayout,
 } from './layout';
 
 /** The ride screen pads the page by 64 px a side, so this is what the row actually gets. */
@@ -182,5 +192,73 @@ describe('chartStackHeights', () => {
     expect(tall.profileHeight + tall.stripHeight).toBe(forCharts);
     const drawnRatio = MOCKUP_PROFILE_HEIGHT / (MOCKUP_PROFILE_HEIGHT + POWER_STRIP_HEIGHT);
     expect(tall.profileHeight / forCharts).toBeCloseTo(drawnRatio, 2);
+  });
+});
+
+describe('planRowLayout', () => {
+  it('reproduces the workout mockup exactly at 1440 px', () => {
+    const layout = planRowLayout(rowWidthForViewport(1440));
+    expect(layout).toEqual({
+      planWidth: 944,
+      chartWidth: 944 - PLAN_LABEL_GUTTER_PX,
+      stepsWidth: MOCKUP_STEPS_WIDTH,
+      showPlan: true,
+    });
+  });
+
+  it('fills the row exactly, so nothing clips and nothing is left over', () => {
+    for (const viewport of [1152, 1280, 1366, 1440, 1470, 1680, 1920, 2560]) {
+      const available = rowWidthForViewport(viewport);
+      const { planWidth, stepsWidth } = planRowLayout(available);
+      expect(planWidth + CHART_ROW_GAP_PX + stepsWidth).toBe(available);
+    }
+  });
+
+  it('gives a wider window to the chart, not to a list of short rows', () => {
+    const wide = planRowLayout(rowWidthForViewport(2560));
+    expect(wide.stepsWidth).toBe(MOCKUP_STEPS_WIDTH);
+    expect(wide.planWidth).toBeGreaterThan(planRowLayout(rowWidthForViewport(1440)).planWidth);
+  });
+
+  it('takes width off the panel before it lets the chart go under its floor', () => {
+    const narrow = planRowLayout(MIN_PLAN_WIDTH + CHART_ROW_GAP_PX + 280);
+    expect(narrow.planWidth).toBe(MIN_PLAN_WIDTH);
+    expect(narrow.stepsWidth).toBe(280);
+    expect(narrow.stepsWidth).toBeGreaterThanOrEqual(MIN_STEPS_WIDTH);
+  });
+
+  it('drops the chart rather than squeezing the panel to nothing', () => {
+    // The panel is the instrument the session can be ridden from, so it is what survives.
+    const layout = planRowLayout(600);
+    expect(layout.showPlan).toBe(false);
+    expect(layout.planWidth).toBe(0);
+    expect(layout.stepsWidth).toBe(600);
+  });
+
+  it('falls back to the mockup row before anything has been measured', () => {
+    expect(planRowLayout(null).stepsWidth).toBe(MOCKUP_STEPS_WIDTH);
+    expect(planRowLayout(Number.NaN).showPlan).toBe(true);
+  });
+});
+
+describe('planChartHeight', () => {
+  it('leaves the heading and the axis figures their own room', () => {
+    const chrome = PLAN_HEADING_PX + PLAN_HEADING_GAP_PX + PLAN_AXIS_PX;
+    expect(planChartHeight(400)).toBe(400 - chrome);
+  });
+
+  it('never goes below the height six zone bands can be told apart in', () => {
+    expect(planChartHeight(120)).toBe(MIN_PLAN_HEIGHT);
+    expect(planChartHeight(0)).toBe(MIN_PLAN_HEIGHT);
+    expect(planChartHeight(-50)).toBe(MIN_PLAN_HEIGHT);
+  });
+
+  it('keeps growing on a tall screen, as the ride row does', () => {
+    expect(planChartHeight(900)).toBeGreaterThan(planChartHeight(400));
+  });
+
+  it('falls back to the drawn height before anything has been measured', () => {
+    expect(planChartHeight(null)).toBe(MOCKUP_PROFILE_HEIGHT);
+    expect(planChartHeight(Number.NaN)).toBe(MOCKUP_PROFILE_HEIGHT);
   });
 });

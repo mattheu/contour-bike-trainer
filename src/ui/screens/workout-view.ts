@@ -1,5 +1,6 @@
 import type { ExpandedStep } from '../../workout/expand';
 import type { CadenceTarget } from '../../workout/types';
+import { stepZone, zoneWash } from '../charts';
 import { ABSENT, duration, stepTarget } from '../format';
 import type { WorkoutSnapshot } from '../store';
 
@@ -23,6 +24,12 @@ export interface StepRow {
   /** The plan's length, except on the current step, which counts down in place. */
   duration: string;
   state: StepState;
+  /**
+   * The row's ink wash, 0-1, or null on a free step — which has no zone, and must read
+   * as an absence rather than as zone 1. The same scale the plan chart's blocks use, so
+   * a row and the block above it are the same shade of the same intensity.
+   */
+  wash: number | null;
 }
 
 export interface Clock {
@@ -78,7 +85,7 @@ function stateOf(index: number, stepIndex: number): StepState {
  * Every step the session will ride, not only what remains: seeing step 4 of 8 with two
  * blocks still below is what tells you where you are in the work.
  */
-export function stepRows(workout: WorkoutSnapshot): StepRow[] {
+export function stepRows(workout: WorkoutSnapshot, ftpW: number): StepRow[] {
   return workout.steps.map((step, index) => {
     const state = stateOf(index, workout.stepIndex);
     return {
@@ -87,6 +94,9 @@ export function stepRows(workout: WorkoutSnapshot): StepRow[] {
       target: stepTarget(step.power),
       duration: duration(state === 'current' ? workout.stepRemainingS : step.durationS),
       state,
+      // At the difficulty being ridden, not as written: the wash has to agree with the
+      // chart's blocks, and the chart draws the plan the rider is actually being given.
+      wash: zoneWash(stepZone(step, ftpW, workout.scalePct)),
     };
   });
 }

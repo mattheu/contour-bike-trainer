@@ -81,12 +81,10 @@ async function authorWorkout(page: Page, plan: string, name: string): Promise<vo
   await expect(page.getByRole('link', { name })).toBeVisible();
 }
 
-/** The row's Ride control, which arms the session on the workout screen at 0:00. */
+/** The row itself, which is the Ride control as it is on the routes list: it arms the
+ * session on the workout screen at 0:00. */
 async function openWorkout(page: Page, name: string): Promise<void> {
-  await page
-    .getByRole('group', { name: `${name} actions` })
-    .getByRole('button', { name: 'Ride' })
-    .click();
+  await page.getByRole('link', { name }).click();
   await expect(page.getByRole('button', { name: 'Start' })).toBeVisible();
 }
 
@@ -192,9 +190,12 @@ test.describe('riding a workout', () => {
     await openWorkouts(page);
     await authorWorkout(page, EDITABLE, 'Spec editor');
 
-    // Opening a row opens its YAML, and it is the text that was written rather than a
-    // tree printed back out: the comments and the layout a rider chose survive the trip.
-    await page.getByRole('link', { name: 'Spec editor' }).click();
+    // Edit opens its YAML, and it is the text that was written rather than a tree printed
+    // back out: the comments and the layout a rider chose survive the trip.
+    await page
+      .getByRole('group', { name: 'Spec editor actions' })
+      .getByRole('button', { name: 'Edit', exact: true })
+      .click();
     await expect(source(page)).toHaveValue(EDITABLE);
 
     await source(page).fill(BROKEN);
