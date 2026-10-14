@@ -34,6 +34,7 @@ import {
   DELETE_WORDING,
   LENGTHS,
   LOADS,
+  canDeleteWorkout,
   filterWorkouts,
   lengthLabel,
   loadLabel,
@@ -69,6 +70,10 @@ interface WorkoutsProps {
   onExportAll: () => Promise<void>;
   onImport: (file: File) => Promise<WorkoutImportResult>;
   onDelete: (workoutId: string) => Promise<DeleteResult>;
+  /** The ids this build supplies: see services.builtInWorkouts. A row in here offers no
+   * Delete control — a starter is editable, including into something unrecognisable, but
+   * it is not the rider's to remove and seeding would write it back anyway. */
+  builtIn: ReadonlySet<string>;
   onNavigate: (screen: ListScreen) => void;
   onOpenProfile: () => void;
 }
@@ -88,6 +93,7 @@ export function Workouts({
   onExportAll,
   onImport,
   onDelete,
+  builtIn,
   onNavigate,
   onOpenProfile,
 }: WorkoutsProps) {
@@ -103,17 +109,15 @@ export function Workouts({
   const shown = useMemo(() => filterWorkouts(rows, { length, load }), [rows, length, load]);
 
   // The confirm state machine is ride-delete.ts, which is about an id and two presses
-  // rather than about rides. Narrowed to what is on screen, so changing either filter
-  // takes the question with it rather than leaving a row silently armed behind it.
+  // rather than about rides. Narrowed to the rows that actually offer Delete, so changing
+  // either filter takes the question with it rather than leaving a row silently armed
+  // behind it — and a starter cannot be armed at all, however the press was reached.
   const [requested, setRequested] = useState<Armed>(null);
-  const armed = useMemo(
-    () =>
-      retainArmed(
-        requested,
-        shown.map((row) => row.id),
-      ),
-    [requested, shown],
+  const deletable = useMemo(
+    () => shown.filter((row) => canDeleteWorkout(row.id, builtIn)).map((row) => row.id),
+    [shown, builtIn],
   );
+  const armed = useMemo(() => retainArmed(requested, deletable), [requested, deletable]);
 
   const press = useCallback(
     (row: WorkoutRow) => {
@@ -167,6 +171,7 @@ export function Workouts({
             <WorkoutRowView
               key={row.id}
               row={row}
+              deletable={canDeleteWorkout(row.id, builtIn)}
               armed={isArmed(armed, row.id)}
               onOpen={onOpen}
               onStart={onStart}
@@ -241,6 +246,7 @@ function Footer({
 
 function WorkoutRowView({
   row,
+  deletable,
   armed,
   onOpen,
   onStart,
@@ -249,6 +255,7 @@ function WorkoutRowView({
   onCancelDelete,
 }: {
   row: WorkoutRow;
+  deletable: boolean;
   armed: boolean;
   onOpen: (workoutId: string) => void;
   onStart: (workoutId: string) => void;
@@ -292,19 +299,24 @@ function WorkoutRowView({
                 <path d="M8,1.5 V10.5 M4.5,7.5 L8,11 L11.5,7.5 M2,13.5 H14" />
               </svg>
             </IconButton>
-            <IconButton label={`Delete ${row.name}`} onClick={onPressDelete}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.25"
-                aria-hidden="true"
-              >
-                <path d="M2.5,4 H13.5 M6,4 V2.5 H10 V4 M4,4 V13.5 H12 V4 M6.5,6.5 V11 M9.5,6.5 V11" />
-              </svg>
-            </IconButton>
+            {/* Absent on a starter rather than disabled: a disabled control says this
+                could happen and currently cannot, and deleting one never can. Edit and
+                Download stay, which is everything a starter is actually for. */}
+            {deletable && (
+              <IconButton label={`Delete ${row.name}`} onClick={onPressDelete}>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  aria-hidden="true"
+                >
+                  <path d="M2.5,4 H13.5 M6,4 V2.5 H10 V4 M4,4 V13.5 H12 V4 M6.5,6.5 V11 M9.5,6.5 V11" />
+                </svg>
+              </IconButton>
+            )}
           </ButtonGroup>
         )
       }

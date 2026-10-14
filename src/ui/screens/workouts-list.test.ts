@@ -5,6 +5,7 @@ import {
   DELETE_WORDING,
   LENGTHS,
   LOADS,
+  canDeleteWorkout,
   filterWorkouts,
   lengthLabel,
   lengthMinutes,
@@ -288,5 +289,23 @@ describe('the delete wording', () => {
     expect(DELETE_WORDING.prompt).toContain("Can't be undone");
     expect(DELETE_WORDING.confirm).toBe('Delete');
     expect(DELETE_WORDING.cancel).toBe('Keep');
+  });
+});
+
+describe('canDeleteWorkout', () => {
+  const builtIn: ReadonlySet<string> = new Set(['sweet-spot-50', '30-30s']);
+
+  it('offers no Delete on a starter the build supplies', () => {
+    // Absent, not disabled. Editing one is still allowed — the author has accepted that
+    // you can gut a starter's YAML and not be able to remove it.
+    expect(canDeleteWorkout('sweet-spot-50', builtIn)).toBe(false);
+  });
+
+  it('offers Delete on a workout the rider created', () => {
+    expect(canDeleteWorkout('a-minted-uuid', builtIn)).toBe(true);
+  });
+
+  it('offers Delete once a starter has left the manifest', () => {
+    expect(canDeleteWorkout('sweet-spot-50', new Set(['30-30s']))).toBe(true);
   });
 });

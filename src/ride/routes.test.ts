@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { climbGpxText, flatGpxText, FIXTURE_LENGTH_M } from '../../test/fixtures';
 import { parseGpx } from '../route/gpx';
 import { MemoryRepository } from '../storage/memory';
-import type { Route as StoredRoute } from '../storage/types';
+import { createId, type Route as StoredRoute } from '../storage/types';
 import {
-  backfillRouteSources,
+  builtInRouteIds,
   bundledRoute,
   bundledRoutes,
   seedRoutes,
@@ -66,8 +66,8 @@ describe('storedRouteGeometry', () => {
   });
 
   it('reports a record with no source instead of throwing', () => {
-    // A legacy record the backfill could not reach. It used to throw from inside a
-    // useMemo in the list row, which took the whole screen down with it.
+    // A legacy record no manifest entry claims, so no reseed can fill it. It used to
+    // throw from inside a useMemo in the list row, taking the whole screen down with it.
     const result = storedRouteGeometry(stored());
 
     expect(result).toEqual({ status: 'unavailable', reason: expect.stringContaining('no GPX') });
@@ -89,10 +89,49 @@ describe('storedRouteGeometry', () => {
   });
 });
 
+describe('builtInRouteIds', () => {
+  it('is exactly what routes/manifest.json declares', () => {
+    const ids = builtInRouteIds();
+    expect(ids.has('test-rolling')).toBe(true);
+    expect(ids.size).toBe(bundledRoutes().length);
+  });
+
+  it('does not claim a route the rider imported', () => {
+    // An imported route's id is minted, so no manifest entry can claim it. This is what
+    // makes it the one kind of route the rider is offered a Remove control for.
+    expect(builtInRouteIds().has(createId())).toBe(false);
+  });
+
+  it('stops claiming a route once its manifest entry is gone', () => {
+    // Deliberate, and the only way a stale record gets out of an install: drop the entry
+    // and its stored route becomes the rider's to remove.
+    const ids = builtInRouteIds([
+      {
+        id: 'kept',
+        name: 'Kept',
+        file: 'fixture.gpx',
+        gpx: flatGpxText,
+        totalDistanceM: 1,
+        totalAscentM: 0,
+      },
+    ]);
+    expect([...ids]).toEqual(['kept']);
+  });
+});
+
 describe('seedRoutes', () => {
+  const entry: BundledRoute = {
+    id: 'fixture-route',
+    name: 'Fixture',
+    file: 'fixture.gpx',
+    gpx: flatGpxText,
+    totalDistanceM: FIXTURE_LENGTH_M,
+    totalAscentM: 0,
+  };
+
   it('writes every bundled route on first run', async () => {
     const repo = repository();
-    const result = await seedRoutes(repo, false);
+    const result = await seedRoutes(repo);
 
     const stored = await repo.list();
     expect(stored).toHaveLength(bundledRoutes().length);
@@ -106,7 +145,7 @@ describe('seedRoutes', () => {
 
   it('stores the route under its manifest id', async () => {
     const repo = repository();
-    await seedRoutes(repo, false);
+    await seedRoutes(repo);
 
     const rolling = await repo.get('test-rolling');
     expect(rolling).toMatchObject({
@@ -117,88 +156,105 @@ describe('seedRoutes', () => {
     expect(rolling?.totalDistanceM).toBeGreaterThan(0);
   });
 
-  it('writes the GPX onto the record, which is what makes it rideable', () => {
-    // ADR-0014 applied to routes: the seed copies the bytes out of the build once, and
-    // nothing afterwards reads the build to ride it.
+  it('writes the GPX onto the record, which is what makes it rideable', async () => {
+    // ADR-0014 applied to routes: the seed copies the bytes out of the build, and nothing
+    // afterwards reads the build to ride it.
     const repo = repository();
-    const entry: BundledRoute = {
-      id: 'fixture-route',
-      name: 'Fixture',
-      file: 'fixture.gpx',
-      gpx: flatGpxText,
-      totalDistanceM: FIXTURE_LENGTH_M,
-      totalAscentM: 0,
-    };
+    await seedRoutes(repo, [entry]);
 
-    return seedRoutes(repo, false, [entry]).then(async () => {
-      expect((await repo.get('fixture-route'))?.gpx).toBe(flatGpxText);
-    });
+    expect((await repo.get('fixture-route'))?.gpx).toBe(flatGpxText);
   });
 
   it('is idempotent: running twice neither duplicates nor rewrites', async () => {
     const repo = repository();
-    await seedRoutes(repo, false);
+    await seedRoutes(repo);
     const first = await repo.get('test-rolling');
 
-    // The marker is true on every boot after the first, which is what the caller writes.
-    const second = await seedRoutes(repo, true);
+    const second = await seedRoutes(repo);
 
     expect(await repo.list()).toHaveLength(bundledRoutes().length);
     expect(second.written).toEqual([]);
-    // Nothing is looked at once the marker is set, so nothing is reported as unchanged.
-    expect(second.unchanged).toEqual([]);
+    expect(second.unchanged.sort()).toEqual(
+      bundledRoutes()
+        .map((r) => r.id)
+        .sort(),
+    );
     // updatedAt is untouched, so a later sync layer does not read a reseed as an edit.
     expect((await repo.get('test-rolling'))?.updatedAt).toBe(first?.updatedAt);
   });
 
-  it('leaves a route alone even when its manifest entry has changed', async () => {
-    // The seed cannot tell a corrected entry from a route the rider deleted, so it
-    // rewrites neither. The cost of that choice, stated in seedRoutes, is this test.
+  it('reaches an install that has already booted when the manifest changes', async () => {
+    // What a rider would check: a figure corrected in the build shows up on the next
+    // launch rather than only on a fresh database. Safe because nothing edits a route.
     const repo = repository();
-    const entry: BundledRoute = {
-      id: 'fixture-route',
-      name: 'Before',
-      file: 'fixture.gpx',
-      gpx: flatGpxText,
-      totalDistanceM: 1000,
-      totalAscentM: 10,
-    };
-    await seedRoutes(repo, false, [entry]);
+    await seedRoutes(repo, [{ ...entry, name: 'Before', totalAscentM: 10 }]);
 
-    const result = await seedRoutes(repo, true, [{ ...entry, name: 'After', totalAscentM: 20 }]);
+    const result = await seedRoutes(repo, [{ ...entry, name: 'After', totalAscentM: 20 }]);
 
-    expect(result.written).toEqual([]);
-    expect(await repo.get('fixture-route')).toMatchObject({ name: 'Before', totalAscentM: 10 });
+    expect(result.written).toEqual(['fixture-route']);
+    expect(await repo.get('fixture-route')).toMatchObject({ name: 'After', totalAscentM: 20 });
     expect(await repo.list()).toHaveLength(1);
   });
 
-  it('does not bring back a route the rider deleted', async () => {
-    // What a rider would actually check, in the order they would do it: boot, remove a
-    // route, reload. A delete control that the next reload undoes is not a delete control,
-    // and absent alone cannot carry that — the marker is what tells a deleted route from
-    // one this install has never seen.
+  it('rewrites a record whose GPX in the build has changed', async () => {
     const repo = repository();
-    await seedRoutes(repo, false);
-    await repo.delete('test-rolling');
+    await seedRoutes(repo, [entry]);
 
-    const result = await seedRoutes(repo, true);
+    await seedRoutes(repo, [{ ...entry, gpx: climbGpxText }]);
 
-    expect(result.written).toEqual([]);
-    expect(await repo.get('test-rolling')).toBeUndefined();
-    expect(await repo.list()).toHaveLength(bundledRoutes().length - 1);
+    expect((await repo.get('fixture-route'))?.gpx).toBe(climbGpxText);
   });
 
-  it('seeds an install that was running before the marker existed, writing nothing', async () => {
-    // Such a blob parses as not seeded, so the first boot after the change runs a full
-    // pass. Safe because every record is already there and present means left alone.
+  it('fills in a record written before routes carried their own GPX', async () => {
+    // The old backfill pass, subsumed: a sourceless record differs from its manifest
+    // entry, so the ordinary changed-or-absent rule repairs it on the next boot.
     const repo = repository();
-    await seedRoutes(repo, false);
-    const before = await repo.get('test-rolling');
+    await repo.put({
+      id: 'fixture-route',
+      updatedAt: '',
+      name: 'Fixture',
+      file: 'fixture.gpx',
+      totalDistanceM: FIXTURE_LENGTH_M,
+      totalAscentM: 0,
+    });
 
-    const upgrade = await seedRoutes(repo, false);
+    const result = await seedRoutes(repo, [entry]);
 
-    expect(upgrade.written).toEqual([]);
-    expect((await repo.get('test-rolling'))?.updatedAt).toBe(before?.updatedAt);
+    expect(result.written).toEqual(['fixture-route']);
+    const stored = await repo.get('fixture-route');
+    expect(stored?.gpx).toBe(flatGpxText);
+    expect(storedRouteGeometry(stored).status).toBe('ok');
+  });
+
+  it('leaves an imported route alone: no manifest entry claims its id', async () => {
+    const repo = repository();
+    const imported: StoredRoute = {
+      id: createId(),
+      updatedAt: '',
+      name: 'Imported',
+      gpx: climbGpxText,
+      totalDistanceM: FIXTURE_LENGTH_M,
+      totalAscentM: 100,
+    };
+    await repo.put(imported);
+
+    await seedRoutes(repo, [entry]);
+
+    expect(await repo.get(imported.id)).toMatchObject({ name: 'Imported', gpx: climbGpxText });
+  });
+
+  it('puts a built-in route back if something managed to delete it', async () => {
+    // Not a regression: a built-in route has no Remove control and services refuses the
+    // id, so the only way to reach this state is a database edited from outside. Seeding
+    // repairing it is the behaviour to want — the build is the source for these records.
+    const repo = repository();
+    await seedRoutes(repo, [entry]);
+    await repo.delete('fixture-route');
+
+    const result = await seedRoutes(repo, [entry]);
+
+    expect(result.written).toEqual(['fixture-route']);
+    expect(await repo.get('fixture-route')).toBeDefined();
   });
 });
 
@@ -210,101 +266,5 @@ describe('a manifest entry whose file is not bundled', () => {
         { id: 'ghost', name: 'Ghost', file: 'missing.gpx', totalDistanceM: 1, totalAscentM: 1 },
       ]),
     ).toThrow(/missing\.gpx.*ghost/);
-  });
-});
-
-describe('backfillRouteSources', () => {
-  const entry: BundledRoute = {
-    id: 'fixture-route',
-    name: 'Fixture',
-    file: 'fixture.gpx',
-    gpx: flatGpxText,
-    totalDistanceM: FIXTURE_LENGTH_M,
-    totalAscentM: 0,
-  };
-
-  function legacy(overrides: Partial<StoredRoute> = {}): StoredRoute {
-    // What the build before this change wrote: metadata and a path, no source.
-    return {
-      id: 'fixture-route',
-      updatedAt: '',
-      name: 'Fixture',
-      file: 'fixture.gpx',
-      totalDistanceM: FIXTURE_LENGTH_M,
-      totalAscentM: 0,
-      ...overrides,
-    };
-  }
-
-  it('fills a record written before routes carried their own GPX', async () => {
-    const repo = repository();
-    await repo.put(legacy());
-
-    const result = await backfillRouteSources(repo, [entry]);
-
-    expect(result).toEqual({ filled: ['fixture-route'], orphaned: [] });
-    expect((await repo.get('fixture-route'))?.gpx).toBe(flatGpxText);
-  });
-
-  it('finds the bytes by file when the id has gone from the manifest', async () => {
-    const repo = repository();
-    await repo.put(legacy({ id: 'renamed-in-the-manifest' }));
-
-    const result = await backfillRouteSources(repo, [entry]);
-
-    expect(result.filled).toEqual(['renamed-in-the-manifest']);
-  });
-
-  it('leaves a record it cannot fill exactly where it is, and names it', async () => {
-    // Deleting the rider's record because a file left the build is the destructive
-    // answer. The row stays, loses its sparkline, and cannot be started.
-    const repo = repository();
-    await repo.put(legacy({ id: 'gone', name: 'Gone', file: 'no-longer-bundled.gpx' }));
-
-    const result = await backfillRouteSources(repo, [entry]);
-
-    expect(result).toEqual({ filled: [], orphaned: ['Gone'] });
-    expect(await repo.get('gone')).toBeDefined();
-    expect(storedRouteGeometry(await repo.get('gone')).status).toBe('unavailable');
-  });
-
-  it('touches nothing that already has a source', async () => {
-    const repo = repository();
-    await repo.put(legacy({ gpx: climbGpxText }));
-    const before = await repo.get('fixture-route');
-
-    const result = await backfillRouteSources(repo, [entry]);
-
-    expect(result.filled).toEqual([]);
-    // Not rewritten: updatedAt is a sync layer's conflict signal, not a free field.
-    expect((await repo.get('fixture-route'))?.updatedAt).toBe(before?.updatedAt);
-    expect((await repo.get('fixture-route'))?.gpx).toBe(climbGpxText);
-  });
-
-  it('does not put back a route the rider deleted', async () => {
-    // It repairs records that exist. Seeding decides which exist, and the seeded marker
-    // is what makes a deletion stick; this runs on every boot and must not undo that.
-    const repo = repository();
-
-    const result = await backfillRouteSources(repo, [entry]);
-
-    expect(result).toEqual({ filled: [], orphaned: [] });
-    expect(await repo.list()).toEqual([]);
-  });
-
-  it('leaves an imported route alone: it never had a file and does not need one', async () => {
-    const repo = repository();
-    await repo.put({
-      id: 'imported',
-      updatedAt: '',
-      name: 'Imported',
-      gpx: climbGpxText,
-      totalDistanceM: FIXTURE_LENGTH_M,
-      totalAscentM: 100,
-    });
-
-    const result = await backfillRouteSources(repo, [entry]);
-
-    expect(result).toEqual({ filled: [], orphaned: [] });
   });
 });

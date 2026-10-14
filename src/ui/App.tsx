@@ -351,6 +351,7 @@ function RideApp() {
           onExportAll={() => services.exportAllWorkouts()}
           onImport={importWorkouts}
           onDelete={deleteWorkout}
+          builtIn={services.builtInWorkouts}
           onNavigate={navigate}
           onOpenProfile={() => setProfileOpen(true)}
         />
@@ -392,6 +393,7 @@ function RideApp() {
         onImport={importRoutes}
         onLoadGeometry={services.loadRouteGeometry}
         onDelete={deleteRoute}
+        builtIn={services.builtInRoutes}
         onNavigate={navigate}
         onOpenProfile={() => setProfileOpen(true)}
       />

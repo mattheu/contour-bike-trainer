@@ -21,13 +21,13 @@ import { systemClock } from '../ride/clock';
 import { RideEngine, type EngineSnapshot } from '../ride/engine';
 import { RideRecorder } from '../ride/recorder';
 import {
-  backfillRouteSources,
+  builtInRouteIds,
   registerRoute,
   seedRoutes,
   storedRouteGeometry,
   type BundledRoute,
 } from '../ride/routes';
-import { seedWorkouts } from '../ride/workouts';
+import { builtInWorkoutIds, seedWorkouts } from '../ride/workouts';
 import { planRouteImport } from '../route/import';
 import type { Route as RouteGeometry } from '../route/types';
 import { TrainerTickSource } from '../ride/tick';
@@ -343,6 +343,16 @@ function applySeed(): void {
 
 applySeed();
 
+/**
+ * Which routes and workouts this build supplies, read once after applySeed so a route the
+ * Playwright seed hook registered counts exactly as a bundled one does.
+ *
+ * A set rather than a call per row: the screens take it as a prop and memoise against it,
+ * and a fresh Set on every render would invalidate every one of those.
+ */
+export const builtInRoutes: ReadonlySet<string> = builtInRouteIds();
+export const builtInWorkouts: ReadonlySet<string> = builtInWorkoutIds();
+
 let settings: Settings = { ...DEFAULT_SETTINGS };
 
 export function currentSettings(): Readonly<Settings> {
@@ -352,42 +362,20 @@ export function currentSettings(): Readonly<Settings> {
 /**
  * Start-up work the screens await before reading storage.
  *
- * Seeding happens once per install, and this is where "once" is decided. Each marker is
- * written only after its own pass has resolved: a pass that threw halfway leaves the
- * marker false and runs again on the next boot, which is the behaviour to want — the
- * alternative is an install permanently missing the routes that pass did not reach.
+ * Both passes run on every boot and neither keeps a marker, because neither needs one: a
+ * built-in route or workout cannot be deleted, so an absent record can only be one this
+ * install has never written. The markers that used to live in Settings existed solely to
+ * tell a deleted record from a new one, and that question no longer arises.
  *
- * Marked per collection rather than once for both, so a failure seeding workouts cannot
- * cost the routes their marker and have them rewritten on every boot afterwards.
- *
- * The two writes are also the reason a deleted route or workout stays deleted. Without
- * them the seed sees an absent record, cannot tell it from one it has never written, and
- * puts it back.
+ * The two passes write by different rules, each stated where it is implemented: routes
+ * also rewrite what the manifest has changed, workouts never rewrite anything.
  */
 export const ready: Promise<void> = (async () => {
   try {
     settings = await storage.settings.get();
 
-    await seedRoutes(storage.routes, settings.routesSeeded);
-    if (!settings.routesSeeded) {
-      await storage.settings.put({ routesSeeded: true });
-      settings = { ...settings, routesSeeded: true };
-    }
-
-    // Repair, not seeding, which is why it is outside the marker: a route written before
-    // records carried their own GPX has none, and an install that was already seeded is
-    // exactly the one that needs filling in. It adds nothing the rider removed.
-    //
-    // What it could not fill is reported by the row itself rather than from here. A boot
-    // alert would sit in the store until the rider opened a ride screen and then surface
-    // against an unrelated route; the routes list says it where the route is.
-    await backfillRouteSources(storage.routes);
-
-    const seeded = await seedWorkouts(storage.workouts, settings.workoutsSeeded);
-    if (!settings.workoutsSeeded) {
-      await storage.settings.put({ workoutsSeeded: true });
-      settings = { ...settings, workoutsSeeded: true };
-    }
+    await seedRoutes(storage.routes);
+    const seeded = await seedWorkouts(storage.workouts);
 
     // A starter that will not parse is a bug in a file we shipped, not in anything the
     // rider did — but it is theirs that is missing, so it says so rather than going quiet.
@@ -1059,13 +1047,24 @@ export async function createWorkout(): Promise<string | null> {
 }
 
 /**
+ * What a built-in record is told when something asks to delete it. The screens do not
+ * offer the control at all, so this is the belt to that braces: a guard here holds for
+ * every caller, including one written after whoever reads this has moved on.
+ */
+const BUILT_IN_REFUSAL = 'it came with this install';
+
+/**
  * Removes this install's record of a route. Nothing cascades, by design and not by
  * omission: a ride carries its own frozen routeId and routeName, and the GPX itself is in
  * the build rather than in the database, so the history and the geometry both survive.
  * A ride on a removed route still opens, still draws its profile and still exports.
+ *
+ * Refuses a route the build supplies. Seeding would write it straight back on the next
+ * boot, so a delete that got past here would read as working and silently undo itself.
  */
 export async function deleteRoute(routeId: string): Promise<DeleteResult> {
   await ready;
+  if (builtInRoutes.has(routeId)) return { status: 'failed', reason: BUILT_IN_REFUSAL };
   try {
     await storage.routes.delete(routeId);
     return { status: 'done' };
@@ -1074,10 +1073,16 @@ export async function deleteRoute(routeId: string): Promise<DeleteResult> {
   }
 }
 
-/** No cascade: a workout is one record, and the rides that reference it keep their own
- * frozen workoutId and workoutName, so deleting it rewrites no history. */
+/**
+ * No cascade: a workout is one record, and the rides that reference it keep their own
+ * frozen workoutId and workoutName, so deleting it rewrites no history.
+ *
+ * Refuses a starter the build supplies, for the same reason deleteRoute does. A starter
+ * stays editable — gutting one is allowed, removing it is not.
+ */
 export async function deleteWorkout(workoutId: string): Promise<DeleteResult> {
   await ready;
+  if (builtInWorkouts.has(workoutId)) return { status: 'failed', reason: BUILT_IN_REFUSAL };
   try {
     await storage.workouts.delete(workoutId);
     return { status: 'done' };

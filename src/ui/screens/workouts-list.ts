@@ -175,6 +175,21 @@ export function workoutMeta(row: WorkoutRow): string | null {
 }
 
 /**
+ * Whether a row offers Delete at all.
+ *
+ * A starter the build supplies is not the rider's to delete — seeding would write it back
+ * on the next boot — so the control is absent rather than present and refused. Editing one
+ * is still allowed, including into something unrecognisable: what cannot be done is
+ * removing the row.
+ *
+ * Here rather than in the component so the rule is testable without rendering, and so the
+ * one place that decides it is the one place both the row and its armed state read.
+ */
+export function canDeleteWorkout(workoutId: string, builtIn: ReadonlySet<string>): boolean {
+  return !builtIn.has(workoutId);
+}
+
+/**
  * Deleting a workout is the rides list's two-press confirm with its own words: a file the
  * rider may have spent an evening writing, with no backup behind it, so it says plainly
  * that this is permanent rather than implying it.

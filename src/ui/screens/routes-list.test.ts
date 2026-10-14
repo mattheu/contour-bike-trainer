@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Ride, Route as StoredRoute } from '../../storage/types';
-import { ROUTE_DELETE_WORDING, rideCounts, riddenLabel, sortRoutes } from './routes-list';
+import {
+  ROUTE_DELETE_WORDING,
+  canRemoveRoute,
+  rideCounts,
+  riddenLabel,
+  sortRoutes,
+} from './routes-list';
 
 function ride(routeId: string | null, id: string): Ride {
   return {
@@ -74,13 +80,33 @@ describe('ROUTE_DELETE_WORDING', () => {
   });
 
   it('scopes the removal to this install, which is the whole of what happens', () => {
-    // A promise seedRoutes keeps: the seeded marker stops a removed route being written
-    // back on the next boot. Narrower than deleting a ride, wider than hiding a row.
+    // Only an imported route can be removed now, and nothing else in the app is touched:
+    // the rides on it keep their own name and figures. Download sits beside Remove, which
+    // is how the rider keeps the GPX this install is the only copy of.
     expect(ROUTE_DELETE_WORDING.prompt).toBe('Remove from this install?');
   });
 
   it('repeats one verb across the control and its confirm', () => {
     expect(ROUTE_DELETE_WORDING.confirm).toBe(ROUTE_DELETE_WORDING.action);
     expect(ROUTE_DELETE_WORDING.cancel).toBe('Keep');
+  });
+});
+
+describe('canRemoveRoute', () => {
+  const builtIn: ReadonlySet<string> = new Set(['test-rolling', 'alpe-dhuez']);
+
+  it('offers no Remove on a route the build supplies', () => {
+    // Absent, not disabled. Seeding writes a built-in route back on the next boot, so a
+    // control here would be a question with one honest answer.
+    expect(canRemoveRoute('test-rolling', builtIn)).toBe(false);
+  });
+
+  it('offers Remove on a route the rider imported', () => {
+    expect(canRemoveRoute('a-minted-uuid', builtIn)).toBe(true);
+  });
+
+  it('offers Remove once a route has left the manifest', () => {
+    // The way out for a stale record: drop the entry and the id stops being built in.
+    expect(canRemoveRoute('test-rolling', new Set(['alpe-dhuez']))).toBe(true);
   });
 });

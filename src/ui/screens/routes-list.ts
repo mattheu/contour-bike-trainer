@@ -26,23 +26,36 @@ export function sortRoutes(routes: readonly StoredRoute[]): StoredRoute[] {
 }
 
 /**
+ * Whether a row offers Remove at all.
+ *
+ * A route the build supplies is not the rider's to remove — seeding would write it back on
+ * the next boot — so the control is absent rather than present and refused. Absent, not
+ * disabled: a disabled control is a promise that something could happen here, and nothing
+ * can. Everything else on the row is unaffected; a built-in route still downloads and
+ * still rides.
+ *
+ * Here rather than in the component so the rule is testable without rendering, and so the
+ * one place that decides it is the one place both the row and its armed state read.
+ */
+export function canRemoveRoute(routeId: string, builtIn: ReadonlySet<string>): boolean {
+  return !builtIn.has(routeId);
+}
+
+/**
  * Removing a route is the rides list's two-press confirm with its own words, and the
  * words matter because the act is not the same one.
  *
  * Deleting a ride destroys the only copy of something that cannot be reconstructed, so it
  * says "can't be undone". What goes with a route is this install's record of it: nothing
- * that references it is touched, and the GPX is still in the build or still on the disk it
- * was imported from. Saying "can't be undone" here would be borrowing weight from the
- * rides list that this action has not got.
+ * that references it is touched, and the rides on it keep their own name and figures.
  *
- * Narrower than it was, now that a route carries its own GPX: an imported route the rider
- * no longer has the file for is gone for good, and the wording does not say so. Download
- * sits next to Remove on every row, which is the honest answer to that for now.
- *
- * "From this install" is a promise seedRoutes can now keep: the seeded marker in Settings
- * means a removed route is not written back on the next boot. It is the honest scope —
- * narrower than deleting a ride, wider than hiding a row — and it would have been a lie
- * before that marker existed.
+ * "From this install" survives a change that narrowed what it covers. Only an imported
+ * route can be removed now — a built-in one has no control at all — and for an imported
+ * route this install is where the only copy lives, so Remove does destroy it. The wording
+ * stays because the scope it names is still true and still the useful half of the claim:
+ * nothing leaves but this install's record, and Download sits beside Remove on every row
+ * so the rider can take the GPX with them first. What it no longer implies is that the
+ * route is safe in the build, and nothing on the row says it is.
  */
 export const ROUTE_DELETE_WORDING = {
   /** Names the icon button, and the verb the confirm repeats. */

@@ -29,7 +29,13 @@ import {
   type DeleteResult,
 } from './ride-delete';
 import { routeImportAlert, type RouteImportResult } from './routes-import';
-import { ROUTE_DELETE_WORDING, rideCounts, riddenLabel, sortRoutes } from './routes-list';
+import {
+  ROUTE_DELETE_WORDING,
+  canRemoveRoute,
+  rideCounts,
+  riddenLabel,
+  sortRoutes,
+} from './routes-list';
 import { Selectable } from './Selectable';
 import { useAsync } from './use-async';
 
@@ -59,6 +65,10 @@ interface RoutesProps {
   onLoadGeometry: (routeId: string) => Promise<RouteGeometry | null>;
   /** Takes nothing with it — a ride on this route keeps its own name and geometry. */
   onDelete: (routeId: string) => Promise<DeleteResult>;
+  /** The ids this build supplies: see services.builtInRoutes. A row in here offers no
+   * Remove control, because a route that came with the install is not the rider's to
+   * remove and seeding would write it back anyway. */
+  builtIn: ReadonlySet<string>;
   onNavigate: (screen: ListScreen) => void;
   onOpenProfile: () => void;
 }
@@ -82,6 +92,7 @@ export function Routes({
   onImport,
   onLoadGeometry,
   onDelete,
+  builtIn,
   onNavigate,
   onOpenProfile,
 }: RoutesProps) {
@@ -92,17 +103,15 @@ export function Routes({
   const clearAlert = useCallback(() => setAlert(null), []);
 
   // The confirm state machine is ride-delete.ts, which is about an id and two presses
-  // rather than about rides. Narrowed to what is on screen, so a route that leaves the
-  // list takes its question with it rather than staying armed behind it.
+  // rather than about rides. Narrowed to the rows that actually offer Remove, so a route
+  // that leaves the list takes its question with it rather than staying armed behind it —
+  // and a built-in route cannot be armed at all, however the press was reached.
   const [requested, setRequested] = useState<Armed>(null);
-  const armed = useMemo(
-    () =>
-      retainArmed(
-        requested,
-        ordered.map((route) => route.id),
-      ),
-    [requested, ordered],
+  const removable = useMemo(
+    () => ordered.filter((route) => canRemoveRoute(route.id, builtIn)).map((route) => route.id),
+    [ordered, builtIn],
   );
+  const armed = useMemo(() => retainArmed(requested, removable), [requested, removable]);
 
   const press = useCallback(
     (route: StoredRoute) => {
@@ -138,6 +147,7 @@ export function Routes({
               key={route.id}
               route={route}
               ridden={riddenLabel(counts.get(route.id) ?? 0)}
+              removable={canRemoveRoute(route.id, builtIn)}
               armed={isArmed(armed, route.id)}
               onSelect={onSelect}
               onDownload={onDownload}
@@ -210,6 +220,7 @@ function Footer({
 function RouteRow({
   route,
   ridden,
+  removable,
   armed,
   onSelect,
   onDownload,
@@ -219,6 +230,7 @@ function RouteRow({
 }: {
   route: StoredRoute;
   ridden: string;
+  removable: boolean;
   armed: boolean;
   onSelect: (routeId: string) => void;
   onDownload: (routeId: string) => void;
@@ -271,22 +283,26 @@ function RouteRow({
                 <path d="M8,1.5 V10.5 M4.5,7.5 L8,11 L11.5,7.5 M2,13.5 H14" />
               </svg>
             </IconButton>
-            <IconButton
-              label={`${ROUTE_DELETE_WORDING.action} ${route.name}`}
-              onClick={onPressDelete}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.25"
-                aria-hidden="true"
+            {/* Absent on a built-in route rather than disabled: a disabled control says
+                this could happen and currently cannot, and removing one never can. */}
+            {removable && (
+              <IconButton
+                label={`${ROUTE_DELETE_WORDING.action} ${route.name}`}
+                onClick={onPressDelete}
               >
-                <path d="M2.5,4 H13.5 M6,4 V2.5 H10 V4 M4,4 V13.5 H12 V4 M6.5,6.5 V11 M9.5,6.5 V11" />
-              </svg>
-            </IconButton>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  aria-hidden="true"
+                >
+                  <path d="M2.5,4 H13.5 M6,4 V2.5 H10 V4 M4,4 V13.5 H12 V4 M6.5,6.5 V11 M9.5,6.5 V11" />
+                </svg>
+              </IconButton>
+            )}
           </ButtonGroup>
         )
       }
@@ -294,7 +310,8 @@ function RouteRow({
       {/* A route this install has no GPX for cannot be ridden, so its row is inert rather
           than a link that fails once the rider is on the bike — the same treatment the
           workouts list gives a plan that will not parse, down to saying why in the line
-          its region would use. Remove stays available, which is the way out. */}
+          its region would use. Remove is the way out where the row offers it, which is
+          any route the build does not supply. */}
       <Selectable onSelect={rideable ? () => onSelect(route.id) : null}>
         <ListRow
           columns={ROUTES_COLUMNS}

@@ -82,6 +82,19 @@ export function bundledRoute(id: string): BundledRoute | undefined {
 }
 
 /**
+ * The ids this build supplies, which is the whole definition of a built-in route: derived
+ * from the manifest on every read rather than stored as a flag on the record, so there is
+ * no second copy of the truth to fall out of step with routes/manifest.json.
+ *
+ * One property of that, deliberate: drop an entry from the manifest and its stored record
+ * stops being built in, which is how a stale route the build no longer supplies gets a way
+ * out of an install. Nothing else gives the rider a way to remove one.
+ */
+export function builtInRouteIds(routes: BundledRoute[] = bundledRoutes()): ReadonlySet<string> {
+  return new Set(routes.map((route) => route.id));
+}
+
+/**
  * What a stored route has to ride on, or why it has nothing.
  *
  * Total rather than throwing, because every caller is a screen. The old version read the
@@ -107,7 +120,7 @@ export function storedRouteGeometry(route: StoredRoute | undefined): StoredGeome
     return { status: 'unavailable', reason: 'it is no longer in this install' };
   }
   if (route.gpx === undefined || route.gpx.trim() === '') {
-    // Backfill could not reach it: its file left the build. See backfillRouteSources.
+    // Nothing in the build to seed it from: its manifest entry has gone. See seedRoutes.
     return { status: 'unavailable', reason: 'this install has no GPX for it' };
   }
   try {
@@ -119,108 +132,63 @@ export function storedRouteGeometry(route: StoredRoute | undefined): StoredGeome
 }
 
 export interface SeedResult {
-  /** Ids written, because the repository had never seen them. */
+  /** Ids written, because they were absent or the manifest entry had changed. */
   written: string[];
-  /** Ids already present, left exactly as the rider has them. Empty when the pass was
-   * skipped outright, because then nothing was looked at. */
+  /** Ids already present and identical to the manifest, left alone. */
   unchanged: string[];
 }
 
+/** Every field a record takes from its manifest entry, the GPX included: a corrected
+ * figure and a re-exported track both have to count as a change. updatedAt is excluded
+ * because the repository stamps it, and id because it is what joined the two. */
+function sameRoute(stored: StoredRoute, next: Omit<StoredRoute, 'updatedAt'>): boolean {
+  return (
+    stored.name === next.name &&
+    stored.region === next.region &&
+    stored.description === next.description &&
+    stored.gpx === next.gpx &&
+    stored.file === next.file &&
+    stored.totalDistanceM === next.totalDistanceM &&
+    stored.totalAscentM === next.totalAscentM
+  );
+}
+
 /**
- * Seeds the bundled routes into the repository, using each route's declared id, exactly
- * as seedWorkouts seeds the starters.
+ * Seeds the bundled routes into the repository on every boot, using each route's declared
+ * id: write what is absent, rewrite what differs from the manifest.
  *
- * Two rules, and it takes both to make a deletion stick.
+ * Deliberately not the rule seedWorkouts uses, and the difference is what each record is.
+ * A route is not editable — there is no screen that changes one — and a built-in route is
+ * not deletable either, so nothing the rider owns can be sitting in one of these records.
+ * That makes the manifest their single source, and a figure corrected in it should reach an
+ * install that has already been used rather than only a fresh database. A starter workout is
+ * the opposite case: see seedWorkouts.
  *
- * Present means left alone, whatever the manifest now says. This used to compare the
- * stored record to the manifest entry and rewrite any route that differed, which made the
- * routes list a mirror of the build rather than something the rider owns.
+ * It is also what repairs a record written by an older build. A route that predates
+ * records carrying their own GPX differs from its manifest entry, so this rewrites it with
+ * the bytes — there is no separate backfill pass, because "changed" already covers it.
  *
- * Absent is only written on an install that has never been seeded, which is what `seeded`
- * says. On its own the first rule is not enough: a route the rider deleted is absent, and
- * absent is indistinguishable from never-seen, so without the marker every deletion would
- * be undone by the next reload.
+ * Idempotent: an identical route is not rewritten, so booting twice does not churn
+ * updatedAt, which a later sync layer would read as a genuine edit.
  *
- * The marker is a setting rather than an argument this function derives, because the only
- * honest moment to set it is after a whole pass has finished — a pass that threw halfway
- * must run again. Its caller, src/ui/services.ts, owns that ordering.
- *
- * The cost, accepted: a route added to routes/manifest.json later, or an entry corrected
- * in it, never reaches an install that has already booted. Only a fresh database picks
- * either up.
+ * Imported routes are untouched. Their ids are minted, so no manifest entry claims one.
  */
 export async function seedRoutes(
   repository: Repository<StoredRoute>,
-  /** Whether this install has already had a seeding pass complete. */
-  seeded: boolean,
   routes: BundledRoute[] = bundledRoutes(),
 ): Promise<SeedResult> {
   const result: SeedResult = { written: [], unchanged: [] };
-  if (seeded) return result;
 
   for (const entry of routes) {
+    const next = toStoredRoute(entry);
     const existing = await repository.get(entry.id);
-    if (existing !== undefined) {
+    if (existing !== undefined && sameRoute(existing, next)) {
       result.unchanged.push(entry.id);
       continue;
     }
     // updatedAt is stamped by the repository on write.
-    await repository.put({ ...toStoredRoute(entry), updatedAt: '' });
+    await repository.put({ ...next, updatedAt: existing?.updatedAt ?? '' });
     result.written.push(entry.id);
-  }
-
-  return result;
-}
-
-export interface BackfillResult {
-  /** Ids given their GPX out of the build, because the record had none. */
-  filled: string[];
-  /** Names of records with no source and nothing in the build to fill it from. */
-  orphaned: string[];
-}
-
-/**
- * Fills in the GPX of records written before a route carried one.
- *
- * Not seeding, and deliberately not gated on the seeded marker. Seeding decides whether a
- * route should exist in this install at all, and the marker is what makes a deletion
- * stick; this repairs records that already exist and were written by an older build, so
- * skipping it on a seeded install would mean it never ran anywhere it was needed. It
- * writes nothing a record already has and adds nothing the rider removed.
- *
- * The lookup is by id first and by file second. The id is the join routes/manifest.json
- * promises never to change — the file name it may; and the file is the only key left when
- * the id itself has gone from the manifest, which is how a route renamed in the build
- * still finds its bytes.
- *
- * What cannot be filled is left exactly as it is. The alternative is deleting a record
- * the rider may have ridden a dozen times, on the strength of a file having left the
- * build — the destructive answer to a problem whose honest answer is a row that says so.
- * Such a route keeps its name, its distances and its ride count, loses its sparkline, and
- * cannot be started: storedRouteGeometry returns unavailable for it everywhere. The names
- * come back so the caller can say which ones, once, rather than per row.
- */
-export async function backfillRouteSources(
-  repository: Repository<StoredRoute>,
-  routes: BundledRoute[] = bundledRoutes(),
-): Promise<BackfillResult> {
-  const result: BackfillResult = { filled: [], orphaned: [] };
-
-  const byId = new Map(routes.map((route) => [route.id, route.gpx]));
-  const byFile = new Map(routes.map((route) => [route.file, route.gpx]));
-
-  for (const stored of await repository.list()) {
-    if (stored.gpx !== undefined && stored.gpx.trim() !== '') continue;
-
-    const gpx =
-      byId.get(stored.id) ?? (stored.file === undefined ? undefined : byFile.get(stored.file));
-    if (gpx === undefined) {
-      result.orphaned.push(stored.name);
-      continue;
-    }
-
-    await repository.put({ ...stored, gpx });
-    result.filled.push(stored.id);
   }
 
   return result;

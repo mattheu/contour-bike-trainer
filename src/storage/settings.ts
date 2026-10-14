@@ -4,12 +4,6 @@ export const SETTINGS_KEY = 'contour.settings';
 
 /** Where this document says "default", it means this table. */
 export const DEFAULT_SETTINGS: Settings = {
-  // False, and a blob written before these existed has no key for them, so it parses as
-  // false too. That is the safe direction: an install that has already booted is read as
-  // unseeded and seeds once more on the first boot after this change — which writes
-  // nothing, because every record is already there and present means left alone.
-  routesSeeded: false,
-  workoutsSeeded: false,
   controlMode: 'simulation',
   trainerDifficulty: 50,
   riderMassKg: 75,
@@ -46,10 +40,6 @@ function nullableNum(value: unknown): unknown {
   return num(value);
 }
 
-function bool(value: unknown): unknown {
-  return typeof value === 'boolean' ? value : undefined;
-}
-
 function oneOf<T extends string>(allowed: T[]): Reader {
   return (value) => (typeof value === 'string' && allowed.includes(value as T) ? value : undefined);
 }
@@ -60,8 +50,6 @@ function oneOf<T extends string>(allowed: T[]): Reader {
  * never break a new build, which matters because these are read on every ride.
  */
 const READERS: { [K in keyof Settings]: Reader } = {
-  routesSeeded: bool,
-  workoutsSeeded: bool,
   controlMode: oneOf(CONTROL_MODES),
   trainerDifficulty: num,
   riderMassKg: num,

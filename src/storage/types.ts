@@ -49,16 +49,17 @@ export interface Route extends StoredRecord {
    * that carries its own file does not need one in the build.
    *
    * Optional only because a record written before this field existed has none. Boot
-   * backfills those from the bundle; see backfillRouteSources in src/ride/routes.ts for
-   * what happens to the ones it cannot reach.
+   * reseeds those out of the bundle, because a record with no GPX differs from its
+   * manifest entry; see seedRoutes in src/ride/routes.ts, and storedRouteGeometry for
+   * what a record no manifest entry claims looks like on the list.
    */
   gpx?: string;
   /**
    * Which file in the build this came from, where it came from one at all. Provenance
    * now, not a join: nothing loads geometry through it, and an imported route has none.
-   * It survives because it is the one key that can find a sourceless legacy record's GPX
-   * in the bundle, and that backfill has to keep working on an install that boots in a
-   * year's time.
+   * It survives because it is the provenance a downloaded GPX is named from, and because
+   * a route's file may be renamed in the build without its id changing — which is the one
+   * direction routes/manifest.json allows.
    */
   file?: string;
   totalDistanceM: number;
@@ -146,22 +147,9 @@ export interface Workout extends StoredRecord {
 export type ControlMode = 'erg' | 'simulation';
 export type Units = 'metric' | 'imperial';
 
+/** Rider preferences, and nothing else: no install state lives here. Seeding needs none,
+ * because a built-in record cannot be deleted and so absent means never seen. */
 export interface Settings {
-  /**
-   * Whether the bundled routes and the starter workouts have been seeded into this
-   * install. Not a rider preference, which is what the rest of this blob is — they live
-   * here because Settings is the one small record every boot already reads, and an
-   * install-state record of its own would be a new store for two booleans.
-   *
-   * They are what makes a deletion survive a reload. Without them seeding writes back
-   * whatever is missing on every boot, and missing is exactly what a deleted record looks
-   * like. Set only after a seeding pass has finished: see src/ui/services.ts.
-   *
-   * Deliberately not on RideSettings, which is the snapshot frozen into a Ride. Nothing
-   * here reaches a ride record.
-   */
-  routesSeeded: boolean;
-  workoutsSeeded: boolean;
   controlMode: ControlMode;
   trainerDifficulty: number;
   riderMassKg: number;

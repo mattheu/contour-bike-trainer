@@ -158,9 +158,10 @@ rather than a parsed tree is what makes that possible.
 condensed format reference sits beside the text box, so you need this page for the detail
 rather than for the basics.
 
-The six that ship with the app are seeded on first run and are yours after that — edit or delete
-them like any other, and a deleted one stays deleted. They live in [`workouts/`](../workouts/) in
-the project if you want the originals back.
+The six that ship with the app are yours to edit — your changes survive, because a starter is only
+written on the first run and never overwritten afterwards. They cannot be deleted, which is the one
+way they differ from a workout you write. They live in [`workouts/`](../workouts/) in the project
+if you want to read an original back.
 
 **Download** on a row gives you that workout's YAML, exactly as you wrote it. Below the list,
 **Download all workouts** gives you the whole library as one file, each workout separated by a

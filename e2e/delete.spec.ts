@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import {
   FIXTURE_ROUTE,
@@ -128,5 +129,63 @@ test.describe('deleting a ride', () => {
 
     await nav(page, 'Rides').click();
     await expect(page.getByText('No rides match these filters')).toBeVisible();
+  });
+});
+
+/** The track <name> inside the fixture GPX, which is what an imported route is called. */
+const IMPORTED_ROUTE_NAME = 'Fixture: 200 m at -4 %';
+
+/** A starter workout, by the name in its own YAML. */
+const STARTER_WORKOUT_NAME = 'Sweet spot 3x9';
+
+/**
+ * What came with the install is not the rider's to remove, and the claim worth testing is
+ * the one a rider could check: a built-in row has no Remove control at all, an imported
+ * one does, and what they removed is still gone after a reload.
+ *
+ * On IndexedDB rather than ?storage=memory, because a reload is the whole point: in-memory
+ * storage starts empty on the second boot, so a deleted route would appear to stay deleted
+ * whatever the seeding did.
+ */
+test.describe('built-in routes and workouts', () => {
+  test('cannot be removed, while an imported route can and stays removed', async ({ page }) => {
+    await openApp(page);
+
+    // The bundled route keeps everything else a row offers; only Remove is absent.
+    await expect(page.getByRole('button', { name: `Remove ${ROLLING_ROUTE_NAME}` })).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: `Download ${ROLLING_ROUTE_NAME} as GPX` }),
+    ).toHaveCount(1);
+
+    // A starter workout, same rule, and Edit survives it: a starter can be rewritten,
+    // just not removed.
+    await nav(page, 'Workouts').click();
+    await expect(page.getByRole('button', { name: `Delete ${STARTER_WORKOUT_NAME}` })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole('group', { name: `${STARTER_WORKOUT_NAME} actions` })).toHaveCount(
+      1,
+    );
+
+    await nav(page, 'Routes').click();
+    await page
+      .locator('input[type="file"]')
+      .setInputFiles(fileURLToPath(new URL('./fixtures/descent-4pct-200m.gpx', import.meta.url)));
+    await expect(page.getByRole('link', { name: IMPORTED_ROUTE_NAME })).toHaveCount(1);
+
+    // An imported route is the one kind this install holds the only copy of, so it is the
+    // one kind with a way out.
+    const remove = page.getByRole('button', { name: `Remove ${IMPORTED_ROUTE_NAME}` });
+    await expect(remove).toHaveCount(1);
+    await remove.click();
+    await expect(page.getByText('Remove from this install?')).toBeVisible();
+    await page.getByRole('button', { name: 'Remove', exact: true }).click();
+    await expect(page.getByText(`${IMPORTED_ROUTE_NAME} removed.`)).toBeVisible();
+
+    // Storage, not React state: the next boot reseeds, and seeding must not resurrect a
+    // route no manifest entry claims.
+    await page.reload();
+    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: IMPORTED_ROUTE_NAME })).toHaveCount(0);
   });
 });

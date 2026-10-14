@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { MemoryRepository } from '../storage/memory';
 import type { Workout as StoredWorkout } from '../storage/types';
 import { expandWorkout } from '../workout/expand';
-import { bundledWorkouts, seedWorkouts, type ManifestWorkout } from './workouts';
+import { builtInWorkoutIds, bundledWorkouts, seedWorkouts, type ManifestWorkout } from './workouts';
 
 function repository(): MemoryRepository<StoredWorkout> {
   return new MemoryRepository<StoredWorkout>();
@@ -55,6 +55,30 @@ describe('bundledWorkouts', () => {
   });
 });
 
+describe('builtInWorkoutIds', () => {
+  it('is exactly what workouts/manifest.json declares', () => {
+    const ids = builtInWorkoutIds();
+    expect(ids.has('sweet-spot-50')).toBe(true);
+    expect(ids.size).toBe(6);
+  });
+
+  it('claims a starter whose YAML will not parse', () => {
+    // It is in the build either way, and a parse error is not a reason to offer a Delete
+    // control that is otherwise never there. The fix is the editor, not the bin.
+    expect(builtInWorkoutIds([{ id: 'broken', file: 'broken.yaml' }]).has('broken')).toBe(true);
+  });
+
+  it('does not claim a workout the rider created', () => {
+    expect(builtInWorkoutIds().has('a-minted-uuid')).toBe(false);
+  });
+
+  it('stops claiming a starter once its manifest entry is gone', () => {
+    // Deliberate, and the only way a stale starter gets out of an install.
+    const ids = builtInWorkoutIds([{ id: 'kept', file: 'kept.yaml' }]);
+    expect([...ids]).toEqual(['kept']);
+  });
+});
+
 describe('seedWorkouts', () => {
   const bundled = {
     workouts: bundledWorkouts([{ id: 'good', file: 'good.yaml' }], new Map([['good.yaml', GOOD]]))
@@ -64,7 +88,7 @@ describe('seedWorkouts', () => {
 
   it('writes every starter on first run, keeping the YAML the rider will edit', async () => {
     const repo = repository();
-    const result = await seedWorkouts(repo, false, bundled);
+    const result = await seedWorkouts(repo, bundled);
 
     expect(result.written).toEqual(['good']);
     const stored = await repo.get('good');
@@ -77,31 +101,45 @@ describe('seedWorkouts', () => {
 
   it('is idempotent across boots', async () => {
     const repo = repository();
-    await seedWorkouts(repo, false, bundled);
-    const result = await seedWorkouts(repo, true, bundled);
+    await seedWorkouts(repo, bundled);
+    const result = await seedWorkouts(repo, bundled);
 
     expect(result.written).toEqual([]);
-    // Nothing is looked at once the marker is set, so nothing is reported as unchanged.
-    expect(result.unchanged).toEqual([]);
+    expect(result.unchanged).toEqual(['good']);
     expect(await repo.list()).toHaveLength(1);
   });
 
   it('never overwrites a starter the rider has edited', async () => {
+    // What a rider would check: edit a starter, relaunch, and find their edit. This is
+    // the whole reason workouts seed by a different rule from routes, which do rewrite.
     const repo = repository();
-    await seedWorkouts(repo, false, bundled);
+    await seedWorkouts(repo, bundled);
     const edited = 'name: Mine now\nsteps:\n  - { duration: 5m, power: 80% }\n';
     await repo.put({ id: 'good', name: 'Mine now', source: edited, updatedAt: '' });
 
-    // Even on the boot that still believes it has never seeded, which is the stronger
-    // claim: present means left alone whatever the marker says.
-    await seedWorkouts(repo, false, bundled);
+    await seedWorkouts(repo, bundled);
+
+    expect((await repo.get('good'))?.source).toBe(edited);
+  });
+
+  it('leaves an edited starter alone even when the file in the build has changed', async () => {
+    const repo = repository();
+    await seedWorkouts(repo, bundled);
+    const edited = 'name: Mine now\nsteps:\n  - { duration: 5m, power: 80% }\n';
+    await repo.put({ id: 'good', name: 'Mine now', source: edited, updatedAt: '' });
+
+    const corrected = bundledWorkouts(
+      [{ id: 'good', file: 'good.yaml' }],
+      new Map([['good.yaml', GOOD.replace('Good one', 'Good one, corrected')]]),
+    );
+    await seedWorkouts(repo, corrected);
 
     expect((await repo.get('good'))?.source).toBe(edited);
   });
 
   it('carries the reasons a starter was skipped through to the caller', async () => {
     const repo = repository();
-    const result = await seedWorkouts(repo, false, {
+    const result = await seedWorkouts(repo, {
       workouts: [],
       skipped: ['"broken" was skipped.'],
     });
@@ -110,30 +148,16 @@ describe('seedWorkouts', () => {
     expect(await repo.list()).toEqual([]);
   });
 
-  it('still reports a broken starter on an install that has already seeded', async () => {
-    // A file we shipped that will not parse is worth saying every boot: the marker stops
-    // the writing, not the reading.
+  it('puts a starter back if something managed to delete it', async () => {
+    // Not a regression: a starter has no Delete control and services refuses the id, so
+    // absent can only mean never seen. Without a marker that is the only reading left.
     const repo = repository();
-
-    const result = await seedWorkouts(repo, true, {
-      workouts: [],
-      skipped: ['"broken" was skipped.'],
-    });
-
-    expect(result.skipped).toEqual(['"broken" was skipped.']);
-  });
-
-  it('does not bring back a starter the rider deleted', async () => {
-    // Boot, delete, reload. The hole this closes was real: without the marker an absent
-    // starter is written again, and the rider's deletion is undone by the next reload.
-    const repo = repository();
-    await seedWorkouts(repo, false, bundled);
+    await seedWorkouts(repo, bundled);
     await repo.delete('good');
 
-    const result = await seedWorkouts(repo, true, bundled);
+    const result = await seedWorkouts(repo, bundled);
 
-    expect(result.written).toEqual([]);
-    expect(await repo.get('good')).toBeUndefined();
-    expect(await repo.list()).toEqual([]);
+    expect(result.written).toEqual(['good']);
+    expect(await repo.get('good')).toBeDefined();
   });
 });

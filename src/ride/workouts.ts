@@ -76,6 +76,25 @@ export function bundledWorkouts(
   return { workouts, skipped };
 }
 
+/**
+ * The ids this build supplies, which is the whole definition of a built-in workout:
+ * derived from workouts/manifest.json on every read rather than stored as a flag on the
+ * record, so there is no second copy of the truth to fall out of step with it.
+ *
+ * Read from the manifest rather than from bundledWorkouts, so a starter whose YAML will
+ * not parse is still built in. It is in the build either way, and a parse error is not a
+ * reason to offer a Delete control that is otherwise never there.
+ *
+ * One property of that, deliberate: drop an entry from the manifest and its stored record
+ * stops being built in, which is how a stale starter the build no longer supplies gets a
+ * way out of an install. Nothing else gives the rider a way to remove one.
+ */
+export function builtInWorkoutIds(
+  entries: ManifestWorkout[] = manifest.workouts,
+): ReadonlySet<string> {
+  return new Set(entries.map((entry) => entry.id));
+}
+
 function toStoredWorkout(entry: BundledWorkout): Omit<StoredWorkout, 'updatedAt'> {
   return {
     id: entry.id,
@@ -95,25 +114,26 @@ export interface SeedResult {
 }
 
 /**
- * Seeds the starters into the repository, using each one's declared id. The same two
- * rules as seedRoutes, which carries the full reasoning.
+ * Seeds the starters into the repository on every boot, using each one's declared id:
+ * write what is absent, and never touch what is already there.
  *
- * Present means left alone, whatever it now says: rewriting an existing record would
- * silently undo the rider's edit the next time the app started. Absent is written only
- * while `seeded` is false, because a starter the rider deleted is absent too, and without
- * the marker the next reload would bring it back.
+ * Deliberately not the rule seedRoutes uses, and the difference is that a starter is
+ * editable. Rewriting a record because its file in the build differs would silently undo
+ * the rider's edit on the next launch, which is the one thing keeping the YAML they wrote
+ * rather than a parsed tree exists to protect. The cost, accepted: a correction to a
+ * starter's file never reaches an install that has already booted.
+ *
+ * Absent is safe to write because a built-in workout cannot be deleted — see
+ * builtInWorkoutIds and src/ui/services.ts — so absent can only mean never seen.
  *
  * `skipped` is filled either way. A starter that will not parse is a bug in a file we
  * shipped, and an install that has already been seeded should still say so.
  */
 export async function seedWorkouts(
   repository: Repository<StoredWorkout>,
-  /** Whether this install has already had a seeding pass complete. */
-  seeded: boolean,
   bundled: BundledWorkouts = bundledWorkouts(),
 ): Promise<SeedResult> {
   const result: SeedResult = { written: [], unchanged: [], skipped: bundled.skipped };
-  if (seeded) return result;
 
   for (const entry of bundled.workouts) {
     const existing = await repository.get(entry.id);

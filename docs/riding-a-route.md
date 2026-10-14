@@ -25,15 +25,16 @@ Two synthetic routes ship alongside them, named as what they are:
 Clicking a row starts the ride immediately. There is no confirmation step — the row _is_ the
 button.
 
-Each row has **Download**, which gives you that route's GPX file, and **Delete**, which removes it
-from this install. Deleting takes two presses and the route stays gone — the bundled routes are
-seeded once, on first run, not restored on every launch. The GPX is still in the project, so a
-route you delete can be brought back by clearing the app's storage.
+Every row has **Download**, which gives you that route's GPX file.
 
-There is no route import yet. Adding one means dropping a GPX file into the project and adding an
-entry to its manifest, which the project [README](../README.md) covers. Because routes are seeded
-only on first run, a route added to the manifest later will not appear in an install that has
-already been used.
+**Import routes** below the list reads a GPX and adds it. A file holding several tracks becomes
+one route per track, so the file you get from **Download all routes** reads back as the routes it
+came from rather than as one enormous ride.
+
+A route you imported also has **Remove**, which takes two presses. The five that ship with the app
+do not: built-in routes stay, and they are refreshed from the project on every launch, so a route
+corrected or added there reaches you. Removing an imported route destroys the only copy this app
+holds — download it first if you want it back.
 
 ## While you are riding
 
