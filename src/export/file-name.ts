@@ -16,20 +16,27 @@ export function pad(value: number): string {
 }
 
 /**
- * A record's name as a file name: lowercase, runs of anything else collapsed to a single
+ * A record's name as a slug: lowercase, runs of anything else collapsed to a single
  * hyphen. Named after what the rider sees in the list rather than after the id, which is
  * a UUID or a manifest key and means nothing outside the app.
  *
  * The fallback is not decoration. A name made entirely of punctuation, or written in a
  * script this slug cannot carry, leaves nothing behind — and an extension on its own is
  * not a file name.
+ *
+ * Also the label in the ride's URL (ADR-0018), which is the same question asked of the
+ * same names, so it is the same rule rather than a second one that drifts.
  */
-export function contourFileName(name: string, extension: string, fallback: string): string {
+export function slugify(name: string, fallback: string): string {
   const slug = name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
-  return `contour-${slug === '' ? fallback : slug}${extension}`;
+  return slug === '' ? fallback : slug;
+}
+
+export function contourFileName(name: string, extension: string, fallback: string): string {
+  return `contour-${slugify(name, fallback)}${extension}`;
 }
 
 /** One route's stored GPX. */

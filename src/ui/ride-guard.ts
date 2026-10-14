@@ -30,3 +30,15 @@ export function rideAtRisk({ state, sampleCount, savedRideId }: GuardedRide): bo
   if (savedRideId !== null) return false;
   return sampleCount > 0;
 }
+
+/**
+ * What in-app back asks before it leaves a ride. Two guards answer the same question
+ * through different plumbing (ADR-0018): `beforeunload` covers reload and tab close and
+ * is worded by the browser, `popstate` covers back and is worded here.
+ *
+ * It says what is actually at stake rather than "your ride will be lost": leaving does
+ * not end the ride, and forward comes straight back to it. Starting another one is what
+ * tears this one down.
+ */
+export const LEAVE_RIDE_PROMPT =
+  'Leave this ride? It has not been saved, and starting another ride would discard it.';

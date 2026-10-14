@@ -18,16 +18,10 @@ import { returnToAfterDelete, type DeleteOrigin, type DeleteResult } from './scr
 import type { Targets } from './screens/RideSettings';
 import { RiderProfile } from './screens/RiderProfile';
 import { useAsync } from './screens/use-async';
-import { rideAtRisk } from './ride-guard';
+import { LEAVE_RIDE_PROMPT, rideAtRisk } from './ride-guard';
+import { formatHash, parseHash, resolve, rideLabel, type Location } from './routing';
 import * as services from './services';
 import { useRideStore } from './useRideStore';
-
-/**
- * One riding screen, not two: `ride` is whatever is being ridden, and the snapshot's
- * workout decides which of the two screens draws it. `workouts` is a list screen like the
- * other two; the editor is a panel over it rather than a screen of its own.
- */
-type Screen = ListScreen | 'ride' | 'summary';
 
 interface History {
   routes: StoredRoute[];
@@ -35,8 +29,9 @@ interface History {
 }
 
 /**
- * Phase 2 has no router: the screen is one piece of state and every transition is an
- * action the rider took. The store subscription below is the only link to the engine.
+ * The screen comes from the hash (ADR-0018) and everything else is still an action the
+ * rider took. The store subscription below is the only link to the engine, and the engine
+ * remains the source of what is being ridden — the URL is a view of that, never a cause.
  */
 export function App() {
   // ?experiment=1 replaces the ride flow outright. ADR-0000 is still Proposed and this
@@ -73,6 +68,20 @@ function SessionGate() {
     void services.startGuestSession().then(() => setStarted((n) => n + 1));
   }, []);
 
+  /**
+   * The splash is `/`. An install with no session opened on a deeper hash — a bookmark
+   * carried from somewhere else — would otherwise sign in and land on a record it has
+   * never had, so the bar is put back to the screen actually on it.
+   */
+  useEffect(() => {
+    if (session !== 'none') return;
+    const splash = formatHash({ name: 'splash' });
+    if (window.location.hash === '' || window.location.hash === splash) return;
+    // Replaced, not pushed, like every other correction here: back must not return to a
+    // screen this install cannot show.
+    window.location.replace(splash);
+  }, [session]);
+
   if (session === null) return <Loading />;
   if (session === 'none') return <Login onStart={start} />;
   return <RideApp />;
@@ -80,19 +89,24 @@ function SessionGate() {
 
 function RideApp() {
   const snapshot = useRideStore();
-  // Routes is the cold start: pairing moved into the ride settings panel, so there is
-  // nothing to do before choosing something to ride.
-  const [requested, setRequested] = useState<Screen>('routes');
-  const [openRideId, setOpenRideId] = useState<string | null>(null);
-  /** The workout open in the editor, which sits over the list rather than replacing it. */
-  const [editingWorkoutId, setEditingWorkoutId] = useState<string | null>(null);
+  /**
+   * The hash, as a screen. Null is one the app has no screen for; resolve below decides
+   * where that goes.
+   *
+   * hashchange keeps it in step, and the two writes that do not produce one — an
+   * assignment to location.hash fires it a task later, pushState never does — set it
+   * themselves. The gap matters: a render inside it would see the bar and this state
+   * disagree, and the correction below would undo the navigation rather than follow it.
+   */
+  const [location, setLocation] = useState<Location | null>(() => parseHash(window.location.hash));
   /**
    * How the summary was reached, which is the difference between discarding the ride you
-   * just abandoned and deleting one from months ago. Not derived from openRideId: ending
-   * a ride by hand sets that too, so the two paths would be indistinguishable. Set where
-   * the rider makes the choice — starting a ride, or opening a row in the history.
+   * just abandoned and deleting one from months ago. Set where the rider makes the
+   * choice — starting a ride, or opening a row in the history. 'history' is the default
+   * because the only way to arrive without making either choice is to open /rides/:id
+   * cold, and a ride that was in storage before this tab opened is history by definition.
    */
-  const [summaryOrigin, setSummaryOrigin] = useState<DeleteOrigin>('finished');
+  const [summaryOrigin, setSummaryOrigin] = useState<DeleteOrigin>('history');
   const [profileOpen, setProfileOpen] = useState(false);
   // Bumped when an import or a delete lands, which are the two things that change the
   // history without leaving the screen that renders it.
@@ -105,16 +119,34 @@ function RideApp() {
   // screen already rendering it.
   const [workoutsVersion, setWorkoutsVersion] = useState(0);
 
+  useEffect(() => {
+    const read = (): void => setLocation(parseHash(window.location.hash));
+    window.addEventListener('hashchange', read);
+    return () => {
+      window.removeEventListener('hashchange', read);
+    };
+  }, []);
+
+  /**
+   * The label `/ride` carries, written from what the engine holds. Geometry rather than
+   * the name decides whether a route is being ridden: the points are what the engine was
+   * handed, and a record whose name has since gone is still a ride.
+   */
+  const label = rideLabel({
+    workoutName: snapshot.workout?.name ?? null,
+    routeName: snapshot.routeGeometry === null ? null : (snapshot.routeName ?? ''),
+  });
+
   /**
    * A ride that runs out of route ends itself. Deriving the screen rather than pushing it
    * from an effect means the engine's state and what is on the glass cannot disagree.
    * The saved id is part of the condition: until the ride is actually in storage there is
    * no summary to show, and a save that failed leaves the fault strip where it can be read.
    */
-  const screen: Screen =
-    requested === 'ride' && snapshot.state === 'finished' && snapshot.savedRideId !== null
-      ? 'summary'
-      : requested;
+  const finishedRideId =
+    snapshot.state === 'finished' && snapshot.savedRideId !== null ? snapshot.savedRideId : null;
+
+  const resolved = resolve(location, { label, finishedRideId });
 
   /**
    * A ride lives in memory until it is saved, so a reload or a closed tab destroys it.
@@ -150,7 +182,40 @@ function RideApp() {
       services.storage.rides.list(),
     ]);
     return { routes, rides };
-  }, [screen, historyVersion]);
+  }, [resolved.name, historyVersion]);
+
+  const workouts = useAsync(() => services.listWorkouts(), [resolved.name, workoutsVersion]);
+
+  /**
+   * A workout id that names nothing — deleted under an open editor, or typed into the
+   * bar — leaves an editor with no record to edit. The list behind it is what remains, so
+   * the bar says that rather than going on naming an editor that cannot open. Only once
+   * the library has actually loaded: useAsync holds the previous list while it re-reads,
+   * and null here means the first read is still in flight.
+   */
+  const screen: Location =
+    resolved.name === 'workout' &&
+    workouts !== null &&
+    !workouts.some((workout) => workout.id === resolved.workoutId)
+      ? { name: 'workouts' }
+      : resolved;
+
+  const hash = formatHash(screen);
+
+  /**
+   * The bar, corrected to the screen actually on the glass: an unknown hash, the splash
+   * on an install that has a session, a cold /ride, a ride that has just saved itself.
+   *
+   * location.replace rather than history.replaceState, which is the same replacement plus
+   * the hashchange that the listener above is already waiting for — so the correction is
+   * one write to one place and the state follows from it. A replacement rather than a
+   * push because a correction is not somewhere the rider has been, and back must not
+   * return to it. `resolve` is idempotent, so this settles in a single pass.
+   */
+  useEffect(() => {
+    if (window.location.hash === hash) return;
+    window.location.replace(hash);
+  }, [hash, location]);
 
   // All three targets are stored and republished through the snapshot, so the panel is
   // reading what was actually saved rather than local state that only looked saved.
@@ -165,19 +230,60 @@ function RideApp() {
   // store already carries what is being ridden, and this is part of it.
   const geometry = snapshot.routeGeometry;
 
-  const workouts = useAsync(() => services.listWorkouts(), [screen, workoutsVersion]);
-
-  const navigate = useCallback((next: ListScreen) => {
-    setOpenRideId(null);
-    setEditingWorkoutId(null);
-    setRequested(next);
+  /**
+   * The one way the rider moves. An assignment to location.hash rather than pushState,
+   * because it is the one that leaves an entry and fires hashchange; the state is set
+   * alongside it so nothing renders in the task before that event arrives.
+   */
+  const go = useCallback((to: Location) => {
+    window.location.hash = formatHash(to);
+    setLocation(to);
   }, []);
 
-  const startRide = useCallback(async (routeId: string) => {
-    await services.startRide(routeId);
-    setSummaryOrigin('finished');
-    setRequested('ride');
-  }, []);
+  const navigate = useCallback(
+    (next: ListScreen) => {
+      go({ name: next });
+    },
+    [go],
+  );
+
+  /**
+   * The second guard. `beforeunload` cannot see in-app navigation, so back out of a ride
+   * asks here instead: the same question through different plumbing (ADR-0018), and
+   * neither covers the other.
+   *
+   * popstate arrives after the browser has already moved, so staying put means putting
+   * the ride's own entry back on top. Registered only while there is a ride on the glass
+   * and something in it to lose, which is what keeps the question off the list screens.
+   */
+  const guardBack = atRisk && screen.name === 'ride';
+
+  useEffect(() => {
+    if (!guardBack) return;
+    const ask = (): void => {
+      // Back within the ride — there is only one such entry, but a forward press lands
+      // here too — is not leaving it.
+      if (parseHash(window.location.hash)?.name === 'ride') return;
+      if (window.confirm(LEAVE_RIDE_PROMPT)) return;
+      window.history.pushState(null, '', hash);
+      setLocation(parseHash(hash));
+    };
+    window.addEventListener('popstate', ask);
+    return () => {
+      window.removeEventListener('popstate', ask);
+    };
+  }, [guardBack, hash]);
+
+  const startRide = useCallback(
+    async (routeId: string) => {
+      await services.startRide(routeId);
+      setSummaryOrigin('finished');
+      // No label: the engine has just been handed the route, and the correction above
+      // writes what it is actually riding.
+      go({ name: 'ride', label: null });
+    },
+    [go],
+  );
 
   const endRide = useCallback(async () => {
     // Read before the await: ending the ride tears the run down, so by the time the
@@ -186,15 +292,12 @@ function RideApp() {
     const outcome = await services.endRide();
     // A failed save said so in the alert strip; staying on the ride screen keeps that
     // message where the rider can see it. A discarded one never existed, so there is no
-    // summary to show — back to the list it was started from.
+    // summary to show — back to the list it was started from. A saved one needs nothing
+    // here: the engine publishes the id it saved under, and the derivation above turns
+    // /ride into that ride's summary whether the rider ended it or the route ran out.
     if (outcome.status === 'failed') return;
-    if (outcome.status === 'discarded') {
-      setRequested(returnToAfterDelete('finished', wasWorkout));
-      return;
-    }
-    setOpenRideId(outcome.rideId);
-    setRequested('summary');
-  }, [snapshot.workout]);
+    if (outcome.status === 'discarded') navigate(returnToAfterDelete('finished', wasWorkout));
+  }, [navigate, snapshot.workout]);
 
   // One control, three jobs: a route is chosen but not yet started, a ride is running,
   // or a ride is paused. The label the rider reads comes from primaryControlLabel.
@@ -244,20 +347,23 @@ function RideApp() {
     // A failure already raised its own fault; there is nothing to open.
     if (workoutId === null) return;
     setWorkoutsVersion((version) => version + 1);
-    setEditingWorkoutId(workoutId);
-  }, []);
+    go({ name: 'workout', workoutId });
+  }, [go]);
 
   /**
    * A copy of a starter, written the same way and then opened: it is the rider's own
    * workout from the moment it exists, so there is nothing special about the editor it
    * lands in. This is the only way a starter becomes something to change.
    */
-  const duplicateWorkout = useCallback(async (workoutId: string) => {
-    const copyId = await services.duplicateWorkout(workoutId);
-    if (copyId === null) return;
-    setWorkoutsVersion((version) => version + 1);
-    setEditingWorkoutId(copyId);
-  }, []);
+  const duplicateWorkout = useCallback(
+    async (workoutId: string) => {
+      const copyId = await services.duplicateWorkout(workoutId);
+      if (copyId === null) return;
+      setWorkoutsVersion((version) => version + 1);
+      go({ name: 'workout', workoutId: copyId });
+    },
+    [go],
+  );
 
   const saveWorkout = useCallback(async (workoutId: string, source: string) => {
     const result = await services.saveWorkout(workoutId, source);
@@ -290,11 +396,14 @@ function RideApp() {
     return result;
   }, []);
 
-  const startWorkout = useCallback(async (workoutId: string) => {
-    await services.startWorkout(workoutId);
-    setSummaryOrigin('finished');
-    setRequested('ride');
-  }, []);
+  const startWorkout = useCallback(
+    async (workoutId: string) => {
+      await services.startWorkout(workoutId);
+      setSummaryOrigin('finished');
+      go({ name: 'ride', label: null });
+    },
+    [go],
+  );
 
   const changeTargets = useCallback((next: Targets) => {
     void services.setTargetPowerW(next.powerW);
@@ -304,7 +413,7 @@ function RideApp() {
 
   // A workout is running exactly when the snapshot says so, which is what decides the
   // screen: the workout screen has no route under it, so it never waits for geometry.
-  if (screen === 'ride' && settings !== null && snapshot.workout !== null) {
+  if (screen.name === 'ride' && settings !== null && snapshot.workout !== null) {
     return (
       <WorkoutScreen
         snapshot={snapshot}
@@ -330,7 +439,7 @@ function RideApp() {
     );
   }
 
-  if (screen === 'ride' && geometry !== null && settings !== null) {
+  if (screen.name === 'ride' && geometry !== null && settings !== null) {
     return (
       <RideScreen
         snapshot={snapshot}
@@ -354,13 +463,12 @@ function RideApp() {
     );
   }
 
-  if (screen === 'summary') {
-    // Whichever path arrived here named its ride: the rider opened one from the history,
-    // or the finish published the id it saved under.
-    const rideId = openRideId ?? snapshot.savedRideId;
-    return rideId === null ? (
-      <Loading />
-    ) : (
+  if (screen.name === 'summary') {
+    // The URL names the ride, whichever path arrived here: the rider opened one from the
+    // history, or the finish published the id it saved under and the bar was corrected to
+    // it. Nothing is left to fall back to, which is why a reload lands on the same ride.
+    const { rideId } = screen;
+    return (
       <SummaryScreen
         rideId={rideId}
         origin={summaryOrigin}
@@ -390,9 +498,12 @@ function RideApp() {
       />
     ) : null;
 
-  if (screen === 'workouts') {
+  if (screen.name === 'workouts' || screen.name === 'workout') {
     if (workouts === null || settings === null) return <Loading />;
-    const editing = workouts.find((workout) => workout.id === editingWorkoutId) ?? null;
+    const editing =
+      screen.name === 'workout'
+        ? (workouts.find((workout) => workout.id === screen.workoutId) ?? null)
+        : null;
     // The editor takes precedence over the list behind it, the way the profile panel does.
     // A workout deleted from under an open editor leaves nothing to edit, so the list is
     // what remains rather than an editor holding a record that is gone.
@@ -401,7 +512,7 @@ function RideApp() {
         <WorkoutEditor
           workout={editing}
           onSave={saveWorkout}
-          onClose={() => setEditingWorkoutId(null)}
+          onClose={() => navigate('workouts')}
           builtIn={services.builtInWorkouts}
         />
       );
@@ -411,7 +522,7 @@ function RideApp() {
         <Workouts
           workouts={workouts}
           ftpW={settings.ftp}
-          onOpen={setEditingWorkoutId}
+          onOpen={(workoutId) => go({ name: 'workout', workoutId })}
           onDuplicate={(workoutId) => void duplicateWorkout(workoutId)}
           onStart={(workoutId) => void startWorkout(workoutId)}
           onCreate={() => void createWorkout()}
@@ -428,15 +539,14 @@ function RideApp() {
     );
   }
 
-  if (screen === 'rides') {
+  if (screen.name === 'rides') {
     return (
       <>
         <Rides
           rides={history?.rides ?? []}
-          onOpen={(id) => {
-            setOpenRideId(id);
+          onOpen={(rideId) => {
             setSummaryOrigin('history');
-            setRequested('summary');
+            go({ name: 'summary', rideId });
           }}
           onExport={(id) => void services.exportRideTcx(id)}
           onExportAll={() => services.exportAllRides()}

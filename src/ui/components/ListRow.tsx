@@ -11,11 +11,20 @@ const GRID = 'grid gap-[32px]';
 
 /**
  * The width reserved for a row's actions, gap included, on every row and on the column
- * labels above them. Sized for the armed delete confirm rather than the resting icons: a
- * row that changed width or height when you armed it would make the list jump under the
- * cursor at exactly the moment someone is about to confirm something they cannot undo.
+ * labels above them. One number for all three lists, so their columns line up as the rider
+ * moves between tabs.
+ *
+ * Sized for the widest row rather than the common one, on two counts. A row that changed
+ * width when you armed its delete would make the list jump under the cursor at exactly the
+ * moment someone is about to confirm something they cannot undo. And the gutter is a fixed
+ * width with its contents right-aligned, so a group too wide for it does not clip or wrap —
+ * it overflows leftwards into the figures, which is how three controls on a workouts row
+ * came to sit 4 px from the load figure.
+ *
+ * The widest today is a workouts row's three controls at 252 px, measured rather than
+ * estimated. Adding a control to any row means measuring again.
  */
-export const ACTIONS_WIDTH = 224;
+export const ACTIONS_WIDTH = 280;
 
 interface ListRowFrameProps {
   /** The row itself — a ListRow, usually inside a Selectable. */
