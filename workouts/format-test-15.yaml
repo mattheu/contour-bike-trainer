@@ -1,24 +1,33 @@
 name: Format test
 description: Fifteen minutes that use every part of the workout format. Not a training session — ride it to check the app, or read it to learn the syntax.
-ftp: 250 # fixed, so the 150W step below is always the same share of the target
+ftp: 250 # fixed, so the watts below are always the same share of the target
 
 # A ramp between two percentages.
 warmup: { duration: 2m, ramp: [50%, 70%] }
 
 steps:
+  # The only block that repeats, so the chart has something to show twice. Everything
+  # below it is written once, with a different target each time.
   - repeat: 2
     steps:
       - repeat: 2
         steps:
-          # Percentage of FTP, with a single cadence target.
-          - { duration: 1m, power: 100%, cadence: 95, name: Percent }
-          # Absolute watts, with a cadence range.
-          - { duration: 1m, power: 150W, cadence: [85, 95], name: Watts }
+          # Above FTP, with a single cadence target.
+          - { duration: 30s, power: 120%, cadence: 100, name: Peak }
+          # Absolute watts, well under the percentage steps either side of it.
+          - { duration: 30s, power: 90W, name: Float }
       # A ramp may mix the two forms.
       - { duration: 1m, ramp: [60%, 180W], name: Mixed ramp }
+
   # No target at all: ERG releases for the length of the step.
   - { duration: 1m, power: free, name: Free }
+  # The highest point in the session, and a cadence range rather than a number.
+  - { duration: 45s, power: 135%, cadence: [95, 105], name: Spike }
+  # Minutes and seconds together.
+  - { duration: 1m15s, power: 55%, name: Float }
+  - { duration: 1m, power: 105%, name: Over }
+  - { duration: 1m, power: 75%, name: Tempo }
   # No name: the target is the whole story.
-  - { duration: 1m, power: 65% }
+  - { duration: 1m, power: 45% }
 
-cooldown: { duration: 1m, ramp: [55%, 40%] }
+cooldown: { duration: 1m, ramp: [65%, 40%] }

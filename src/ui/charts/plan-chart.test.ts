@@ -266,16 +266,21 @@ describe('the plan is drawn at the FTP the session is ridden at', () => {
     path.endsWith('format-test-15.yaml'),
   )?.[1] as string;
 
-  /** The y the plan block sits at, and the y a sample of that many watts lands at. */
-  function heights(source: string, heldW: number, ftpW?: number) {
+  /**
+   * The y the plan block sits at, and the y a sample of the watts that step commands
+   * lands at. The step is whichever percentage one comes first and the watts are derived
+   * from it, so editing the workout's targets cannot quietly stop this testing anything.
+   */
+  function heights(source: string, ftpW?: number) {
     const parsed = parseWorkout(source);
     const steps = expandWorkout(parsed).steps;
     const at = steps.findIndex(
-      (s) =>
-        s.power.kind === 'constant' &&
-        s.power.value.unit === 'ftpPercent' &&
-        s.power.value.value === 100,
+      (s) => s.power.kind === 'constant' && s.power.value.unit === 'ftpPercent',
     );
+    const step = steps[at]?.power;
+    if (step?.kind !== 'constant') throw new Error('no percentage step to test against');
+    const sessionFtp = workoutFtp(parsed, DEFAULT_SETTINGS.ftp);
+    const heldW = (step.value.value / 100) * sessionFtp;
     const chart = planChartGeometry({
       steps,
       samples: [
@@ -283,7 +288,7 @@ describe('the plan is drawn at the FTP the session is ridden at', () => {
         { t: 1, powerW: heldW },
       ],
       // Exactly what services.ts hands the engine and publishes on the snapshot.
-      ftpW: ftpW ?? workoutFtp(parsed, DEFAULT_SETTINGS.ftp),
+      ftpW: ftpW ?? sessionFtp,
       scalePct: 100,
       elapsedS: 0,
       width: WIDTH,
@@ -295,24 +300,24 @@ describe('the plan is drawn at the FTP the session is ridden at', () => {
     };
   }
 
-  it("is the workout's own FTP: a 100 % step of a workout declaring 250 is drawn at 250 W", () => {
+  it("is the workout's own FTP, not the rider's: holding the commanded watts sits on the plan", () => {
     // The test only means anything while the two numbers differ.
     expect(parseWorkout(formatTest).ftp).toBe(250);
     expect(DEFAULT_SETTINGS.ftp).not.toBe(250);
 
-    const { plan, actual } = heights(formatTest, 250);
+    const { plan, actual } = heights(formatTest);
     expect(plan).toBeDefined();
     expect(actual).toBe(plan);
 
     // And the regression itself: handed the profile's FTP instead, the same held watts
     // draw clear of the block, which is exactly what the rider saw.
-    const wrong = heights(formatTest, 250, DEFAULT_SETTINGS.ftp);
+    const wrong = heights(formatTest, DEFAULT_SETTINGS.ftp);
     expect(wrong.actual).not.toBe(wrong.plan);
   });
 
   it('leaves a workout that declares none exactly as it was, on the profile FTP', () => {
     const source = 'name: Relative\nsteps:\n  - { duration: 1m, power: 100% }\n';
-    const { plan, actual } = heights(source, DEFAULT_SETTINGS.ftp);
+    const { plan, actual } = heights(source);
     expect(plan).toBeDefined();
     expect(actual).toBe(plan);
   });
