@@ -6,6 +6,7 @@ import {
   LENGTHS,
   LOADS,
   canDeleteWorkout,
+  canEditWorkout,
   filterWorkouts,
   lengthLabel,
   lengthMinutes,
@@ -14,6 +15,7 @@ import {
   matchesLength,
   matchesLoad,
   parseDetail,
+  workoutControls,
   workoutMeta,
   workoutRow,
   workoutRows,
@@ -296,8 +298,8 @@ describe('canDeleteWorkout', () => {
   const builtIn: ReadonlySet<string> = new Set(['sweet-spot-50', '30-30s']);
 
   it('offers no Delete on a starter the build supplies', () => {
-    // Absent, not disabled. Editing one is still allowed — the author has accepted that
-    // you can gut a starter's YAML and not be able to remove it.
+    // Absent, not disabled: a disabled control says this could happen and currently
+    // cannot, and removing a starter never can.
     expect(canDeleteWorkout('sweet-spot-50', builtIn)).toBe(false);
   });
 
@@ -307,5 +309,46 @@ describe('canDeleteWorkout', () => {
 
   it('offers Delete once a starter has left the manifest', () => {
     expect(canDeleteWorkout('sweet-spot-50', new Set(['30-30s']))).toBe(true);
+  });
+});
+
+describe('canEditWorkout', () => {
+  const builtIn: ReadonlySet<string> = new Set(['sweet-spot-50', '30-30s']);
+
+  it('does not open a starter for editing', () => {
+    // The build's record, not the rider's: seeding rewrites one that differs from the
+    // file it came from, so an edit would be undone on the next boot anyway.
+    expect(canEditWorkout('sweet-spot-50', builtIn)).toBe(false);
+  });
+
+  it('opens a workout the rider created', () => {
+    expect(canEditWorkout('a-minted-uuid', builtIn)).toBe(true);
+  });
+
+  it('opens a starter once it has left the manifest', () => {
+    expect(canEditWorkout('sweet-spot-50', new Set(['30-30s']))).toBe(true);
+  });
+});
+
+describe('workoutControls', () => {
+  const builtIn: ReadonlySet<string> = new Set(['sweet-spot-50']);
+
+  it('offers View and Duplicate on a starter, and no Delete', () => {
+    // The control says what pressing it does. Duplicate is the way through: a starter
+    // cannot be changed, so a copy is the only way to ride a version of it.
+    expect(workoutControls('sweet-spot-50', builtIn)).toEqual({
+      open: 'View',
+      duplicate: true,
+      delete: false,
+    });
+  });
+
+  it("offers Edit and Delete on the rider's own, and no Duplicate", () => {
+    // Three controls a row is already a lot, and Edit already changes this one in place.
+    expect(workoutControls('a-minted-uuid', builtIn)).toEqual({
+      open: 'Edit',
+      duplicate: false,
+      delete: true,
+    });
   });
 });

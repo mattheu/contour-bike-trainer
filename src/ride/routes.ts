@@ -157,12 +157,12 @@ function sameRoute(stored: StoredRoute, next: Omit<StoredRoute, 'updatedAt'>): b
  * Seeds the bundled routes into the repository on every boot, using each route's declared
  * id: write what is absent, rewrite what differs from the manifest.
  *
- * Deliberately not the rule seedWorkouts uses, and the difference is what each record is.
- * A route is not editable — there is no screen that changes one — and a built-in route is
- * not deletable either, so nothing the rider owns can be sitting in one of these records.
- * That makes the manifest their single source, and a figure corrected in it should reach an
- * install that has already been used rather than only a fresh database. A starter workout is
- * the opposite case: see seedWorkouts.
+ * The same rule seedWorkouts uses, and for the same reason: a built-in record is the
+ * build's rather than the rider's. A route is not editable — there is no screen that
+ * changes one — and a built-in route is not deletable either, so nothing the rider owns
+ * can be sitting in one of these records. That makes the manifest their single source,
+ * and a figure corrected in it should reach an install that has already been used rather
+ * than only a fresh database.
  *
  * It is also what repairs a record written by an older build. A route that predates
  * records carrying their own GPX differs from its manifest entry, so this rewrites it with

@@ -157,8 +157,8 @@ test.describe('built-in routes and workouts', () => {
       page.getByRole('button', { name: `Download ${ROLLING_ROUTE_NAME} as GPX` }),
     ).toHaveCount(1);
 
-    // A starter workout, same rule, and Edit survives it: a starter can be rewritten,
-    // just not removed.
+    // A starter workout, same rule: its row keeps the controls a starter is for — View,
+    // Duplicate and Download — and offers no Delete.
     await nav(page, 'Workouts').click();
     await expect(page.getByRole('button', { name: `Delete ${STARTER_WORKOUT_NAME}` })).toHaveCount(
       0,

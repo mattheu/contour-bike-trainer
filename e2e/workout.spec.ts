@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { connectDevices, openApp } from './support/app';
 
@@ -215,5 +217,79 @@ test.describe('riding a workout', () => {
     await page.getByRole('button', { name: 'Save' }).click();
     await expect(page.getByText('Spec editor saved.')).toBeVisible();
     await expect(page.getByRole('alert')).toHaveCount(0);
+  });
+});
+
+/**
+ * A starter, and the file the build bundles it from. The starters are the documentation —
+ * src/workout/starters.test.ts asserts they cover the whole format between them — so what
+ * the editor shows has to be this text, comments and all, rather than a tidied tree.
+ */
+const STARTER_NAME = 'Format test';
+const STARTER_SOURCE = readFileSync(
+  fileURLToPath(new URL('../workouts/format-test-15.yaml', import.meta.url)),
+  'utf8',
+);
+
+/** What the rider writes over a copy of the starter, which is the point of taking one. */
+const COPY = `name: Spec copy
+description: A starter taken as a starting point.
+
+steps:
+  - { duration: 6s, power: 60%, name: Steady }
+`;
+
+/** A row's controls, by the group the row labels with its own name. Rows are located this
+ * way rather than by link, because a copy's name contains the original's. */
+function actions(page: Page, name: string): Locator {
+  return page.getByRole('group', { name: `${name} actions` });
+}
+
+test.describe('a workout that came with the app', () => {
+  test('opens to be read, with no way to change it', async ({ page }) => {
+    await openWorkouts(page);
+
+    // View, not Edit: the control says what pressing it does.
+    await expect(actions(page, STARTER_NAME).getByRole('button', { name: 'Edit' })).toHaveCount(0);
+    await actions(page, STARTER_NAME).getByRole('button', { name: 'View' }).click();
+
+    // The bundled file itself, byte for byte. Its comments are what a rider reads it for.
+    await expect(source(page)).toHaveValue(STARTER_SOURCE);
+    await expect(source(page)).not.toBeEditable();
+
+    // Absent rather than disabled, and one line saying what this workout is.
+    await expect(page.getByRole('button', { name: 'Save' })).toHaveCount(0);
+    await expect(page.getByText('came with the app')).toBeVisible();
+
+    // The format reference is still beside it: reading one against the other is the job.
+    await expect(page.getByRole('heading', { name: 'Format', exact: true })).toBeVisible();
+  });
+
+  test("is a starting point: a copy is the rider's own, and the original is untouched", async ({
+    page,
+  }) => {
+    await openWorkouts(page);
+    await actions(page, STARTER_NAME).getByRole('button', { name: 'Duplicate' }).click();
+
+    // The editor opens on the copy, which is a workout like any other the rider wrote:
+    // the same YAML under a name of its own, and a box that takes typing.
+    await expect(source(page)).toHaveValue(
+      STARTER_SOURCE.replace('name: Format test', 'name: Format test copy'),
+    );
+    await expect(source(page)).toBeEditable();
+
+    await source(page).fill(COPY);
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByText('Spec copy saved.')).toBeVisible();
+    await page.getByRole('button', { name: 'Done' }).click();
+
+    // Two rows: the rider's, which can be deleted, and the starter, which cannot.
+    await expect(actions(page, 'Spec copy').getByRole('button', { name: 'Edit' })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Delete Spec copy' })).toHaveCount(1);
+    await expect(page.getByRole('button', { name: `Delete ${STARTER_NAME}` })).toHaveCount(0);
+
+    // The original is exactly as it was: a copy is a copy, not a move.
+    await actions(page, STARTER_NAME).getByRole('button', { name: 'View' }).click();
+    await expect(source(page)).toHaveValue(STARTER_SOURCE);
   });
 });

@@ -7,12 +7,14 @@ import { LABEL, MONO, SERIF } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
 import {
+  READ_ONLY_NOTE,
   caretRow,
   saveAlert,
   validateSource,
   type ParseFailure,
   type SaveResult,
 } from './workout-editor';
+import { canEditWorkout } from './workouts-list';
 import { WORKOUT_REFERENCE } from './workout-reference';
 
 interface WorkoutEditorProps {
@@ -20,6 +22,9 @@ interface WorkoutEditorProps {
   /** Writes the source as given; the record's name comes back out of the YAML. */
   onSave: (workoutId: string, source: string) => Promise<SaveResult>;
   onClose: () => void;
+  /** The ids this build supplies: see services.builtInWorkouts. One of those opens for
+   * reading — the starters are the documentation and must still be legible here. */
+  builtIn: ReadonlySet<string>;
 }
 
 /**
@@ -33,8 +38,14 @@ interface WorkoutEditorProps {
  *
  * Save is ink rather than accent: DESIGN.md gives Save to the single committing action,
  * and the accent on this part of the app is New workout on the list behind it.
+ *
+ * A starter opens read-only: the box is not editable and Save is absent rather than
+ * disabled, because a disabled control says this could happen and currently cannot. What
+ * stays is everything the starter is for — its YAML, its comments, and the format
+ * reference beside it — and one line saying what this workout is.
  */
-export function WorkoutEditor({ workout, onSave, onClose }: WorkoutEditorProps) {
+export function WorkoutEditor({ workout, onSave, onClose, builtIn }: WorkoutEditorProps) {
+  const editable = canEditWorkout(workout.id, builtIn);
   const [draft, setDraft] = useState(workout.source);
   // What is actually in storage, so "unsaved changes" means it rather than merely
   // meaning that the rider has typed something.
@@ -80,9 +91,11 @@ export function WorkoutEditor({ workout, onSave, onClose }: WorkoutEditorProps) 
           )}
         </div>
         <div className={`flex items-center ${CONTROL_GAP}`}>
-          <Button tone="ink" onClick={save} disabled={saving}>
-            Save
-          </Button>
+          {editable && (
+            <Button tone="ink" onClick={save} disabled={saving}>
+              Save
+            </Button>
+          )}
           <Button onClick={onClose}>Done</Button>
         </div>
       </header>
@@ -101,10 +114,13 @@ export function WorkoutEditor({ workout, onSave, onClose }: WorkoutEditorProps) 
             id="workout-source"
             value={draft}
             onChange={(event) => edit(event.target.value)}
+            readOnly={!editable}
             spellCheck={false}
             wrap="off"
             aria-invalid={failure !== null}
-            aria-describedby={failure === null ? undefined : 'workout-source-error'}
+            aria-describedby={
+              failure !== null ? 'workout-source-error' : editable ? undefined : 'workout-read-only'
+            }
             className={[
               MONO,
               'text-label bg-ground/60 min-h-0 grow resize-none border p-[16px] leading-[1.6]',
@@ -112,6 +128,13 @@ export function WorkoutEditor({ workout, onSave, onClose }: WorkoutEditorProps) 
               failure === null ? 'border-hairline text-ink' : 'border-alert text-ink',
             ].join(' ')}
           />
+
+          {/* Where the failure would be, and for the same reason: it is about the box. */}
+          {!editable && (
+            <p id="workout-read-only" className={`${NOTE} shrink-0`}>
+              {READ_ONLY_NOTE}
+            </p>
+          )}
 
           {/* Under the box rather than under the row: it points at a line in the box. */}
           {failure !== null && <Failure failure={failure} />}

@@ -158,10 +158,13 @@ rather than a parsed tree is what makes that possible.
 condensed format reference sits beside the text box, so you need this page for the detail
 rather than for the basics.
 
-The six that ship with the app are yours to edit — your changes survive, because a starter is only
-written on the first run and never overwritten afterwards. They cannot be deleted, which is the one
-way they differ from a workout you write. They live in [`workouts/`](../workouts/) in the project
-if you want to read an original back.
+The six that ship with the app cannot be changed or deleted. **View** opens one to read — the YAML
+with its comments, beside the format reference — and **Duplicate** gives you a copy that is yours,
+to edit and delete like anything you wrote. They are refreshed from the project on every launch, so
+a correction to one reaches you.
+
+That is the whole difference between a built-in workout and your own: you can read one and copy it,
+but the original stays as it shipped.
 
 **Download** on a row gives you that workout's YAML, exactly as you wrote it. Below the list,
 **Download all workouts** gives you the whole library as one file, each workout separated by a

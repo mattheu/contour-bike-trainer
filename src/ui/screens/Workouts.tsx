@@ -38,10 +38,12 @@ import {
   filterWorkouts,
   lengthLabel,
   loadLabel,
+  workoutControls,
   workoutMeta,
   workoutRows,
   type LengthFilter,
   type LoadFilter,
+  type WorkoutControls,
   type WorkoutRow,
 } from './workouts-list';
 
@@ -58,8 +60,10 @@ interface WorkoutsProps {
   workouts: readonly StoredWorkout[];
   /** The rider's FTP, for any workout that does not declare one of its own. */
   ftpW: number;
-  /** Selecting a row opens it for editing. */
+  /** Selecting a row opens it in the editor — to change, or on a starter to read. */
   onOpen: (workoutId: string) => void;
+  /** Copies a workout to one of the rider's own and opens the editor on the copy. */
+  onDuplicate: (workoutId: string) => void;
   /** The row action: services.startWorkout, which rides it with no route. */
   onStart: (workoutId: string) => void;
   /** Mints a workout on the starting template and opens the editor on it. */
@@ -70,9 +74,9 @@ interface WorkoutsProps {
   onExportAll: () => Promise<void>;
   onImport: (file: File) => Promise<WorkoutImportResult>;
   onDelete: (workoutId: string) => Promise<DeleteResult>;
-  /** The ids this build supplies: see services.builtInWorkouts. A row in here offers no
-   * Delete control — a starter is editable, including into something unrecognisable, but
-   * it is not the rider's to remove and seeding would write it back anyway. */
+  /** The ids this build supplies: see services.builtInWorkouts. A row in here offers
+   * neither Edit nor Delete: a starter is the build's record, not the rider's, and
+   * seeding would write back any change to it anyway. It offers View and Duplicate. */
   builtIn: ReadonlySet<string>;
   onNavigate: (screen: ListScreen) => void;
   onOpenProfile: () => void;
@@ -87,6 +91,7 @@ export function Workouts({
   workouts,
   ftpW,
   onOpen,
+  onDuplicate,
   onStart,
   onCreate,
   onDownload,
@@ -171,9 +176,10 @@ export function Workouts({
             <WorkoutRowView
               key={row.id}
               row={row}
-              deletable={canDeleteWorkout(row.id, builtIn)}
+              controls={workoutControls(row.id, builtIn)}
               armed={isArmed(armed, row.id)}
               onOpen={onOpen}
+              onDuplicate={onDuplicate}
               onStart={onStart}
               onDownload={onDownload}
               onPressDelete={() => press(row)}
@@ -246,18 +252,20 @@ function Footer({
 
 function WorkoutRowView({
   row,
-  deletable,
+  controls,
   armed,
   onOpen,
+  onDuplicate,
   onStart,
   onDownload,
   onPressDelete,
   onCancelDelete,
 }: {
   row: WorkoutRow;
-  deletable: boolean;
+  controls: WorkoutControls;
   armed: boolean;
   onOpen: (workoutId: string) => void;
+  onDuplicate: (workoutId: string) => void;
   onStart: (workoutId: string) => void;
   onDownload: (workoutId: string) => void;
   onPressDelete: () => void;
@@ -278,11 +286,15 @@ function WorkoutRowView({
           </ButtonGroup>
         ) : (
           <ButtonGroup label={`${row.name} actions`}>
-            {/* No Ride control: the row is the button, as it is on the routes list. Edit
-                is the only named action because it is the only one the row cannot be —
-                and it is how a workout that will not parse is reached, since such a row
-                is deliberately not selectable. */}
-            <Button onClick={() => onOpen(row.id)}>Edit</Button>
+            {/* No Ride control: the row is the button, as it is on the routes list. The
+                named actions are the ones the row itself cannot be — and this one is how
+                a workout that will not parse is reached, since such a row is deliberately
+                not selectable. It says what pressing it does: a starter opens to read. */}
+            <Button onClick={() => onOpen(row.id)}>{controls.open}</Button>
+            {/* Grey, like everything else here: the screen's one accent is New workout.
+                On a starter only — the rider's own workout is changed in place, and a
+                fourth control on every row would be the real cost. */}
+            {controls.duplicate && <Button onClick={() => onDuplicate(row.id)}>Duplicate</Button>}
             {/* The rides list's glyph, in its position. A workout that will not parse is
                 still downloadable: the source is exactly what the rider needs in order to
                 fix it somewhere with a better editor than a textarea. */}
@@ -300,9 +312,9 @@ function WorkoutRowView({
               </svg>
             </IconButton>
             {/* Absent on a starter rather than disabled: a disabled control says this
-                could happen and currently cannot, and deleting one never can. Edit and
-                Download stay, which is everything a starter is actually for. */}
-            {deletable && (
+                could happen and currently cannot, and deleting one never can. View,
+                Duplicate and Download stay, which is what a starter is actually for. */}
+            {controls.delete && (
               <IconButton label={`Delete ${row.name}`} onClick={onPressDelete}>
                 <svg
                   width="16"

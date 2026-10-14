@@ -63,8 +63,8 @@ describe('builtInWorkoutIds', () => {
   });
 
   it('claims a starter whose YAML will not parse', () => {
-    // It is in the build either way, and a parse error is not a reason to offer a Delete
-    // control that is otherwise never there. The fix is the editor, not the bin.
+    // It is in the build either way, and a parse error is not a reason to offer controls
+    // that are otherwise never there. The fix is a corrected file in the next build.
     expect(builtInWorkoutIds([{ id: 'broken', file: 'broken.yaml' }]).has('broken')).toBe(true);
   });
 
@@ -86,7 +86,7 @@ describe('seedWorkouts', () => {
     skipped: [],
   };
 
-  it('writes every starter on first run, keeping the YAML the rider will edit', async () => {
+  it('writes every starter on first run, keeping the YAML the rider will read', async () => {
     const repo = repository();
     const result = await seedWorkouts(repo, bundled);
 
@@ -109,32 +109,63 @@ describe('seedWorkouts', () => {
     expect(await repo.list()).toHaveLength(1);
   });
 
-  it('never overwrites a starter the rider has edited', async () => {
-    // What a rider would check: edit a starter, relaunch, and find their edit. This is
-    // the whole reason workouts seed by a different rule from routes, which do rewrite.
+  it('rewrites a starter whose file in the build has changed', async () => {
+    // What a rider would check: a corrected starter reaches an install that has already
+    // been used, rather than only a fresh database. The same rule seedRoutes follows.
     const repo = repository();
     await seedWorkouts(repo, bundled);
-    const edited = 'name: Mine now\nsteps:\n  - { duration: 5m, power: 80% }\n';
-    await repo.put({ id: 'good', name: 'Mine now', source: edited, updatedAt: '' });
-
-    await seedWorkouts(repo, bundled);
-
-    expect((await repo.get('good'))?.source).toBe(edited);
-  });
-
-  it('leaves an edited starter alone even when the file in the build has changed', async () => {
-    const repo = repository();
-    await seedWorkouts(repo, bundled);
-    const edited = 'name: Mine now\nsteps:\n  - { duration: 5m, power: 80% }\n';
-    await repo.put({ id: 'good', name: 'Mine now', source: edited, updatedAt: '' });
 
     const corrected = bundledWorkouts(
       [{ id: 'good', file: 'good.yaml' }],
       new Map([['good.yaml', GOOD.replace('Good one', 'Good one, corrected')]]),
     );
-    await seedWorkouts(repo, corrected);
+    const result = await seedWorkouts(repo, corrected);
 
-    expect((await repo.get('good'))?.source).toBe(edited);
+    expect(result.written).toEqual(['good']);
+    const stored = await repo.get('good');
+    expect(stored?.source).toContain('Good one, corrected');
+    expect(stored?.name).toBe('Good one, corrected');
+  });
+
+  it('rewrites a starter whose comments alone have changed', async () => {
+    // The comments are half of what a starter teaches, so a reworded one is a change.
+    const repo = repository();
+    await seedWorkouts(repo, bundled);
+
+    const recommented = bundledWorkouts(
+      [{ id: 'good', file: 'good.yaml' }],
+      new Map([['good.yaml', `# Ten minutes, steady.\n${GOOD}`]]),
+    );
+    await seedWorkouts(repo, recommented);
+
+    expect((await repo.get('good'))?.source).toContain('# Ten minutes, steady.');
+  });
+
+  it('restores a starter edited under a build that still allowed it', async () => {
+    // Intended, and the only way back: a starter is the build's record, not the rider's.
+    // Their own copy of it is a separate workout with a minted id — see the test below.
+    const repo = repository();
+    await seedWorkouts(repo, bundled);
+    const edited = 'name: Mine now\nsteps:\n  - { duration: 5m, power: 80% }\n';
+    await repo.put({ id: 'good', name: 'Mine now', source: edited, updatedAt: '' });
+
+    const result = await seedWorkouts(repo, bundled);
+
+    expect(result.written).toEqual(['good']);
+    expect((await repo.get('good'))?.source).toBe(GOOD);
+    expect((await repo.get('good'))?.name).toBe('Good one');
+  });
+
+  it('never touches a workout the rider wrote or imported', async () => {
+    // No manifest entry claims a minted id, so seeding has nothing to say about it.
+    const repo = repository();
+    const mine = 'name: Mine\nsteps:\n  - { duration: 5m, power: 80% }\n';
+    await repo.put({ id: 'a-minted-uuid', name: 'Mine', source: mine, updatedAt: '' });
+
+    await seedWorkouts(repo, bundled);
+
+    expect((await repo.get('a-minted-uuid'))?.source).toBe(mine);
+    expect(await repo.list()).toHaveLength(2);
   });
 
   it('carries the reasons a starter was skipped through to the caller', async () => {
@@ -150,7 +181,7 @@ describe('seedWorkouts', () => {
 
   it('puts a starter back if something managed to delete it', async () => {
     // Not a regression: a starter has no Delete control and services refuses the id, so
-    // absent can only mean never seen. Without a marker that is the only reading left.
+    // absent can only mean never seen, and absent is written like anything that differs.
     const repo = repository();
     await seedWorkouts(repo, bundled);
     await repo.delete('good');

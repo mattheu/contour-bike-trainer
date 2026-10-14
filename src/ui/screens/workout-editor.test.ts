@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { expandWorkout } from '../../workout/expand';
+import { bundledWorkouts } from '../../ride/workouts';
+import { parseWorkout } from '../../workout/parse';
 import {
   NEW_WORKOUT_SOURCE,
+  READ_ONLY_NOTE,
   caretRow,
+  duplicateName,
+  duplicateSource,
   saveAlert,
   sourceLine,
   validateSource,
@@ -113,5 +118,85 @@ describe('saveAlert', () => {
       level: 'info',
       message: 'Openers saved.',
     });
+  });
+});
+
+describe('READ_ONLY_NOTE', () => {
+  it('states what the workout is rather than refusing the rider', () => {
+    expect(READ_ONLY_NOTE).toContain('came with the app');
+    expect(READ_ONLY_NOTE).not.toMatch(/cannot|can't|not allowed|read-only/i);
+  });
+
+  it('names the way through, because there is one', () => {
+    expect(READ_ONLY_NOTE).toContain('Duplicate');
+  });
+});
+
+describe('duplicateName', () => {
+  it('is the original with "copy" on the end', () => {
+    expect(duplicateName('Sweet spot 3x9', [])).toBe('Sweet spot 3x9 copy');
+  });
+
+  it('numbers the second copy rather than repeating a name in the list', () => {
+    const taken = ['Sweet spot 3x9', 'Sweet spot 3x9 copy'];
+    expect(duplicateName('Sweet spot 3x9', taken)).toBe('Sweet spot 3x9 copy 2');
+    expect(duplicateName('Sweet spot 3x9', [...taken, 'Sweet spot 3x9 copy 2'])).toBe(
+      'Sweet spot 3x9 copy 3',
+    );
+  });
+
+  it('fills a gap rather than counting past it', () => {
+    expect(duplicateName('A', ['A copy', 'A copy 3'])).toBe('A copy 2');
+  });
+});
+
+describe('duplicateSource', () => {
+  const SOURCE = `# Three nine-minute blocks at 90 %.
+name: Sweet spot 3x9
+description: Sustained, not hard.
+
+steps:
+  - { duration: 9m, power: 90%, name: Block }  # the sweet spot itself
+`;
+
+  it('renames the workout and changes nothing else', () => {
+    const copy = duplicateSource(SOURCE, 'Sweet spot 3x9 copy');
+
+    expect(parseWorkout(copy).name).toBe('Sweet spot 3x9 copy');
+    expect(parseWorkout(copy).description).toBe('Sustained, not hard.');
+  });
+
+  it('keeps the comments, which are half of what a starter teaches', () => {
+    const copy = duplicateSource(SOURCE, 'Anything');
+
+    expect(copy).toContain('# Three nine-minute blocks at 90 %.');
+    expect(copy).toContain('# the sweet spot itself');
+    // Line for line the original but one: nothing has been reflowed or re-serialised.
+    expect(copy.split('\n')).toHaveLength(SOURCE.split('\n').length);
+  });
+
+  it("leaves a step's own name alone", () => {
+    expect(duplicateSource(SOURCE, 'Renamed')).toContain('name: Block }');
+  });
+
+  it('quotes a name a plain scalar would not survive', () => {
+    const copy = duplicateSource(SOURCE, 'Threshold: the hard bit copy');
+    expect(parseWorkout(copy).name).toBe('Threshold: the hard bit copy');
+  });
+
+  it('copies every starter in the build into something that still parses', () => {
+    // The claim that matters: every starter is a usable starting point, not just the
+    // one written out above.
+    for (const entry of bundledWorkouts().workouts) {
+      const name = duplicateName(entry.workout.name, [entry.workout.name]);
+      const copy = duplicateSource(entry.source, name);
+      expect(parseWorkout(copy).name).toBe(name);
+      expect(copy.replace(name, entry.workout.name)).toBe(entry.source);
+    }
+  });
+
+  it('gives a source with no name key one', () => {
+    const copy = duplicateSource('steps:\n  - { duration: 5m, power: 60% }\n', 'Named now');
+    expect(parseWorkout(copy).name).toBe('Named now');
   });
 });

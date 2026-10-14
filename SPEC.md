@@ -589,6 +589,18 @@ Also note that mockup's zones legend reads `Z1 <55 · Z2 56–75 · Z3 76–90 �
 1. **The ghost.** The headline item, standing on its own rather than as polish: your previous ride on this route, drawn against the current one, so a route you have ridden before has something to ride against. The last ride on a route and the best one are the two candidates, and the choice between them is part of the work.
 2. Candidates still open: GPX upload, workout import, richer history and summary statistics, a real basemap.
 
+## Unscheduled — FTP
+
+Not yet placed in a phase. Three features, in the order they should be built, each useful on its own:
+
+1. **A best-efforts record** — best 5 s, 1 min, 5 min and 20 min power, maintained across all rides. A sliding window over data already recorded at 1 Hz. It is the enabling primitive for the other two, and it is also the progress view phase 2 wanted and did not get.
+2. **An FTP test.** A ramp test is already expressible in the workout format; what is missing is a step that runs until failure rather than for a duration, a rule for when that is (power below target by a margin for a few seconds, or cadence collapsing), and something that reads the result and offers a number. Ramp gives FTP ≈ 75 % of the best one-minute power; a 20-minute test gives 95 % of the average.
+3. **FTP detection.** Watch recorded power and offer a higher FTP when the best 20-minute effort implies one. It must **offer**, never apply, and say what the number came from: a 20-minute effort inside an unstructured ride is not the maximal evenly-paced effort the 0.95 coefficient assumes, so this method over-reads for some riders.
+
+**Adaptive training is explicitly out of scope** — adjusting what is prescribed based on how the rider coped needs a plan model, compliance tracking and progression rules, which is a product in itself and a coaching layer close to what this app is not.
+
+All three are bound by [ADR-0017](docs/adr/0017-changing-ftp-never-rewrites-history.md): a new FTP changes only what is ahead. That was your FTP at that time.
+
 ## Phase 5 — Backend and phone mirror
 
 1. Server with the API the `storage/http/` implementation expects. Rides, routes and workouts persist server-side; the browser syncs.

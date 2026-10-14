@@ -178,15 +178,52 @@ export function workoutMeta(row: WorkoutRow): string | null {
  * Whether a row offers Delete at all.
  *
  * A starter the build supplies is not the rider's to delete — seeding would write it back
- * on the next boot — so the control is absent rather than present and refused. Editing one
- * is still allowed, including into something unrecognisable: what cannot be done is
- * removing the row.
+ * on the next boot — so the control is absent rather than present and refused.
  *
  * Here rather than in the component so the rule is testable without rendering, and so the
  * one place that decides it is the one place both the row and its armed state read.
  */
 export function canDeleteWorkout(workoutId: string, builtIn: ReadonlySet<string>): boolean {
   return !builtIn.has(workoutId);
+}
+
+/**
+ * Whether the editor opens on something the rider can change.
+ *
+ * The same answer as canDeleteWorkout, from the same set, and deliberately a second name
+ * rather than a shared one: these are two claims about a starter — it is not yours to
+ * remove, and it is not yours to rewrite — and a later build could keep one without the
+ * other. src/ui/services.ts refuses both for real; this is what the screens read.
+ */
+export function canEditWorkout(workoutId: string, builtIn: ReadonlySet<string>): boolean {
+  return !builtIn.has(workoutId);
+}
+
+export interface WorkoutControls {
+  /** The row's first control, which says what pressing it does rather than what the
+   * screen behind it is called. */
+  open: 'Edit' | 'View';
+  /** Offered on a starter only: see below. */
+  duplicate: boolean;
+  delete: boolean;
+}
+
+/**
+ * What a row offers, in one place, so the row and its tests read the same rule.
+ *
+ * Duplicate is on a starter and nowhere else. A starter is the one row with a wall in
+ * front of it — "sweet spot but ten minutes" has no other way through, and without a copy
+ * to make, the examples stop being something to riff on. The rider's own workout has no
+ * such wall: Edit already changes it, and a second copy of it is a want rather than a
+ * need. It also keeps every row at three controls, which is already a lot.
+ */
+export function workoutControls(workoutId: string, builtIn: ReadonlySet<string>): WorkoutControls {
+  const editable = canEditWorkout(workoutId, builtIn);
+  return {
+    open: editable ? 'Edit' : 'View',
+    duplicate: !editable,
+    delete: canDeleteWorkout(workoutId, builtIn),
+  };
 }
 
 /**

@@ -193,6 +193,18 @@ function RideApp() {
     setEditingWorkoutId(workoutId);
   }, []);
 
+  /**
+   * A copy of a starter, written the same way and then opened: it is the rider's own
+   * workout from the moment it exists, so there is nothing special about the editor it
+   * lands in. This is the only way a starter becomes something to change.
+   */
+  const duplicateWorkout = useCallback(async (workoutId: string) => {
+    const copyId = await services.duplicateWorkout(workoutId);
+    if (copyId === null) return;
+    setWorkoutsVersion((version) => version + 1);
+    setEditingWorkoutId(copyId);
+  }, []);
+
   const saveWorkout = useCallback(async (workoutId: string, source: string) => {
     const result = await services.saveWorkout(workoutId, source);
     if (result.status === 'saved') setWorkoutsVersion((version) => version + 1);
@@ -336,6 +348,7 @@ function RideApp() {
           workout={editing}
           onSave={saveWorkout}
           onClose={() => setEditingWorkoutId(null)}
+          builtIn={services.builtInWorkouts}
         />
       );
     }
@@ -345,6 +358,7 @@ function RideApp() {
           workouts={workouts}
           ftpW={settings.ftp}
           onOpen={setEditingWorkoutId}
+          onDuplicate={(workoutId) => void duplicateWorkout(workoutId)}
           onStart={(workoutId) => void startWorkout(workoutId)}
           onCreate={() => void createWorkout()}
           onDownload={(id) => void services.exportWorkoutYaml(id)}

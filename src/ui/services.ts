@@ -53,7 +53,12 @@ import type { DeleteResult } from './screens/ride-delete';
 import type { ImportResult } from './screens/rides-import';
 import type { RouteImportResult } from './screens/routes-import';
 import type { WorkoutImportResult } from './screens/workouts-import';
-import { NEW_WORKOUT_SOURCE, type SaveResult } from './screens/workout-editor';
+import {
+  NEW_WORKOUT_SOURCE,
+  duplicateName,
+  duplicateSource,
+  type SaveResult,
+} from './screens/workout-editor';
 import { experimentStore, rideStore, type WorkoutSnapshot } from './store';
 import { createWakeLock } from './wake-lock';
 
@@ -1002,7 +1007,19 @@ export async function listWorkouts(): Promise<StoredWorkout[]> {
 }
 
 /**
+ * What a built-in record is told when something asks to change or remove it. The screens
+ * offer neither control at all, so this is the belt to that braces: a guard here holds
+ * for every caller, including one written after whoever reads this has moved on.
+ */
+const BUILT_IN_REFUSAL = 'it came with this install';
+
+/**
  * Writes the text the rider wrote, with the name and description read back out of it.
+ *
+ * Refuses a starter the build supplies, as deleteWorkout does. Seeding rewrites a record
+ * that differs from its bundled file, so a save that got past here would read as working
+ * and be undone on the next boot. The editor opens a starter read-only and offers
+ * Duplicate instead, which is how a starter becomes something to change.
  *
  * Parsing here is not a second validation — the editor has already asked that question
  * and shown the rider where the answer was — it is how the two denormalised fields are
@@ -1011,6 +1028,7 @@ export async function listWorkouts(): Promise<StoredWorkout[]> {
  */
 export async function saveWorkout(workoutId: string, source: string): Promise<SaveResult> {
   await ready;
+  if (builtInWorkouts.has(workoutId)) return { status: 'failed', reason: BUILT_IN_REFUSAL };
   try {
     const parsed = parseWorkout(source);
     await storage.workouts.put({
@@ -1047,11 +1065,30 @@ export async function createWorkout(): Promise<string | null> {
 }
 
 /**
- * What a built-in record is told when something asks to delete it. The screens do not
- * offer the control at all, so this is the belt to that braces: a guard here holds for
- * every caller, including one written after whoever reads this has moved on.
+ * A copy of a workout, as a workout of the rider's own: the source exactly as written,
+ * under a name no row in the library has yet, with a minted id that no manifest entry
+ * claims. Written before the editor opens on it, as createWorkout writes its template.
+ *
+ * This is how a starter becomes a starting point. A starter cannot be changed, so without
+ * a copy to take, "sweet spot but ten minutes" means retyping it from the screen.
  */
-const BUILT_IN_REFUSAL = 'it came with this install';
+export async function duplicateWorkout(workoutId: string): Promise<string | null> {
+  await ready;
+  const original = await storage.workouts.get(workoutId);
+  if (original === undefined) {
+    fault('That workout is no longer in the library, so there is nothing to copy.');
+    return null;
+  }
+  const taken = (await storage.workouts.list()).map((workout) => workout.name);
+  const copy = duplicateSource(original.source, duplicateName(original.name, taken));
+  const id = createId();
+  const result = await saveWorkout(id, copy);
+  if (result.status === 'failed') {
+    fault(`Could not copy that workout: ${result.reason}`);
+    return null;
+  }
+  return id;
+}
 
 /**
  * Removes this install's record of a route. Nothing cascades, by design and not by
@@ -1077,8 +1114,8 @@ export async function deleteRoute(routeId: string): Promise<DeleteResult> {
  * No cascade: a workout is one record, and the rides that reference it keep their own
  * frozen workoutId and workoutName, so deleting it rewrites no history.
  *
- * Refuses a starter the build supplies, for the same reason deleteRoute does. A starter
- * stays editable — gutting one is allowed, removing it is not.
+ * Refuses a starter the build supplies, for the same reason deleteRoute does, and the
+ * same reason saveWorkout does: it is the build's record rather than the rider's.
  */
 export async function deleteWorkout(workoutId: string): Promise<DeleteResult> {
   await ready;

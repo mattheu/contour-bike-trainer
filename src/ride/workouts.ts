@@ -105,26 +105,44 @@ function toStoredWorkout(entry: BundledWorkout): Omit<StoredWorkout, 'updatedAt'
 }
 
 export interface SeedResult {
-  /** Ids written, because the repository had never seen them. */
+  /** Ids written, because they were absent or the file in the build had changed. */
   written: string[];
-  /** Ids already present, left exactly as the rider has them. */
+  /** Ids already present and identical to the bundled file, left alone. */
   unchanged: string[];
   /** Starters that could not be parsed, one line each. */
   skipped: string[];
 }
 
+/** Every field a record takes from its bundled file. The source carries the comments and
+ * the layout, so a reworded comment counts as a change — it is half of what a starter
+ * teaches. updatedAt is excluded because the repository stamps it, and id because it is
+ * what joined the two. */
+function sameWorkout(stored: StoredWorkout, next: Omit<StoredWorkout, 'updatedAt'>): boolean {
+  return (
+    stored.name === next.name &&
+    stored.description === next.description &&
+    stored.source === next.source
+  );
+}
+
 /**
  * Seeds the starters into the repository on every boot, using each one's declared id:
- * write what is absent, and never touch what is already there.
+ * write what is absent, rewrite what differs from the file in the build.
  *
- * Deliberately not the rule seedRoutes uses, and the difference is that a starter is
- * editable. Rewriting a record because its file in the build differs would silently undo
- * the rider's edit on the next launch, which is the one thing keeping the YAML they wrote
- * rather than a parsed tree exists to protect. The cost, accepted: a correction to a
- * starter's file never reaches an install that has already booted.
+ * The same rule seedRoutes uses, and for the same reason: a built-in record is the
+ * build's rather than the rider's. It cannot be edited and it cannot be deleted — see
+ * builtInWorkoutIds and src/ui/services.ts — so nothing the rider owns can be sitting in
+ * one of these records. That makes the bundled file their single source, and a starter
+ * corrected in it should reach an install that has already been used rather than only a
+ * fresh database.
  *
- * Absent is safe to write because a built-in workout cannot be deleted — see
- * builtInWorkoutIds and src/ui/services.ts — so absent can only mean never seen.
+ * One consequence, accepted: an install where someone edited a starter under an earlier
+ * build has that edit overwritten and the starter restored on the next boot. There is no
+ * other way back from such an edit, and the rider's own copy — made with Duplicate — has
+ * a minted id that no manifest entry claims, so it is untouched. So is anything imported.
+ *
+ * Idempotent: an identical starter is not rewritten, so booting twice does not churn
+ * updatedAt, which a later sync layer would read as a genuine edit.
  *
  * `skipped` is filled either way. A starter that will not parse is a bug in a file we
  * shipped, and an install that has already been seeded should still say so.
@@ -136,13 +154,14 @@ export async function seedWorkouts(
   const result: SeedResult = { written: [], unchanged: [], skipped: bundled.skipped };
 
   for (const entry of bundled.workouts) {
+    const next = toStoredWorkout(entry);
     const existing = await repository.get(entry.id);
-    if (existing !== undefined) {
+    if (existing !== undefined && sameWorkout(existing, next)) {
       result.unchanged.push(entry.id);
       continue;
     }
     // updatedAt is stamped by the repository on write.
-    await repository.put({ ...toStoredWorkout(entry), updatedAt: '' });
+    await repository.put({ ...next, updatedAt: existing?.updatedAt ?? '' });
     result.written.push(entry.id);
   }
 
