@@ -20,7 +20,7 @@ describe('bundledWorkouts', () => {
     const { workouts, skipped } = bundledWorkouts();
 
     expect(skipped).toEqual([]);
-    expect(workouts.length).toBe(4);
+    expect(workouts.length).toBe(6);
     for (const entry of workouts) {
       expect(entry.file).toMatch(/\.yaml$/);
       expect(entry.workout.name.length).toBeGreaterThan(0);
@@ -30,8 +30,8 @@ describe('bundledWorkouts', () => {
   });
 
   it('reads the name and description out of the file rather than the manifest', () => {
-    const entry = bundledWorkouts().workouts.find((w) => w.id === '2x20-threshold');
-    expect(entry?.workout.name).toMatch(/2 ?x ?20/i);
+    const entry = bundledWorkouts().workouts.find((w) => w.id === 'sweet-spot-50');
+    expect(entry?.workout.name).toMatch(/sweet ?spot/i);
     expect(entry?.workout.description?.length).toBeGreaterThan(0);
   });
 

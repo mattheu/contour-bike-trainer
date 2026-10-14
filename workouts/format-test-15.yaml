@@ -1,0 +1,24 @@
+name: Format test
+description: Fifteen minutes that use every part of the workout format. Not a training session — ride it to check the app, or read it to learn the syntax.
+ftp: 250 # fixed, so the 150W step below is always the same share of the target
+
+# A ramp between two percentages.
+warmup: { duration: 2m, ramp: [50%, 70%] }
+
+steps:
+  - repeat: 2
+    steps:
+      - repeat: 2
+        steps:
+          # Percentage of FTP, with a single cadence target.
+          - { duration: 1m, power: 100%, cadence: 95, name: Percent }
+          # Absolute watts, with a cadence range.
+          - { duration: 1m, power: 150W, cadence: [85, 95], name: Watts }
+      # A ramp may mix the two forms.
+      - { duration: 1m, ramp: [60%, 180W], name: Mixed ramp }
+  # No target at all: ERG releases for the length of the step.
+  - { duration: 1m, power: free, name: Free }
+  # No name: the target is the whole story.
+  - { duration: 1m, power: 65% }
+
+cooldown: { duration: 1m, ramp: [55%, 40%] }

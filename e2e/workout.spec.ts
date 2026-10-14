@@ -58,7 +58,7 @@ async function openWorkouts(page: Page): Promise<void> {
   await openApp(page, { fake: 'constant', memoryStorage: true });
   await page.getByRole('button', { name: 'Workouts' }).click();
   // The bundled starters are seeded on boot, so the list is never the empty state here.
-  await expect(page.getByRole('link', { name: 'Openers' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Format test' })).toBeVisible();
 }
 
 /** The textarea, which the editor labels as the workout itself. */

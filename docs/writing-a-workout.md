@@ -88,20 +88,20 @@ hours a step, 300 % of FTP, 2,000 W, 200 rpm.
 ```
 
 A repeat block holds its own steps, and those may themselves be repeats — a set of sets, as in
-`openers.yaml`:
+`format-test-15.yaml`:
 
 ```yaml
 - repeat: 2
   steps:
-    - repeat: 3
+    - repeat: 2
       steps:
-        - { duration: 30s, power: 120%, cadence: [100, 110], name: Fast pedal }
-        - { duration: 90s, power: 55%, name: Easy }
-    - { duration: 3m, power: 50%, name: Easy }
+        - { duration: 1m, power: 100%, cadence: 95, name: Percent }
+        - { duration: 1m, power: 150W, cadence: [85, 95], name: Watts }
+    - { duration: 1m, ramp: [60%, 180W], name: Mixed ramp }
 ```
 
-Repeats are flattened before you ride, so `openers.yaml` is 17 steps and 32 minutes — each one
-listed in the panel and counted in the header. A count runs from 1 to 100, nesting is capped at
+Repeats are flattened before you ride, so `format-test-15.yaml` is 14 steps and 15 minutes — each
+one listed in the panel and counted in the header. A count runs from 1 to 100, nesting is capped at
 ten deep, and the whole expansion at 1,000 steps — limits there to catch a typo, not to express a
 view on training.
 
@@ -158,6 +158,6 @@ rather than a parsed tree is what makes that possible.
 condensed format reference sits beside the text box, so you need this page for the detail
 rather than for the basics.
 
-The four that ship with the app are seeded on first run and are yours after that — edit or
+The six that ship with the app are seeded on first run and are yours after that — edit or
 delete them like any other. They live in [`workouts/`](../workouts/) in the project if you want
 the originals back.

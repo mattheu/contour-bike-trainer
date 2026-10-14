@@ -101,8 +101,9 @@ Look for:
 
 **Nothing below has ever run against real hardware.** The whole workout feature writes target
 power to the trainer and releases it again, and every test of that path so far has been against
-the fake. Ride `Openers` — it has ramps, nested repeats, a cadence target and a `free` block, which
-is most of the format in half an hour.
+the fake. Ride `Format test` — fifteen minutes that use every part of the format, which is exactly what
+this section needs to exercise. Then ride `Thirty by thirty` for sustained step changes under
+load.
 
 - [ ] The warmup ramp climbs smoothly rather than in audible jumps. Watch the trainer's reported
       power follow the target up, not lag a block behind it.

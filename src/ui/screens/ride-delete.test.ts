@@ -3,6 +3,7 @@ import {
   cancelDelete,
   deleteAlert,
   deleteWording,
+  returnToAfterDelete,
   isArmed,
   pressDelete,
   retainArmed,
@@ -61,29 +62,39 @@ describe('retainArmed', () => {
 });
 
 describe('deleteWording', () => {
-  it('asks rather than warns about a ride that just finished, and returns to Routes', () => {
+  it('asks rather than warns about a ride that just finished', () => {
     expect(deleteWording('finished')).toEqual({
       action: 'Discard ride',
       prompt: 'Discard?',
       confirm: 'Discard',
       cancel: 'Keep',
-      returnTo: 'routes',
     });
   });
 
-  it('says a historic ride cannot be undone, and returns to Rides', () => {
+  it('says a historic ride cannot be undone', () => {
     expect(deleteWording('history')).toEqual({
       action: 'Delete ride',
       prompt: "Sure? Can't be undone",
       confirm: 'Delete',
       cancel: 'Keep',
-      returnTo: 'rides',
     });
   });
 
   it('offers a worded way out of both, not just a click elsewhere', () => {
     expect(deleteWording('finished').cancel).not.toBe('');
     expect(deleteWording('history').cancel).not.toBe('');
+  });
+});
+
+describe('returnToAfterDelete', () => {
+  it('sends a discarded ride back to the list it was started from', () => {
+    expect(returnToAfterDelete('finished', false)).toBe('routes');
+    expect(returnToAfterDelete('finished', true)).toBe('workouts');
+  });
+
+  it('sends a historic ride back to the history, whatever it was', () => {
+    expect(returnToAfterDelete('history', false)).toBe('rides');
+    expect(returnToAfterDelete('history', true)).toBe('rides');
   });
 });
 

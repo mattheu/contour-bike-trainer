@@ -11,6 +11,11 @@ import type { Workout, WorkoutNode, WorkoutStep } from './types';
  * format, so a rider learns it by reading them. This test is what stops a later format
  * change quietly breaking that — and the coverage assertion is what stops the examples
  * drifting into using only the easy half of the grammar.
+ *
+ * `1h30m` is the one form deliberately absent: the longest starter is an hour and no step
+ * in it runs that long, and padding a session to demonstrate a duration would be writing a
+ * worse workout to satisfy a test. It is covered by the editor's format reference instead,
+ * whose snippets are parsed by src/ui/screens/workout-reference.test.ts.
  */
 
 const sourceByPath = import.meta.glob('../../workouts/*.yaml', {
@@ -44,7 +49,6 @@ const FEATURES = [
   'cadence as a range',
   'duration in seconds',
   'duration in minutes',
-  'duration in hours and minutes',
   'comments',
 ] as const;
 
@@ -95,7 +99,6 @@ function featuresOf(source: string, workout: Workout): Set<Feature> {
   // The written form of a duration is lost by the time it is seconds, so read it from the source.
   if (/duration:\s*\d+s\b/.test(source)) found.add('duration in seconds');
   if (/duration:\s*\d+m\b/.test(source)) found.add('duration in minutes');
-  if (/duration:\s*\d+h\d+m\b/.test(source)) found.add('duration in hours and minutes');
   if (/^\s*#|\s#\s/m.test(source)) found.add('comments');
   return found;
 }
@@ -109,13 +112,15 @@ const starters = manifest.workouts.map((entry) => {
 });
 
 describe('workouts/manifest.json', () => {
-  it('ships the four starters the spec names', () => {
-    expect(manifest.workouts).toHaveLength(4);
+  it('ships the six starters the spec names', () => {
+    expect(manifest.workouts).toHaveLength(6);
     expect(manifest.workouts.map((entry) => entry.id)).toEqual([
-      '2x20-threshold',
-      '5x3-vo2',
-      'endurance-90',
-      'openers',
+      '30-30s',
+      'sweet-spot-50',
+      'over-unders-45',
+      'vo2-max-50',
+      'aerobic-builds-60',
+      'format-test-15',
     ]);
   });
 
@@ -143,8 +148,12 @@ describe('the starter workouts', () => {
       expanded.totalDurationS,
       ftp,
     );
-    expect(tss).toBeGreaterThan(20);
-    expect(tss).toBeLessThan(200);
+    // Per hour rather than total: the format test is fifteen minutes and legitimately
+    // scores in the teens, while an hour of endurance scores in the fifties. A flat floor
+    // would only be asking every starter to be the same length.
+    const perHour = tss / (expanded.totalDurationS / 3600);
+    expect(perHour).toBeGreaterThan(20);
+    expect(perHour).toBeLessThan(150);
   });
 
   it('uses every feature of the format between them', () => {
@@ -159,14 +168,22 @@ describe('the starter workouts', () => {
     const byId = new Map(
       starters.map(({ id, source }) => [id, featuresOf(source, parseWorkout(source))]),
     );
-    expect(byId.get('2x20-threshold')).toContain('cadence as a number');
-    expect(byId.get('2x20-threshold')).toContain('ftp');
-    expect(byId.get('2x20-threshold')).toContain('unnamed step');
-    expect(byId.get('5x3-vo2')).toContain('cadence as a range');
-    expect(byId.get('endurance-90')).toContain('power in watts');
-    expect(byId.get('endurance-90')).toContain('duration in hours and minutes');
-    expect(byId.get('openers')).toContain('nested repeat');
-    expect(byId.get('openers')).toContain('power free');
-    expect(byId.get('openers')).toContain('ramp mixing forms');
+    // The format test carries the whole grammar; the training sessions carry the forms
+    // they would naturally use, which is what keeps them readable as training.
+    for (const feature of [
+      'nested repeat',
+      'power free',
+      'power in watts',
+      'ramp mixing forms',
+      'cadence as a number',
+      'cadence as a range',
+      'ftp',
+      'unnamed step',
+    ] as const) {
+      expect(byId.get('format-test-15')).toContain(feature);
+    }
+    expect(byId.get('30-30s')).toContain('duration in seconds');
+    expect(byId.get('sweet-spot-50')).toContain('cadence as a range');
+    expect(byId.get('aerobic-builds-60')).toContain('unnamed step');
   });
 });

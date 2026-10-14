@@ -1,0 +1,14 @@
+name: Sweet spot 3x9
+description: Fifty minutes at the intensity that buys the most fitness per unit of suffering — just under threshold, held long enough to matter.
+
+warmup: { duration: 10m, ramp: [50%, 75%] }
+
+steps:
+  - repeat: 3
+    steps:
+      # 90 % is the middle of the sweet spot: hard enough to drive adaptation, easy
+      # enough to repeat tomorrow.
+      - { duration: 9m, power: 90%, cadence: [85, 95], name: Sweet spot }
+      - { duration: 2m, power: 55%, name: Easy }
+
+cooldown: { duration: 7m, ramp: [60%, 40%] }

@@ -59,20 +59,18 @@ export interface DeleteWording {
   confirm: string;
   /** The escape, always worded rather than implied by clicking elsewhere. */
   cancel: string;
-  /** Where a summary goes once its ride is gone. */
-  returnTo: ListScreen;
 }
 
 const WORDING: Record<DeleteOrigin, DeleteWording> = {
   // A ride the rider was on a moment ago: the false start, the accidental two minutes.
   // They know exactly what they are throwing away, so the confirm asks rather than warns.
-  // Back to Routes, because what they want next is something to ride, not their history.
+  // Back to whichever list they came from, because what they want next is something to
+  // ride, not their history. See returnToAfterDelete.
   finished: {
     action: 'Discard ride',
     prompt: 'Discard?',
     confirm: 'Discard',
     cancel: 'Keep',
-    returnTo: 'routes',
   },
   // A ride from months ago, remembered only as the figures on its row. Say plainly that
   // this is permanent, once, and leave it there.
@@ -81,7 +79,6 @@ const WORDING: Record<DeleteOrigin, DeleteWording> = {
     prompt: "Sure? Can't be undone",
     confirm: 'Delete',
     cancel: 'Keep',
-    returnTo: 'rides',
   },
 };
 
@@ -103,4 +100,17 @@ export function deleteAlert(
   return result.status === 'failed'
     ? { level: 'fault', message: `That ride could not be deleted: ${result.reason}` }
     : { level: 'info', message: `${title} deleted.` };
+}
+
+/**
+ * Where to go once the ride is gone.
+ *
+ * Not a field on the wording, because it is not a property of why the rider is deleting:
+ * a ride they just abandoned belongs back at the list they started it from, and a workout
+ * ride was started from the workouts list. Sending them to the routes would be offering a
+ * route to someone who was doing a plan.
+ */
+export function returnToAfterDelete(origin: DeleteOrigin, wasWorkout: boolean): ListScreen {
+  if (origin === 'history') return 'rides';
+  return wasWorkout ? 'workouts' : 'routes';
 }

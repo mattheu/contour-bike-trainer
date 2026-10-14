@@ -12,7 +12,7 @@ import { Routes } from './screens/Routes';
 import { Summary } from './screens/Summary';
 import { WorkoutEditor } from './screens/WorkoutEditor';
 import { Workouts } from './screens/Workouts';
-import { deleteWording, type DeleteOrigin, type DeleteResult } from './screens/ride-delete';
+import { returnToAfterDelete, type DeleteOrigin, type DeleteResult } from './screens/ride-delete';
 import type { Targets } from './screens/RideSettings';
 import { RiderProfile } from './screens/RiderProfile';
 import { useAsync } from './screens/use-async';
@@ -125,18 +125,21 @@ function RideApp() {
   }, []);
 
   const endRide = useCallback(async () => {
+    // Read before the await: ending the ride tears the run down, so by the time the
+    // outcome lands the snapshot no longer knows a workout was being ridden.
+    const wasWorkout = snapshot.workout !== null;
     const outcome = await services.endRide();
     // A failed save said so in the alert strip; staying on the ride screen keeps that
     // message where the rider can see it. A discarded one never existed, so there is no
-    // summary to show — back to the routes, which is where they were going anyway.
+    // summary to show — back to the list it was started from.
     if (outcome.status === 'failed') return;
     if (outcome.status === 'discarded') {
-      setRequested('routes');
+      setRequested(returnToAfterDelete('finished', wasWorkout));
       return;
     }
     setOpenRideId(outcome.rideId);
     setRequested('summary');
-  }, []);
+  }, [snapshot.workout]);
 
   // One control, three jobs: a route is chosen but not yet started, a ride is running,
   // or a ride is paused. The label the rider reads comes from primaryControlLabel.
@@ -268,9 +271,9 @@ function RideApp() {
         rideId={rideId}
         origin={summaryOrigin}
         onExport={(id) => void services.exportRideTcx(id)}
-        onDelete={async () => {
+        onDelete={async (wasWorkout) => {
           const result = await deleteRide(rideId);
-          if (result.status === 'done') navigate(deleteWording(summaryOrigin).returnTo);
+          if (result.status === 'done') navigate(returnToAfterDelete(summaryOrigin, wasWorkout));
           return result;
         }}
         onDone={() => navigate('rides')}
@@ -379,7 +382,8 @@ function SummaryScreen({
   rideId: string;
   origin: DeleteOrigin;
   onExport: (rideId: string) => void;
-  onDelete: () => Promise<DeleteResult>;
+  /** Told whether this was a workout, which decides the list it goes back to. */
+  onDelete: (wasWorkout: boolean) => Promise<DeleteResult>;
   onDone: () => void;
 }) {
   const loaded = useAsync<LoadedRide>(async () => {
@@ -411,7 +415,7 @@ function SummaryScreen({
       route={route}
       origin={origin}
       onExport={() => onExport(loaded.ride.id)}
-      onDelete={onDelete}
+      onDelete={() => onDelete(loaded.ride.workoutId !== null)}
       onDone={onDone}
     />
   );
