@@ -48,17 +48,19 @@ export const SCALE_BAR_TARGET_PX = 50;
  * the perpendicular either way, so widening the tolerance only decides whether to
  * mark, never where. What it buys back is a 24 px band to aim at instead of one.
  *
- * It is not wide enough to be sloppy against the frame — 12 px of a 320 px map, or of
- * the 240 px one layout.ts will still draw, is a small fraction of the width, and the
- * empty quarters of the panel stay empty.
+ * Widening it costs no accuracy, which is why it is as generous as it is: the answer is
+ * the foot of the perpendicular either way, so this decides only whether to mark, never
+ * where. It still is not wide enough to be sloppy against the frame — 24 px of a 320 px
+ * map, or of the 240 px one layout.ts will still draw, leaves the empty quarters of the
+ * panel empty.
  *
  * Screen pixels, not metres: the ground it covers depends on the route and the zoom —
- * about 180 m on Sa Calobra at 320 px — and that is correct, because the tolerance is
+ * about 360 m on Sa Calobra at 320 px — and that is correct, because the tolerance is
  * a property of the pointer rather than of the road. It is emphatically not a figure
  * that can separate the limbs of a hairpin: on Sa Calobra the road passes within a
  * pixel of itself, so no threshold could.
  */
-export const HOVER_SNAP_PX = 12;
+export const HOVER_SNAP_PX = 24;
 
 export interface ScaleBar {
   lengthPx: number;
