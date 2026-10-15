@@ -30,7 +30,13 @@ const HOVER_ARM = 5;
 export interface ElevationProfileHandle {
   /** Called at 1 Hz. Mutates the ridden paths and the marker; never re-renders. */
   update(distanceM: number): void;
-  /** Moves or clears the hover marker. Mutates one node; never re-renders either. */
+  /**
+   * Moves or clears the hover marker. Mutates one node; never re-renders either.
+   *
+   * Drawing only. It cannot call onHover — the emit lives in the pointer handlers and
+   * nowhere else — so the map driving this marker cannot drive a hover back out, and
+   * the two charts cannot push each other around a loop.
+   */
   hover(distanceM: number | null): void;
 }
 
@@ -44,9 +50,13 @@ export interface ElevationProfileProps {
   width?: number;
   height?: number;
   /**
-   * Where on the route the pointer is, in metres, or null when it leaves. Supplying it
-   * is what makes the chart hoverable at all: a profile nobody is listening to — the
-   * summary's — keeps no hit surface and grows no marker.
+   * Where on the route *this chart's own pointer* is, in metres, or null when it
+   * leaves. Supplying it is what makes the chart hoverable at all: a profile nobody is
+   * listening to — the summary's — keeps no hit surface and grows no marker.
+   *
+   * Only a pointer on this chart's hit surface produces one. A marker put here through
+   * the handle is drawn and nothing more, which is what keeps the map and the profile
+   * from driving each other.
    *
    * Called straight out of the pointer handler, so it must not set state on a screen
    * that would re-render under the mouse. The ride screen forwards it to the map's
@@ -83,8 +93,14 @@ export function ElevationProfile({
   const dropLine = useRef<SVGLineElement>(null);
   const gradeText = useRef<SVGTSpanElement>(null);
   const hoverGroup = useRef<SVGGElement>(null);
-  /** The hovered distance, kept out of React: a mousemove must not render anything. */
+  /** The marked distance, kept out of React: a mousemove must not render anything. */
   const hoveredM = useRef<number | null>(null);
+  /**
+   * The same distance, but only while this chart's own pointer is the one putting it
+   * there. Written by the pointer handlers and by nothing else, so it is the chart's
+   * answer to "is the mouse on me" — which is the only thing that entitles it to speak.
+   */
+  const pointerM = useRef<number | null>(null);
 
   const paint = useMemo(() => {
     return (distance: number): void => {
@@ -111,7 +127,11 @@ export function ElevationProfile({
       hoveredM.current = distance;
       const node = hoverGroup.current;
       if (node === null) return;
-      if (distance === null) {
+      // Outside the window there is no x to draw it at: marker() clamps, so the cross
+      // would sit on the edge of the chart naming a distance the pointer is nowhere
+      // near. The map can ask for one — it hovers the whole route however this chart
+      // happens to be zoomed — so this is the case, not an impossible one.
+      if (distance === null || distance < geometry.startM || distance > geometry.endM) {
         node.setAttribute('visibility', 'hidden');
         return;
       }
@@ -136,12 +156,17 @@ export function ElevationProfile({
   useEffect(() => {
     const at = hoveredM.current;
     if (at === null) return;
-    if (at < geometry.startM || at > geometry.endM) {
+    if (pointerM.current !== null && (at < geometry.startM || at > geometry.endM)) {
+      pointerM.current = null;
       paintHover(null);
       onHover?.(null);
-    } else {
-      paintHover(at);
+      return;
     }
+    // A marker the map put here has a pointer of its own somewhere else on the screen,
+    // so it is kept rather than dropped: hidden while the window is past it, drawn
+    // again if the window scrolls back over it. Telling the map its hover had ended
+    // would wipe the crosshair out from under a mouse that has not moved.
+    paintHover(at);
   }, [geometry, paintHover, onHover]);
 
   const hoverable = onHover !== undefined;
@@ -152,12 +177,14 @@ export function ElevationProfile({
     if (event.pointerType !== 'mouse') return;
     const box = event.currentTarget.getBoundingClientRect();
     const at = geometry.distFor(event.clientX - box.left);
+    pointerM.current = at;
     paintHover(at);
     onHover?.(at);
   }
 
   function endHover(): void {
-    if (hoveredM.current === null) return;
+    if (pointerM.current === null) return;
+    pointerM.current = null;
     paintHover(null);
     onHover?.(null);
   }

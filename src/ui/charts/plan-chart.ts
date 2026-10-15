@@ -278,3 +278,22 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
     marker,
   };
 }
+
+/**
+ * The block a hovered Steps row points at, or null where the row has none.
+ *
+ * The exact inverse of `hoveredRowNumber` in workout-view.ts, and the reason hovering a
+ * free step's row marks nothing on the chart: a free step produces no segment and so no
+ * block, so there is no entry here to find. The absence is in the list being searched
+ * rather than in a test for freeness written above it — which is also what keeps a plan
+ * that shortens under a skip from outlining a block that is gone.
+ *
+ * Null in, null out: a pointer on no row is a chart with nothing outlined.
+ */
+export function blockForStep(
+  blocks: readonly PlanBlock[],
+  stepIndex: number | null,
+): PlanBlock | null {
+  if (stepIndex === null) return null;
+  return blocks.find((block) => block.stepIndex === stepIndex) ?? null;
+}

@@ -36,10 +36,100 @@ const MAX_TRACE_POINTS = 1500;
 /** The scale bar is drawn at this nominal length, then snapped to a round distance. */
 export const SCALE_BAR_TARGET_PX = 50;
 
+/**
+ * How near the trace the pointer has to be, in screen pixels, before the map marks a
+ * point on the route.
+ *
+ * A map is mostly empty space, so without a limit every move across the panel would
+ * snap to some arbitrary distance and plant a marker on the profile — the chart would
+ * twitch at a pointer that is nowhere near the road. The trace is a 1.25 px hairline
+ * though, so demanding a hit on the line itself would feel broken. This is the slop a
+ * pointer target normally gets, and it costs no accuracy: the answer is the foot of
+ * the perpendicular either way, so widening the tolerance only decides whether to
+ * mark, never where. What it buys back is a 24 px band to aim at instead of one.
+ *
+ * It is not wide enough to be sloppy against the frame — 12 px of a 320 px map, or of
+ * the 240 px one layout.ts will still draw, is a small fraction of the width, and the
+ * empty quarters of the panel stay empty.
+ *
+ * Screen pixels, not metres: the ground it covers depends on the route and the zoom —
+ * about 180 m on Sa Calobra at 320 px — and that is correct, because the tolerance is
+ * a property of the pointer rather than of the road. It is emphatically not a figure
+ * that can separate the limbs of a hairpin: on Sa Calobra the road passes within a
+ * pixel of itself, so no threshold could.
+ */
+export const HOVER_SNAP_PX = 12;
+
 export interface ScaleBar {
   lengthPx: number;
   metres: number;
   label: string;
+}
+
+/** A projected trace vertex: where it sits on the plane, and how far along the route. */
+export interface TraceVertex extends Pt {
+  distM: number;
+}
+
+/** The nearest point on the trace, in whatever space the search was run in. */
+export interface TraceHit {
+  /** Distance along the route, in metres. */
+  distM: number;
+  /** Gap between the target and that point, in the units of the points given. */
+  offset: number;
+}
+
+/** What the pointer found: where on the route, and how near it actually got. */
+export interface RouteHit {
+  /** Distance along the route, in metres, of the nearest point on the trace. */
+  distM: number;
+  /** Gap between the pointer and that point, in screen pixels, for HOVER_SNAP_PX. */
+  offsetPx: number;
+}
+
+function clamp01(value: number): number {
+  return value < 0 ? 0 : value > 1 ? 1 : value;
+}
+
+/**
+ * The point on a projected polyline nearest `target`, as a distance along the route.
+ *
+ * Going the other way is a formula — a distance interpolates to one position. Coming
+ * back is a search, and has to be: a route folds over itself, so a position does not
+ * determine a distance and nothing can be inverted. So every chord is tested and the
+ * global best wins. Linear over a trace capped at MAX_TRACE_POINTS, which is a couple
+ * of thousand multiply-adds per pointer move — far less than the paint it triggers,
+ * and cheaper than keeping an index correct across two zooms.
+ *
+ * A strict improvement replaces the best, so a tie goes to the lower distance. That
+ * decides a hairpin, where the pointer on the apex is genuinely equidistant from both
+ * limbs: the answer is the way out rather than the way back, and it is at least the
+ * same answer every time the pointer returns to the same pixel.
+ */
+export function nearestOnTrace(trace: readonly TraceVertex[], target: Pt): TraceHit {
+  const first = trace[0];
+  if (first === undefined) return { distM: 0, offset: Infinity };
+
+  let bestSq = (first.x - target.x) ** 2 + (first.y - target.y) ** 2;
+  let bestM = first.distM;
+
+  for (let i = 0; i < trace.length - 1; i += 1) {
+    const a = trace[i] as TraceVertex;
+    const b = trace[i + 1] as TraceVertex;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lengthSq = dx * dx + dy * dy;
+    // A zero-length chord — a route that pauses in one place — is just its own vertex.
+    const t =
+      lengthSq > 0 ? clamp01(((target.x - a.x) * dx + (target.y - a.y) * dy) / lengthSq) : 0;
+    const gapSq = (a.x + dx * t - target.x) ** 2 + (a.y + dy * t - target.y) ** 2;
+    if (gapSq < bestSq) {
+      bestSq = gapSq;
+      bestM = a.distM + (b.distM - a.distM) * t;
+    }
+  }
+
+  return { distM: bestM, offset: Math.sqrt(bestSq) };
 }
 
 export interface RouteMapGeometry {
@@ -68,6 +158,16 @@ export interface RouteMapGeometry {
    * it and every marker would come back at the middle of the frame.
    */
   screenFor(distM: number, panM: number): PlanePoint;
+  /**
+   * screenFor backwards: the point on the route nearest a pointer sitting at `screen`
+   * while the frame is panned to `panM`, and how far off the trace that pointer was.
+   *
+   * The pan is not optional here for the same reason it is not optional there. On the
+   * 5 km view the frame is panned and zoomed around the rider, so the same pixel is a
+   * different place on the route every second; searching in the untransformed plane
+   * would answer for a map nobody is looking at.
+   */
+  routeAt(screen: PlanePoint, panM: number): RouteHit;
   strokeWidth(basePx: number): number;
   scaleBar: ScaleBar;
 }
@@ -148,6 +248,24 @@ export function routeMapGeometry(input: RouteMapInput): RouteMapGeometry {
     };
   };
 
+  /** toScreen undone, so a pointer can be searched against the untransformed trace. */
+  const toPlane = (point: PlanePoint, distM: number): PlanePoint => {
+    if (zoom !== 'near') return { x: point.x - offset.x, y: point.y - offset.y };
+    const rider = planeAt(distM);
+    return {
+      x: rider.x + (point.x - centre.x) / scale,
+      y: rider.y + (point.y - centre.y) / scale,
+    };
+  };
+
+  // Projected once, shared by the drawn path and by every pointer move: the search runs
+  // on the vertices the trace is actually drawn through, so what it reports is what the
+  // rider can see rather than a higher-resolution route hidden under it.
+  const vertices: TraceVertex[] = trace.map((point) => ({
+    ...projection.project(point),
+    distM: point.distM,
+  }));
+
   const prefix = (distM: number): Pt[] => {
     if (distM <= 0) return [];
     const head = trace.filter((point) => point.distM < distM).map(toPt);
@@ -165,12 +283,19 @@ export function routeMapGeometry(input: RouteMapInput): RouteMapGeometry {
     projection,
     scale,
     clipped: zoom === 'near',
-    tracePath: smoothPath(trace.map(toPt)),
+    tracePath: smoothPath(vertices),
     riddenPath: (distM) => smoothPath(prefix(distM)),
     transform,
     startScreen: (distM) => toScreen(toPt(route.points[0] as RoutePoint), distM),
     riderScreen: (distM) => toScreen(planeAt(distM), distM),
     screenFor: (distM, panM) => toScreen(planeAt(distM), panM),
+    routeAt: (screen, panM) => {
+      const hit = nearestOnTrace(vertices, toPlane(screen, panM));
+      // The plane is isotropic and the zoom uniform, so one multiply carries a plane
+      // gap into the pixels the pointer measures in. That is what makes HOVER_SNAP_PX
+      // one number for both views rather than one per zoom.
+      return { distM: hit.distM, offsetPx: hit.offset * scale };
+    },
     strokeWidth: (basePx) => basePx / scale,
     scaleBar: {
       lengthPx: (metres / projection.metresPerUnit) * scale,

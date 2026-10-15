@@ -1,6 +1,6 @@
 import { useId, useMemo, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ExpandedStep } from '../../workout/expand';
-import { planChartGeometry, type PlanChartSample } from './plan-chart';
+import { blockForStep, planChartGeometry, type PlanChartSample } from './plan-chart';
 
 export const PLAN_CHART_WIDTH = 912;
 export const PLAN_CHART_HEIGHT = 220;
@@ -31,6 +31,15 @@ export interface PlanChartProps {
    * mousemove, and the screen above can hold it in state without the usual cost.
    */
   onHoverStep?: (stepIndex: number | null) => void;
+  /**
+   * The expanded step to outline, or null for none — the same index `onHoverStep` reports,
+   * handed back. One value travels both ways, so a block and its row in the Steps panel
+   * cannot disagree about what the pointer is on, whichever end it is actually over.
+   *
+   * Independent of `onHoverStep`: a chart given only this one outlines without being
+   * hoverable itself, which is what a row driving it from the panel needs.
+   */
+  hoveredStep?: number | null;
 }
 
 /**
@@ -51,6 +60,7 @@ export function PlanChart({
   width = PLAN_CHART_WIDTH,
   height = PLAN_CHART_HEIGHT,
   onHoverStep,
+  hoveredStep = null,
 }: PlanChartProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const geometry = useMemo(
@@ -60,6 +70,7 @@ export function PlanChart({
 
   const marker = geometry.marker;
   const aheadX = marker?.x ?? 0;
+  const hoveredBlock = blockForStep(geometry.blocks, hoveredStep);
 
   return (
     <svg
@@ -186,6 +197,38 @@ export function PlanChart({
           strokeLinejoin="round"
         />
       ))}
+
+      {/* The block under the pointer, outlined. The same answer the ink crosshair gives on
+          the ride screen's profile: this is the thing you are pointing at.
+
+          An outline and not a fill, because the wash ramp is 4 points a zone — any change
+          of fill big enough to see is two zones wide, and would be read as the step having
+          changed intensity. The perimeter says nothing the zone scale is saying.
+
+          Unclipped, like the hit layer it answers and unlike the blocks it traces: the
+          painted blocks stop at the marker, but a step already ridden is still a step you
+          can point at, and an outline that vanished behind the marker would be the dead
+          pointer this exists to fix.
+
+          Drawn over the plan's own grey line, which runs along this same top edge, so the
+          edge reads as ink rather than as muted laid on top of it — and under the actual
+          power line and the marker, which keep the accent and the foreground.
+
+          Every block outlines, the current one included. The Steps row is exempt from its
+          own hover because it is already solid ink with nothing left to raise; a block is
+          drawn no differently for being the one the marker sits on, so it has everything
+          left to say. Exempting it too would make the current step the one place where
+          pointing at the plan answers nothing at all. */}
+      {hoveredBlock !== null && (
+        <path
+          data-testid="plan-hovered-block"
+          d={hoveredBlock.d}
+          fill="none"
+          stroke="var(--color-ink)"
+          strokeWidth="var(--stroke-chart)"
+          strokeLinejoin="round"
+        />
+      )}
 
       {geometry.actualAreaPaths.map((d) => (
         <path key={`area-${d}`} d={d} fill={`url(#ridden-hatch-${uid})`} opacity={0.75} />

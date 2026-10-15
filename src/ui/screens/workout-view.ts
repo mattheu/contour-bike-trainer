@@ -146,6 +146,23 @@ export function hoveredRowNumber(
   return rows[stepIndex]?.number ?? null;
 }
 
+/**
+ * The expanded step a hovered row names, or null where the pointer is on no row.
+ *
+ * The inverse of `hoveredRowNumber`, and the other half of one piece of state: both ends
+ * of the coupling speak in step indices, so a row and a block cannot hold different ideas
+ * of what is hovered. Searched rather than subtracted one, so the two directions stay
+ * inverses of each other if the panel ever numbers rows differently from their position.
+ *
+ * A free row resolves to an index like any other. It marks nothing on the chart because
+ * no block carries that index — see `blockForStep` — not because this declines to answer.
+ */
+export function stepIndexForRow(rows: readonly StepRow[], rowNumber: number | null): number | null {
+  if (rowNumber === null) return null;
+  const index = rows.findIndex((row) => row.number === rowNumber);
+  return index === -1 ? null : index;
+}
+
 /** The panel's heading: `8 · 63 min`, both of them of the plan that will actually be ridden. */
 export function stepsHeading(steps: readonly ExpandedStep[]): string {
   const totalS = steps.reduce((total, step) => total + step.durationS, 0);

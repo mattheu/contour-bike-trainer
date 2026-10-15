@@ -4,11 +4,13 @@ import {
   useImperativeHandle,
   useMemo,
   useRef,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
 } from 'react';
 import type { Route } from '../../route/types';
-import { routeMapGeometry, type MapZoom } from './map';
+import type { PlanePoint } from '../projection';
+import { HOVER_SNAP_PX, routeMapGeometry, type MapZoom } from './map';
 
 export const MAP_WIDTH = 320;
 export const MAP_HEIGHT = 302;
@@ -26,6 +28,10 @@ export interface RouteMapHandle {
   /**
    * Puts the hover marker at a distance along the route, or clears it. Driven by the
    * elevation profile, which is where the pointer actually is; the map only draws it.
+   *
+   * Drawing only, exactly as the profile's handle is: it cannot call onHover, so being
+   * told to show a marker can never emit one back and the two charts have no loop to
+   * fall into.
    */
   hover(distanceM: number | null): void;
 }
@@ -36,6 +42,15 @@ export interface RouteMapProps {
   zoom?: MapZoom;
   width?: number;
   height?: number;
+  /**
+   * Where on the route *this chart's own pointer* is, in metres, or null when it is
+   * not near the route at all. Supplying it is what gives the map a hit surface, the
+   * same bargain the profile strikes.
+   *
+   * Called straight out of the pointer handler, so like the profile's it must not set
+   * state on a screen that would re-render under the mouse.
+   */
+  onHover?: (distanceM: number | null) => void;
   ref?: RefObject<RouteMapHandle | null>;
 }
 
@@ -45,6 +60,7 @@ export function RouteMap({
   zoom = 'route',
   width = MAP_WIDTH,
   height = MAP_HEIGHT,
+  onHover,
   ref,
 }: RouteMapProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
@@ -58,10 +74,18 @@ export function RouteMap({
   const rider = useRef<SVGCircleElement>(null);
   const halo = useRef<SVGCircleElement>(null);
   const hoverGroup = useRef<SVGGElement>(null);
-  /** The hovered distance and the distance the frame is panned to. Both out of React:
+  /** The marked distance and the distance the frame is panned to. Both out of React:
    *  neither a mousemove nor a tick may render this component. */
   const hoveredM = useRef<number | null>(null);
   const pannedM = useRef(distanceM);
+  /**
+   * Where this chart's own pointer sits in the frame, in screen pixels, or null when it
+   * is off the map. Written by the pointer handlers and by nothing else, so it is what
+   * entitles the map to speak — and it is kept as a pixel rather than a distance
+   * because on the 5 km view the frame slides out from under a stationary mouse, and
+   * the pixel is then the only part of the hover that has not changed.
+   */
+  const pointerPx = useRef<PlanePoint | null>(null);
 
   const paintHover = useMemo(() => {
     return (): void => {
@@ -81,6 +105,27 @@ export function RouteMap({
     };
   }, [geometry]);
 
+  /**
+   * Reads the route under this chart's own pointer and reports it.
+   *
+   * Beyond HOVER_SNAP_PX of the trace there is no answer worth giving: a map is mostly
+   * empty space, and snapping from anywhere would mark an arbitrary distance every time
+   * the mouse crossed the panel.
+   */
+  const trackPointer = useMemo(() => {
+    return (): void => {
+      const at = pointerPx.current;
+      if (at === null) return;
+      const hit = geometry.routeAt(at, pannedM.current);
+      const next = hit.offsetPx <= HOVER_SNAP_PX ? hit.distM : null;
+      // Empty space over empty space is not news, and the profile is not told again.
+      if (next === null && hoveredM.current === null) return;
+      hoveredM.current = next;
+      paintHover();
+      onHover?.(next);
+    };
+  }, [geometry, paintHover, onHover]);
+
   const paint = useMemo(() => {
     return (distance: number): void => {
       pannedM.current = distance;
@@ -92,10 +137,13 @@ export function RouteMap({
         node?.setAttribute('cy', String(screen.y));
       }
       // The 5 km frame pans under a stationary pointer, so the hover marker has to be
-      // re-placed every time the rider moves or it drifts off the point it names.
+      // re-placed every time the rider moves or it drifts off the point it names — and
+      // where the pointer is this chart's own, the road under it has changed too, so
+      // the question is asked again rather than the old answer moved.
+      trackPointer();
       paintHover();
     };
-  }, [geometry, paintHover]);
+  }, [geometry, paintHover, trackPointer]);
 
   const hover = useMemo(() => {
     return (distance: number | null): void => {
@@ -109,6 +157,25 @@ export function RouteMap({
   useEffect(() => {
     paint(distanceM);
   }, [paint, distanceM]);
+
+  const hoverable = onHover !== undefined;
+
+  function moveHover(event: ReactPointerEvent<SVGRectElement>): void {
+    // A pointing-device affordance, for the reason the profile gives: a tap would leave
+    // a marker stranded on two charts with no pointer to explain either.
+    if (event.pointerType !== 'mouse') return;
+    const box = event.currentTarget.getBoundingClientRect();
+    pointerPx.current = { x: event.clientX - box.left, y: event.clientY - box.top };
+    trackPointer();
+  }
+
+  function endHover(): void {
+    pointerPx.current = null;
+    if (hoveredM.current === null) return;
+    hoveredM.current = null;
+    paintHover();
+    onHover?.(null);
+  }
 
   const start = route.points[0];
   const body = (
@@ -244,6 +311,26 @@ export function RouteMap({
       >
         {geometry.scaleBar.label}
       </text>
+
+      {/* One surface for the whole frame rather than a fatter trace to aim at: the
+          pointer is asking "what part of the route is this", which the empty ground
+          answers as honestly as the line does — with nothing. Last, so the compass and
+          the scale bar cannot swallow a move; fill none with pointerEvents all, so it
+          is hit-testable without painting anything. Outside the clip group, because a
+          frame is the one thing the 5 km view does not pan. */}
+      {hoverable && (
+        <rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fill="none"
+          pointerEvents="all"
+          onPointerMove={moveHover}
+          onPointerLeave={endHover}
+          onPointerCancel={endHover}
+        />
+      )}
     </svg>
   );
 }

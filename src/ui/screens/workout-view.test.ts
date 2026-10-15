@@ -18,6 +18,7 @@ import {
   hoveredRowNumber,
   powerHero,
   scaleLabel,
+  stepIndexForRow,
   stepRows,
   stepsHeading,
   workoutClock,
@@ -212,6 +213,37 @@ describe('hoveredRowNumber', () => {
 
   it('lights no row for a step the plan no longer has', () => {
     expect(hoveredRowNumber(rows, STEPS.length)).toBeNull();
+  });
+});
+
+describe('stepIndexForRow', () => {
+  const rows = stepRows(snapshot(), FTP);
+
+  it('is the step the row names, 0-based like the plan', () => {
+    expect(stepIndexForRow(rows, 1)).toBe(0);
+    expect(stepIndexForRow(rows, 4)).toBe(3);
+  });
+
+  it('is nothing when the pointer is on no row', () => {
+    expect(stepIndexForRow(rows, null)).toBeNull();
+  });
+
+  it('is nothing for a row the panel does not have', () => {
+    expect(stepIndexForRow(rows, 0)).toBeNull();
+    expect(stepIndexForRow(rows, STEPS.length + 1)).toBeNull();
+  });
+
+  it('answers for the free row, which has a step even though it has no block', () => {
+    // STEPS[4] is free. The row resolves like any other; nothing outlines because no
+    // block carries index 4, which is blockForStep's business rather than this one's.
+    expect(stepIndexForRow(rows, 5)).toBe(4);
+  });
+
+  it('is the exact inverse of hoveredRowNumber, so the two ends cannot drift', () => {
+    for (const row of rows) {
+      expect(hoveredRowNumber(rows, stepIndexForRow(rows, row.number))).toBe(row.number);
+    }
+    expect(stepIndexForRow(rows, hoveredRowNumber(rows, null))).toBeNull();
   });
 });
 

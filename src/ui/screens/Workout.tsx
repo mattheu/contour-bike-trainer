@@ -45,6 +45,7 @@ import {
   intervalClock,
   powerHero,
   scaleLabel,
+  stepIndexForRow,
   stepRows,
   stepsHeading,
   workoutClock,
@@ -116,13 +117,20 @@ export function Workout({
 }: WorkoutProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   /**
-   * The plan block under the pointer, by expanded-step index.
+   * The step under the pointer, by expanded-step index. One value for both directions:
+   * the chart's blocks set it, and so do the Steps panel's rows, so a block and a row can
+   * never hold different ideas of what is hovered.
+   *
+   * One piece of state is also what rules out the loop. Both ends write it from a pointer
+   * event and neither reads the other's mark: the row's lit type and the block's outline
+   * are both derived on the way down, so a row lighting its block cannot light the row
+   * again. There is no effect and no callback between them to go round.
    *
    * React state here where the ride screen's profile hover is imperative, because the two
    * are different shapes of event: that one fires per pixel of mouse travel, this one only
-   * when the pointer crosses from one block to the next — a handful of times a session.
-   * The screen already re-renders every second for its clocks, so a render on a block
-   * boundary costs nothing it was not spending anyway.
+   * when the pointer crosses from one block or row to the next — a handful of times a
+   * session. The screen already re-renders every second for its clocks, so a render on a
+   * block boundary costs nothing it was not spending anyway.
    */
   const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
@@ -343,6 +351,7 @@ export function Workout({
                 width={layout.chartWidth}
                 height={chartHeight}
                 onHoverStep={setHoveredStep}
+                hoveredStep={hoveredStep}
               />
             </div>
           )}
@@ -351,6 +360,9 @@ export function Workout({
             heading={stepsHeading(workout.steps)}
             skippable={canSkip(workout)}
             hovered={hoveredRow}
+            onHoverRow={(rowNumber) => {
+              setHoveredStep(stepIndexForRow(rows, rowNumber));
+            }}
             onSkip={onSkipStep}
           />
         </div>
@@ -404,13 +416,17 @@ function Steps({
   heading,
   skippable,
   hovered,
+  onHoverRow,
   onSkip,
 }: {
   rows: readonly StepRow[];
   heading: string;
   skippable: boolean;
-  /** The row a block on the plan chart is pointing at, by number, or null for none. */
+  /** The row the hovered step points at, by number, or null for none. Whichever end the
+   *  pointer is on: the chart sets the step, and so does a row. */
   hovered: number | null;
+  /** The row under the pointer, by number, or null on leaving one. */
+  onHoverRow: (rowNumber: number | null) => void;
   onSkip: () => void;
 }) {
   const current = currentRowNumber(rows);
@@ -449,6 +465,7 @@ function Steps({
             key={row.number}
             row={row}
             hovered={row.number === hovered}
+            onHover={onHoverRow}
             ref={row.number === current ? currentRow : undefined}
           />
         ))}
@@ -524,6 +541,11 @@ const QUIET = {
  * accent; there is nothing above it to raise, and a translucent veil over solid ink shows
  * nothing anyway. Hovering the block the marker is sitting on points at the row that is
  * already the loudest thing on screen, so it has nothing left to say.
+ *
+ * Its block is not exempt, and the asymmetry is the point: a row that is already the
+ * loudest thing in the panel has nowhere to go, where a block is drawn exactly like its
+ * neighbours and so has everywhere. The pointer is answered at whichever end still has an
+ * answer in it, and the current step is never a dead place to point.
  */
 const HOVERED = {
   number: 'text-ink',
@@ -573,10 +595,12 @@ function ruleColour(rule: number): string {
 function Step({
   row,
   hovered,
+  onHover,
   ref,
 }: {
   row: StepRow;
   hovered: boolean;
+  onHover: (rowNumber: number | null) => void;
   ref?: React.Ref<HTMLDivElement>;
 }) {
   const base = ROW_TONE[row.state];
@@ -585,6 +609,15 @@ function Step({
     <div
       ref={ref}
       className={`flex items-baseline gap-[14px] py-[9px] pr-[10px] ${tone.frame}`}
+      /* The other end of the chart's hit layer, and the same guard: a tap must not leave
+         a block outlined with no pointer to explain it. Nothing here is reachable only by
+         hover — the row says the same four things whether or not one ever arrives. */
+      onPointerEnter={(event: React.PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType === 'mouse') onHover(row.number);
+      }}
+      onPointerLeave={(event: React.PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType === 'mouse') onHover(null);
+      }}
       style={
         row.state === 'current'
           ? undefined

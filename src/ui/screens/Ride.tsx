@@ -146,14 +146,23 @@ export function Ride({
   });
 
   /**
-   * Hovering the profile marks the same place on the map, through the same handles the
-   * clock already drives. Deliberately not React state: mousemove fires far faster than
-   * this screen renders, and this screen re-renders every second for its clocks — hover
-   * held at this level would rebuild both charts, the stats and the steps on every pixel
-   * the mouse moves. Stable, so the memoised ProfileChart below is not defeated by it.
+   * Hovering either chart marks the same place on the other, through the same handles
+   * the clock already drives. Deliberately not React state: mousemove fires far faster
+   * than this screen renders, and this screen re-renders every second for its clocks —
+   * hover held at this level would rebuild both charts, the stats and the steps on every
+   * pixel the mouse moves. Stable, so the memoised charts below are not defeated by it.
+   *
+   * The pair cannot drive each other round in circles, and not because anything here
+   * watches for it. A chart only ever emits from its own pointer handlers; the hover()
+   * it is given is a painting routine with no path back to the callback. So each of
+   * these ends the moment it has drawn, one hop from the mouse that started it.
    */
   const onProfileHover = useCallback((hoveredM: number | null) => {
     mapRef.current?.hover(hoveredM);
+  }, []);
+
+  const onMapHover = useCallback((hoveredM: number | null) => {
+    profileRef.current?.hover(hoveredM);
   }, []);
 
   // Space is the one keyboard shortcut: hands are on the bars, not the keyboard.
@@ -363,6 +372,7 @@ export function Ride({
                 width={layout.mapWidth}
                 height={stack.mapHeight}
                 handleRef={mapRef}
+                onHover={onMapHover}
               />
             </div>
           )}
@@ -438,12 +448,14 @@ const MapChart = memo(function MapChart({
   width,
   height,
   handleRef,
+  onHover,
 }: {
   route: Route;
   zoom: MapZoom;
   width: number;
   height: number;
   handleRef: RefObject<RouteMapHandle | null>;
+  onHover: (hoveredM: number | null) => void;
 }) {
   return (
     <RouteMap
@@ -453,6 +465,7 @@ const MapChart = memo(function MapChart({
       width={width}
       height={height}
       distanceM={0}
+      onHover={onHover}
     />
   );
 });

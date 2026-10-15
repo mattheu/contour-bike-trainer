@@ -4,12 +4,15 @@ import type { Route, RoutePoint } from '../../route/types';
 import mixedGpx from '../../../routes/test-mixed.gpx?raw';
 import rollingGpx from '../../../routes/test-rolling.gpx?raw';
 import {
+  HOVER_SNAP_PX,
   MAP_PADDING_PX,
   NEAR_WINDOW_M,
   SCALE_BAR_TARGET_PX,
+  nearestOnTrace,
   niceMetres,
   routeMapGeometry,
   scaleBarLabel,
+  type TraceVertex,
 } from './map';
 
 const WIDTH = 320;
@@ -215,5 +218,213 @@ describe('screenFor', () => {
     expect(geometry.screenFor(riderM, riderM)).toEqual(centre);
     const ahead = geometry.screenFor(riderM + 1000, riderM);
     expect(Math.hypot(ahead.x - centre.x, ahead.y - centre.y)).toBeGreaterThan(1);
+  });
+});
+
+describe('nearestOnTrace', () => {
+  /** A 100-unit horizontal run, one unit of plane per metre, so the sums are readable. */
+  const straight: TraceVertex[] = [
+    { x: 0, y: 0, distM: 0 },
+    { x: 50, y: 0, distM: 50 },
+    { x: 100, y: 0, distM: 100 },
+  ];
+
+  it('drops a perpendicular onto the chord the target is beside', () => {
+    const hit = nearestOnTrace(straight, { x: 30, y: 7 });
+    expect(hit.distM).toBeCloseTo(30, 9);
+    expect(hit.offset).toBeCloseTo(7, 9);
+  });
+
+  it('reports no offset for a target sitting on the line', () => {
+    const hit = nearestOnTrace(straight, { x: 72, y: 0 });
+    expect(hit.distM).toBeCloseTo(72, 9);
+    expect(hit.offset).toBeCloseTo(0, 9);
+  });
+
+  it('clamps past either end rather than running off the line it extends', () => {
+    const before = nearestOnTrace(straight, { x: -40, y: 0 });
+    expect(before.distM).toBe(0);
+    expect(before.offset).toBeCloseTo(40, 9);
+
+    const after = nearestOnTrace(straight, { x: 130, y: 30 });
+    expect(after.distM).toBeCloseTo(100, 9);
+    expect(after.offset).toBeCloseTo(Math.hypot(30, 30), 9);
+  });
+
+  it('interpolates the distance along a chord rather than snapping to a vertex', () => {
+    // Vertices every 50 m, so a vertex-only answer could only ever say 50 or 100.
+    expect(nearestOnTrace(straight, { x: 63, y: 2 }).distM).toBeCloseTo(63, 9);
+  });
+
+  /**
+   * The hairpin. Two limbs 6 units apart, the pointer on the axis between them: the
+   * search has no geometric reason to prefer either, and must still answer the same
+   * thing every time. It takes the outward limb, because only a strict improvement
+   * displaces the incumbent.
+   */
+  describe('on a hairpin', () => {
+    const hairpin: TraceVertex[] = [
+      { x: 0, y: 0, distM: 0 },
+      { x: 100, y: 0, distM: 100 },
+      { x: 100, y: 6, distM: 106 },
+      { x: 0, y: 6, distM: 206 },
+    ];
+
+    it('takes the earlier limb when the two are exactly equidistant', () => {
+      const hit = nearestOnTrace(hairpin, { x: 40, y: 3 });
+      expect(hit.distM).toBeCloseTo(40, 9);
+      expect(hit.offset).toBeCloseTo(3, 9);
+    });
+
+    it('is stable: the same pointer gives the same answer every time', () => {
+      const once = nearestOnTrace(hairpin, { x: 40, y: 3 });
+      expect(nearestOnTrace(hairpin, { x: 40, y: 3 })).toEqual(once);
+    });
+
+    it('switches limbs as the pointer crosses the midline, and not before', () => {
+      expect(nearestOnTrace(hairpin, { x: 40, y: 2.9 }).distM).toBeCloseTo(40, 6);
+      expect(nearestOnTrace(hairpin, { x: 40, y: 3.1 }).distM).toBeCloseTo(166, 6);
+    });
+  });
+
+  it('survives a trace with no points, and one with a single point', () => {
+    expect(nearestOnTrace([], { x: 1, y: 1 })).toEqual({ distM: 0, offset: Infinity });
+
+    const single = nearestOnTrace([{ x: 10, y: 10, distM: 400 }], { x: 13, y: 14 });
+    expect(single).toEqual({ distM: 400, offset: 5 });
+  });
+
+  it('treats a stalled route — two vertices in one place — as that one place', () => {
+    const stalled: TraceVertex[] = [
+      { x: 0, y: 0, distM: 0 },
+      { x: 0, y: 0, distM: 10 },
+    ];
+    expect(nearestOnTrace(stalled, { x: 3, y: 4 })).toEqual({ distM: 0, offset: 5 });
+  });
+});
+
+/**
+ * The inverse of screenFor, and the thing the map's own hover is built on. Tested as a
+ * round trip rather than against hand-computed pixels: the pair have to agree, and what
+ * the projection puts where is screenFor's business and already covered above.
+ */
+describe('routeAt', () => {
+  const at = (route: Route, zoom: 'route' | 'near') =>
+    routeMapGeometry({ route, width: WIDTH, height: HEIGHT, zoom });
+
+  /**
+   * Position, not distance. A point on the map does not determine a distance — a loop
+   * comes back to its own start, and test-rolling is one — so the invariant that holds
+   * for every route is that the distance it answers is drawn at the pixel that was
+   * asked about. Where the route visits a place once, that is the same thing.
+   */
+  it('round-trips every distance back to the pixel screenFor put it at', () => {
+    for (const route of [rolling, mixed]) {
+      for (const zoom of ['route', 'near'] as const) {
+        const geometry = at(route, zoom);
+        const pan = route.totalDistanceM / 2;
+        for (const fraction of [0, 0.1, 0.25, 0.5, 0.75, 1]) {
+          const screen = geometry.screenFor(route.totalDistanceM * fraction, pan);
+          const hit = geometry.routeAt(screen, pan);
+          const back = geometry.screenFor(hit.distM, pan);
+          expect(Math.hypot(back.x - screen.x, back.y - screen.y)).toBeLessThan(1);
+          expect(hit.offsetPx).toBeLessThan(1);
+        }
+      }
+    }
+  });
+
+  it('recovers the distance itself where the route passes a place only once', () => {
+    for (const zoom of ['route', 'near'] as const) {
+      const geometry = at(mixed, zoom);
+      const pan = mixed.totalDistanceM / 2;
+      for (const fraction of [0.1, 0.25, 0.5, 0.75]) {
+        const distM = mixed.totalDistanceM * fraction;
+        // Within a few metres of ground rather than exactly: the trace is resampled, so
+        // the search answers from a chord rather than from the route's own vertex.
+        expect(geometry.routeAt(geometry.screenFor(distM, pan), pan).distM).toBeCloseTo(distM, -1);
+      }
+    }
+  });
+
+  /**
+   * The start of a loop is its finish, and both are drawn on the same pixel. There is no
+   * right answer, so the only thing worth asserting is that it picks one of them rather
+   * than something in between.
+   */
+  it('answers a loop closing on itself with one of its two ends', () => {
+    const geometry = at(rolling, 'route');
+    const hit = geometry.routeAt(geometry.screenFor(0, 0), 0);
+    expect(hit.offsetPx).toBeLessThan(1);
+    expect(Math.min(hit.distM, Math.abs(rolling.totalDistanceM - hit.distM))).toBeLessThan(5);
+  });
+
+  it('measures the offset in screen pixels at either zoom', () => {
+    for (const zoom of ['route', 'near'] as const) {
+      const geometry = at(mixed, zoom);
+      const pan = mixed.totalDistanceM / 2;
+      const on = geometry.screenFor(pan, pan);
+
+      // A fixed pixel offset reads as the same number of pixels however far the view is
+      // zoomed in, which is what lets HOVER_SNAP_PX be one constant for both views.
+      for (const dy of [5, 20, 40]) {
+        expect(geometry.routeAt({ x: on.x, y: on.y + dy }, pan).offsetPx).toBeLessThanOrEqual(
+          dy + 1e-6,
+        );
+      }
+      // Straight down from the rider is across the trace on neither route by more than
+      // a pixel or two, so the large offset has to come back large.
+      expect(geometry.routeAt({ x: on.x, y: on.y }, pan).offsetPx).toBeLessThan(1);
+    }
+  });
+
+  it('reports empty space as well beyond the snap threshold', () => {
+    const geometry = at(rolling, 'route');
+    // The frame corners are outside the padded box the trace is fitted into, so no part
+    // of the route can be near them.
+    for (const corner of [
+      { x: 0, y: 0 },
+      { x: WIDTH, y: 0 },
+      { x: 0, y: HEIGHT },
+      { x: WIDTH, y: HEIGHT },
+    ]) {
+      expect(geometry.routeAt(corner, 0).offsetPx).toBeGreaterThan(HOVER_SNAP_PX);
+    }
+  });
+
+  it('answers for the frame the rider is holding, not the untransformed plane', () => {
+    const geometry = at(mixed, 'near');
+    const centre = { x: WIDTH / 2, y: HEIGHT / 2 };
+
+    // The rider is the centre of the 5 km view, so the centre pixel is the rider's own
+    // distance — whichever distance that is. A search that ignored the pan would answer
+    // the same thing for both.
+    for (const riderM of [3000, 12_000, 21_000]) {
+      const hit = geometry.routeAt(centre, riderM);
+      expect(hit.distM).toBeCloseTo(riderM, -1);
+      expect(hit.offsetPx).toBeLessThan(1);
+    }
+    expect(geometry.routeAt(centre, 3000).distM).not.toBeCloseTo(
+      geometry.routeAt(centre, 21_000).distM,
+      -1,
+    );
+  });
+
+  it('ignores the pan on the whole-route view, which never pans', () => {
+    const geometry = at(mixed, 'route');
+    const screen = geometry.screenFor(mixed.totalDistanceM / 3, 0);
+    expect(geometry.routeAt(screen, 0)).toEqual(geometry.routeAt(screen, mixed.totalDistanceM));
+  });
+
+  it('survives a route with a single point', () => {
+    const geometry = routeMapGeometry({
+      route: singlePointRoute(),
+      width: WIDTH,
+      height: HEIGHT,
+      zoom: 'route',
+    });
+    const hit = geometry.routeAt({ x: WIDTH / 2, y: HEIGHT / 2 }, 0);
+    expect(hit.distM).toBe(0);
+    expect(hit.offsetPx).toBeCloseTo(0, 9);
   });
 });

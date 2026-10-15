@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS } from '../../storage/settings';
 import { expandWorkout, type ExpandedStep } from '../../workout/expand';
 import { parseWorkout } from '../../workout/parse';
 import { workoutFtp } from '../../workout/runner';
-import { planChartGeometry, type PlanChartSample } from './plan-chart';
+import { blockForStep, planChartGeometry, type PlanChartSample } from './plan-chart';
 import { ZONE_WASH_OPACITY } from './plan';
 
 const FTP = 250;
@@ -328,5 +328,38 @@ describe('the plan is drawn at the FTP the session is ridden at', () => {
     const { plan, actual } = heights(source);
     expect(plan).toBeDefined();
     expect(actual).toBe(plan);
+  });
+});
+
+describe('blockForStep', () => {
+  const PLAN = [step(600, 60), step(600, 'free'), step(600, 90)];
+
+  it('is the block drawing that step, so a hovered row outlines its own work', () => {
+    const { blocks } = geometry(PLAN);
+    expect(blockForStep(blocks, 0)?.d).toBe(blocks[0]?.d);
+    expect(blockForStep(blocks, 2)?.d).toBe(blocks[2 - 1]?.d);
+  });
+
+  it('is nothing when nothing is hovered', () => {
+    expect(blockForStep(geometry(PLAN).blocks, null)).toBeNull();
+  });
+
+  it('is nothing for a free step, which has no block to outline', () => {
+    // Not a test for freeness: step 1 produces no segment, so no block carries its index.
+    const { blocks } = geometry(PLAN);
+    expect(blocks.map((block) => block.stepIndex)).toEqual([0, 2]);
+    expect(blockForStep(blocks, 1)).toBeNull();
+  });
+
+  it('is nothing past the end, so a plan shortened by a skip outlines nothing stale', () => {
+    expect(blockForStep(geometry(PLAN).blocks, 9)).toBeNull();
+  });
+
+  it('finds the block by its step, not by its place in the list', () => {
+    // The free step leaves a hole in the indices, so position and identity diverge: step 2
+    // is the second block, and reading blocks[2] would outline nothing at all.
+    const { blocks } = geometry(PLAN);
+    expect(blocks[2]).toBeUndefined();
+    expect(blockForStep(blocks, 2)?.stepIndex).toBe(2);
   });
 });
