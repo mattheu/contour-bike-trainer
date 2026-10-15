@@ -51,6 +51,14 @@ export interface PlanChartProps {
  * so there is nothing for mutation to save here, unlike the ride screen where the charts
  * outlive the renders around them.
  */
+/**
+ * The ink laid over the block under the pointer, on top of its zone fill rather than
+ * instead of it. Well clear of the 4 points that separate one zone from the next, so the
+ * lift cannot be mistaken for the step having moved a zone, and still short of hiding the
+ * shade underneath.
+ */
+const HOVER_VEIL_OPACITY = 0.12;
+
 export function PlanChart({
   steps,
   samples,
@@ -201,9 +209,13 @@ export function PlanChart({
       {/* The block under the pointer, outlined. The same answer the ink crosshair gives on
           the ride screen's profile: this is the thing you are pointing at.
 
-          An outline and not a fill, because the wash ramp is 4 points a zone — any change
-          of fill big enough to see is two zones wide, and would be read as the step having
-          changed intensity. The perimeter says nothing the zone scale is saying.
+          An ink veil inside the perimeter as well as the line around it. The veil alone was
+          rejected and the objection still stands — the wash ramp is 4 points a zone, so a
+          fill change big enough to see is two zones wide and could be read as the step
+          having changed intensity. The outline is what answers it: a block that is both
+          brighter and ringed is plainly the one under the pointer, where a block that is
+          merely brighter is ambiguous. It is a layer over the zone fill rather than a
+          change to it, so the shade underneath is still the shade the scale painted.
 
           Unclipped, like the hit layer it answers and unlike the blocks it traces: the
           painted blocks stop at the marker, but a step already ridden is still a step you
@@ -223,7 +235,8 @@ export function PlanChart({
         <path
           data-testid="plan-hovered-block"
           d={hoveredBlock.d}
-          fill="none"
+          fill="var(--color-ink)"
+          fillOpacity={HOVER_VEIL_OPACITY}
           stroke="var(--color-ink)"
           strokeWidth="var(--stroke-chart)"
           strokeLinejoin="round"
