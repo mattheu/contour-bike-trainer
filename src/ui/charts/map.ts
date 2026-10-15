@@ -58,6 +58,16 @@ export interface RouteMapGeometry {
   /** Screen-space positions, so markers keep a constant radius at any zoom. */
   startScreen(distM: number): PlanePoint;
   riderScreen(distM: number): PlanePoint;
+  /**
+   * Where `distM` lands on screen while the frame is panned to `panM`.
+   *
+   * riderScreen is the case where the two are the same, which is why it reads as the
+   * rider's own position. Anything else on the route — a point the rider is not at —
+   * has to be placed in the frame the rider is holding: on the 5 km view the pan IS
+   * the rider, so asking riderScreen for another distance would re-centre the map on
+   * it and every marker would come back at the middle of the frame.
+   */
+  screenFor(distM: number, panM: number): PlanePoint;
   strokeWidth(basePx: number): number;
   scaleBar: ScaleBar;
 }
@@ -160,6 +170,7 @@ export function routeMapGeometry(input: RouteMapInput): RouteMapGeometry {
     transform,
     startScreen: (distM) => toScreen(toPt(route.points[0] as RoutePoint), distM),
     riderScreen: (distM) => toScreen(planeAt(distM), distM),
+    screenFor: (distM, panM) => toScreen(planeAt(distM), panM),
     strokeWidth: (basePx) => basePx / scale,
     scaleBar: {
       lengthPx: (metres / projection.metresPerUnit) * scale,

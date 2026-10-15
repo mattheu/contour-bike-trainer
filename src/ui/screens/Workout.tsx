@@ -41,6 +41,7 @@ import {
   difficultyInertReason,
   ergLabel,
   ERG_MODE_OPTIONS,
+  hoveredRowNumber,
   intervalClock,
   powerHero,
   scaleLabel,
@@ -114,6 +115,16 @@ export function Workout({
   onDisconnectHrm,
 }: WorkoutProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /**
+   * The plan block under the pointer, by expanded-step index.
+   *
+   * React state here where the ride screen's profile hover is imperative, because the two
+   * are different shapes of event: that one fires per pixel of mouse travel, this one only
+   * when the pointer crosses from one block to the next — a handful of times a session.
+   * The screen already re-renders every second for its clocks, so a render on a block
+   * boundary costs nothing it was not spending anyway.
+   */
+  const [hoveredStep, setHoveredStep] = useState<number | null>(null);
 
   // design/DESIGN.md: a fault shows in the data too. The trainer's readings go stale when
   // it drops; heart rate follows the strap, which can fail on its own.
@@ -161,6 +172,7 @@ export function Workout({
   const interval = intervalClock(workout);
   const clock = workoutClock(snapshot.elapsedS, workout.totalRemainingS);
   const rows = stepRows(workout, ftpW);
+  const hoveredRow = hoveredRowNumber(rows, hoveredStep);
 
   const devices: DevicesView = {
     source,
@@ -330,6 +342,7 @@ export function Workout({
                 elapsedS={snapshot.elapsedS}
                 width={layout.chartWidth}
                 height={chartHeight}
+                onHoverStep={setHoveredStep}
               />
             </div>
           )}
@@ -337,6 +350,7 @@ export function Workout({
             rows={rows}
             heading={stepsHeading(workout.steps)}
             skippable={canSkip(workout)}
+            hovered={hoveredRow}
             onSkip={onSkipStep}
           />
         </div>
@@ -389,11 +403,14 @@ function Steps({
   rows,
   heading,
   skippable,
+  hovered,
   onSkip,
 }: {
   rows: readonly StepRow[];
   heading: string;
   skippable: boolean;
+  /** The row a block on the plan chart is pointing at, by number, or null for none. */
+  hovered: number | null;
   onSkip: () => void;
 }) {
   const current = currentRowNumber(rows);
@@ -428,7 +445,12 @@ function Steps({
       {/* bg-ground/60 rather than solid ground, because the contour field runs behind it. */}
       <div className="bg-ground/60 min-h-0 grow overflow-y-auto" data-testid="workout-steps">
         {rows.map((row) => (
-          <Step key={row.number} row={row} ref={row.number === current ? currentRow : undefined} />
+          <Step
+            key={row.number}
+            row={row}
+            hovered={row.number === hovered}
+            ref={row.number === current ? currentRow : undefined}
+          />
         ))}
       </div>
     </div>
@@ -487,6 +509,29 @@ const QUIET = {
   duration: 'text-muted',
 };
 
+/**
+ * Hover. Not DESIGN.md's hover — fill and border to solid ink, label to ground — which is
+ * written for things you can press: applied here it would make a row look like a button,
+ * and the panel's rows are read, not pressed. They are also already carrying three states
+ * and a per-zone wash, so a fourth background would be read as a change of intensity
+ * rather than as a pointer.
+ *
+ * So the type, and only the type: the row's four cells come up from muted to ink, nothing
+ * moves, no box or border changes, and the zone wash still says exactly what it said. Loud
+ * enough to find across a panel of eight rows, quiet enough not to look pressable.
+ *
+ * The current row is exempt. It is already solid ink with ground text and the panel's only
+ * accent; there is nothing above it to raise, and a translucent veil over solid ink shows
+ * nothing anyway. Hovering the block the marker is sitting on points at the row that is
+ * already the loudest thing on screen, so it has nothing left to say.
+ */
+const HOVERED = {
+  number: 'text-ink',
+  name: 'text-ink',
+  target: 'text-ink',
+  duration: 'text-ink',
+};
+
 const ROW_TONE: Record<
   StepRow['state'],
   { frame: string; number: string; name: string; target: string; duration: string }
@@ -525,8 +570,17 @@ function ruleColour(rule: number): string {
   return `color-mix(in srgb, var(--color-ink) ${String(Math.min(1, rule) * 100)}%, transparent)`;
 }
 
-function Step({ row, ref }: { row: StepRow; ref?: React.Ref<HTMLDivElement> }) {
-  const tone = ROW_TONE[row.state];
+function Step({
+  row,
+  hovered,
+  ref,
+}: {
+  row: StepRow;
+  hovered: boolean;
+  ref?: React.Ref<HTMLDivElement>;
+}) {
+  const base = ROW_TONE[row.state];
+  const tone = hovered && row.state !== 'current' ? { ...base, ...HOVERED } : base;
   return (
     <div
       ref={ref}

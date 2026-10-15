@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react';
+import { useId, useMemo, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ExpandedStep } from '../../workout/expand';
 import { planChartGeometry, type PlanChartSample } from './plan-chart';
 
@@ -22,6 +22,15 @@ export interface PlanChartProps {
   elapsedS: number;
   width?: number;
   height?: number;
+  /**
+   * The expanded step under the pointer, or null when there is none. Supplying it is
+   * what makes the blocks hoverable; without it the chart keeps no hit layer.
+   *
+   * Fires on crossing a block, not on every pixel: the hit areas are the block shapes
+   * themselves, so this is a handful of calls across a whole session rather than one per
+   * mousemove, and the screen above can hold it in state without the usual cost.
+   */
+  onHoverStep?: (stepIndex: number | null) => void;
 }
 
 /**
@@ -41,6 +50,7 @@ export function PlanChart({
   elapsedS,
   width = PLAN_CHART_WIDTH,
   height = PLAN_CHART_HEIGHT,
+  onHoverStep,
 }: PlanChartProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const geometry = useMemo(
@@ -111,7 +121,7 @@ export function PlanChart({
 
       <g clipPath={`url(#plan-ahead-${uid})`}>
         {geometry.blocks.map((block) => (
-          <g key={block.d}>
+          <g key={block.stepIndex}>
             <path d={block.d} fill="var(--color-ink)" opacity={block.opacity} />
             <path d={block.d} fill={`url(#plan-hatch-${uid})`} opacity={0.45} />
           </g>
@@ -222,6 +232,33 @@ export function PlanChart({
       >
         {geometry.totalLabel}
       </text>
+
+      {/* The hit layer: the block shapes again, unpainted and unclipped.
+          Unpainted, because the chart already says everything it has to say — the answer
+          goes to the Steps panel beside it.
+          Unclipped, because the blocks above stop at the marker and a step already ridden
+          is still a step you can point at.
+          The shapes, not a band across the chart, because a free step has no block: there
+          is no hit area over its gap, so hovering one highlights nothing by construction
+          rather than by a test for freeness. Above the plan and the marker, which are not
+          pointable and so have nothing to lose by it. */}
+      {onHoverStep !== undefined && (
+        <g fill="none" pointerEvents="all">
+          {geometry.blocks.map((block) => (
+            <path
+              key={block.stepIndex}
+              d={block.d}
+              onPointerEnter={(event: ReactPointerEvent<SVGPathElement>) => {
+                // A tap must not leave a row lit with no pointer to explain it.
+                if (event.pointerType === 'mouse') onHoverStep(block.stepIndex);
+              }}
+              onPointerLeave={(event: ReactPointerEvent<SVGPathElement>) => {
+                if (event.pointerType === 'mouse') onHoverStep(null);
+              }}
+            />
+          ))}
+        </g>
+      )}
     </svg>
   );
 }

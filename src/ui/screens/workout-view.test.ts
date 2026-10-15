@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ExpandedStep } from '../../workout/expand';
-import { zoneWash } from '../charts';
+import { planSegments, zoneWash } from '../charts';
 import type { WorkoutSnapshot } from '../store';
 import {
   RULE_MARGIN,
@@ -15,6 +15,7 @@ import {
   ERG_MODE_OPTIONS,
   intervalClock,
   currentRowNumber,
+  hoveredRowNumber,
   powerHero,
   scaleLabel,
   stepRows,
@@ -186,6 +187,31 @@ describe('currentRowNumber', () => {
 
   it('has nothing to hold once the plan has run out', () => {
     expect(currentRowNumber(stepRows(snapshot({ stepIndex: STEPS.length }), FTP))).toBeNull();
+  });
+});
+
+describe('hoveredRowNumber', () => {
+  const rows = stepRows(snapshot(), FTP);
+
+  it('is the row the hovered block belongs to, 1-based like the panel', () => {
+    expect(hoveredRowNumber(rows, 0)).toBe(1);
+    expect(hoveredRowNumber(rows, 3)).toBe(4);
+  });
+
+  it('is nothing when the pointer is on no block', () => {
+    expect(hoveredRowNumber(rows, null)).toBeNull();
+  });
+
+  it('lights no row for the free step, because nothing can hover one', () => {
+    // STEPS[4] is free, and the chart only has hit areas where it has blocks — so the
+    // indices that ever reach here are exactly the plan's segments, and 4 is not one.
+    const hoverable = planSegments(STEPS, FTP).map((segment) => segment.stepIndex);
+    expect(hoverable).not.toContain(4);
+    expect(hoverable.map((index) => hoveredRowNumber(rows, index))).toEqual([1, 2, 3, 4]);
+  });
+
+  it('lights no row for a step the plan no longer has', () => {
+    expect(hoveredRowNumber(rows, STEPS.length)).toBeNull();
   });
 });
 

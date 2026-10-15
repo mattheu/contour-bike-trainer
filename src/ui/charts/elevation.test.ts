@@ -306,3 +306,45 @@ describe('elevationGeometry at sparkline size', () => {
     expect(at120(mixed).reliefPx).toBeGreaterThan(at120(rolling).reliefPx * 3);
   });
 });
+
+describe('distFor', () => {
+  const profile = buildProfile(mixed);
+
+  function geometryFor(window: ReturnType<typeof projectWindow> | null) {
+    return elevationGeometry({ route: mixed, profile, window, width: WIDTH, height: HEIGHT });
+  }
+
+  it('is the inverse of xFor across the route view', () => {
+    const geometry = geometryFor(null);
+
+    for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
+      const distM = mixed.totalDistanceM * fraction;
+      expect(geometry.distFor(geometry.xFor(distM))).toBeCloseTo(distM, 6);
+    }
+  });
+
+  it('clamps a pointer outside the chart to its ends rather than off the route', () => {
+    const geometry = geometryFor(null);
+
+    expect(geometry.distFor(-40)).toBe(0);
+    expect(geometry.distFor(WIDTH + 40)).toBeCloseTo(mixed.totalDistanceM, 6);
+  });
+
+  it('answers in the window it is drawn over, not in route distance', () => {
+    const window = projectWindow(mixed, profile, 12000, WINDOW_WIDE_M);
+    const geometry = geometryFor(window);
+
+    expect(geometry.distFor(0)).toBeCloseTo(window.startM, 6);
+    expect(geometry.distFor(WIDTH)).toBeCloseTo(window.endM, 6);
+    // The middle of the chart is the middle of the window, which is nowhere near the
+    // middle of the route: a hover reads the window's scale or it points at the wrong hill.
+    expect(geometry.distFor(WIDTH / 2)).toBeCloseTo((window.startM + window.endM) / 2, 6);
+  });
+
+  it('stays inside the window on a route with no length', () => {
+    const flat = syntheticRoute(0, () => 10);
+    const geometry = elevationGeometry({ route: flat, width: WIDTH, height: HEIGHT });
+
+    expect(geometry.distFor(WIDTH)).toBe(0);
+  });
+});

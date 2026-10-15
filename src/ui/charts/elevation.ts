@@ -173,6 +173,12 @@ export interface ElevationGeometry {
   endM: number;
   scale: ElevationScale;
   xFor(distM: number): number;
+  /**
+   * A chart x back to the distance it stands for: the inverse of xFor, clamped to the
+   * window the chart is drawn over. Pointing at the profile is the only thing that needs
+   * it — a mouse arrives as a pixel and the route is indexed by metres.
+   */
+  distFor(x: number): number;
   yFor(eleM: number): number;
   /** The whole visible route: smoothed line, and the same line closed to the axis. */
   linePath: string;
@@ -232,6 +238,10 @@ export function elevationGeometry(input: ElevationInput): ElevationGeometry {
 
   const scale = elevationScale({ eleMinM, eleMaxM, spanM, width, height });
   const xFor = (distM: number): number => ((clamp(distM, startM, endM) - startM) / spanM) * width;
+  // spanM carries a floor, so a route with no length would otherwise map every x past
+  // its own end; the clamp is what keeps the inverse inside the window at both edges.
+  const distFor = (x: number): number =>
+    width <= 0 ? startM : clamp(startM + (clamp(x, 0, width) / width) * spanM, startM, endM);
   const yFor = scale.yFor;
 
   const samples = visibleSamples(visible, width);
@@ -292,6 +302,7 @@ export function elevationGeometry(input: ElevationInput): ElevationGeometry {
     endM,
     scale,
     xFor,
+    distFor,
     yFor,
     linePath: smoothPath(points),
     areaPath: areaPath(points, scale.baselineY),

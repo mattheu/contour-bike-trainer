@@ -128,6 +128,24 @@ export function currentRowNumber(rows: readonly StepRow[]): number | null {
   return rows.find((row) => row.state === 'current')?.number ?? null;
 }
 
+/**
+ * The row a hovered plan block points at, by its number, or null where the pointer is on
+ * no block at all.
+ *
+ * The index is the expanded step's, and `stepRows` walks the same steps in the same order,
+ * so the row is found by position rather than searched for. A free step never reaches here:
+ * it has no block to hover, which is why hovering its gap highlights nothing — the absence
+ * is in the chart's hit areas, not in a rule written here. The lookup still guards an index
+ * past the end, because a plan that shortens under a skip must not light a row that is gone.
+ */
+export function hoveredRowNumber(
+  rows: readonly StepRow[],
+  stepIndex: number | null,
+): number | null {
+  if (stepIndex === null) return null;
+  return rows[stepIndex]?.number ?? null;
+}
+
 /** The panel's heading: `8 · 63 min`, both of them of the plan that will actually be ridden. */
 export function stepsHeading(steps: readonly ExpandedStep[]): string {
   const totalS = steps.reduce((total, step) => total + step.durationS, 0);

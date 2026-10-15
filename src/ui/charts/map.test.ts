@@ -176,3 +176,44 @@ describe('routeMapGeometry edge cases', () => {
     expect(Number.isFinite(geometry.scaleBar.lengthPx)).toBe(true);
   });
 });
+
+describe('screenFor', () => {
+  it('agrees with riderScreen when the frame is panned to the point itself', () => {
+    for (const zoom of ['route', 'near'] as const) {
+      const geometry = routeMapGeometry({ route: mixed, width: WIDTH, height: HEIGHT, zoom });
+      const distM = mixed.totalDistanceM / 3;
+
+      expect(geometry.screenFor(distM, distM)).toEqual(geometry.riderScreen(distM));
+    }
+  });
+
+  it('ignores the pan on the whole-route view, which never pans', () => {
+    const geometry = routeMapGeometry({
+      route: mixed,
+      width: WIDTH,
+      height: HEIGHT,
+      zoom: 'route',
+    });
+    const distM = mixed.totalDistanceM / 4;
+
+    expect(geometry.screenFor(distM, 0)).toEqual(geometry.riderScreen(distM));
+    expect(geometry.screenFor(distM, mixed.totalDistanceM)).toEqual(geometry.riderScreen(distM));
+  });
+
+  it('places a point away from the rider off-centre on the 5 km view', () => {
+    const geometry = routeMapGeometry({
+      route: mixed,
+      width: WIDTH,
+      height: HEIGHT,
+      zoom: 'near',
+    });
+    const riderM = mixed.totalDistanceM / 2;
+    const centre = { x: WIDTH / 2, y: HEIGHT / 2 };
+
+    // The rider is the centre of this view by construction, and a marker for somewhere
+    // else must not be: riderScreen would have returned the centre for both.
+    expect(geometry.screenFor(riderM, riderM)).toEqual(centre);
+    const ahead = geometry.screenFor(riderM + 1000, riderM);
+    expect(Math.hypot(ahead.x - centre.x, ahead.y - centre.y)).toBeGreaterThan(1);
+  });
+});

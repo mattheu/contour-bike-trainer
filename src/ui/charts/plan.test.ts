@@ -202,4 +202,12 @@ describe('planSegments', () => {
     const segments = planSegments([step(600, 60), step(600, 90)], FTP);
     expect(segments[1]?.startS).toBe(segments[0]?.endS);
   });
+
+  it('carries the step it came from, skipping the index a free step took', () => {
+    const segments = planSegments([step(600, 60), step(300, 'free'), step(600, 90)], FTP);
+
+    // Not 0 and 1: the second segment is the third step, and anything downstream that
+    // wants to name the step behind a block has to be told which one it actually is.
+    expect(segments.map((segment) => segment.stepIndex)).toEqual([0, 2]);
+  });
 });

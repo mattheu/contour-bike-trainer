@@ -108,6 +108,14 @@ describe('the plan', () => {
     expect(planPaths).toHaveLength(2);
   });
 
+  it('names the step each block draws, across the gap a free step leaves', () => {
+    const { blocks } = geometry([step(600, 60), step(600, 'free'), step(600, 90)]);
+
+    // The second block is step three. Its position in the list is not its position in
+    // the plan, and the Steps panel is indexed by the plan.
+    expect(blocks.map((block) => block.stepIndex)).toEqual([0, 2]);
+  });
+
   it('breaks the line nowhere else: two targeted steps in a row are one path', () => {
     expect(geometry([step(600, 60), step(600, 90)]).planPaths).toHaveLength(1);
   });

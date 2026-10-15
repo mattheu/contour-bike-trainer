@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { Climb } from '../../route/climbs';
 import { detectClimbs } from '../../route/climbs';
 import { WINDOW_WIDE_M, buildProfile, projectWindow } from '../../route/profile';
@@ -144,6 +144,17 @@ export function Ride({
     mapRef.current?.update(distanceM);
     stripRef.current?.update(distanceM, displayPowerW);
   });
+
+  /**
+   * Hovering the profile marks the same place on the map, through the same handles the
+   * clock already drives. Deliberately not React state: mousemove fires far faster than
+   * this screen renders, and this screen re-renders every second for its clocks — hover
+   * held at this level would rebuild both charts, the stats and the steps on every pixel
+   * the mouse moves. Stable, so the memoised ProfileChart below is not defeated by it.
+   */
+  const onProfileHover = useCallback((hoveredM: number | null) => {
+    mapRef.current?.hover(hoveredM);
+  }, []);
 
   // Space is the one keyboard shortcut: hands are on the bars, not the keyboard.
   useEffect(() => {
@@ -317,6 +328,7 @@ export function Ride({
               width={layout.profileWidth}
               height={stack.profileHeight}
               handleRef={profileRef}
+              onHover={onProfileHover}
             />
             <div className="mt-[26px]">
               {/* The strip shares the profile's x-axis, so it shares its width exactly. */}
@@ -394,6 +406,7 @@ const ProfileChart = memo(function ProfileChart({
   width,
   height,
   handleRef,
+  onHover,
 }: {
   route: Route;
   profile: ReturnType<typeof buildProfile>;
@@ -402,6 +415,7 @@ const ProfileChart = memo(function ProfileChart({
   width: number;
   height: number;
   handleRef: RefObject<ElevationProfileHandle | null>;
+  onHover: (hoveredM: number | null) => void;
 }) {
   return (
     <ElevationProfile
@@ -413,6 +427,7 @@ const ProfileChart = memo(function ProfileChart({
       width={width}
       height={height}
       distanceM={0}
+      onHover={onHover}
     />
   );
 });

@@ -26,6 +26,12 @@ export const PLAN_SPARKLINE_HEIGHT = 28;
  * running it along the floor.
  */
 export interface PlanSegment {
+  /**
+   * Which expanded step this came from, 0-based. A free step produces no segment, so the
+   * indices run with gaps in them — and the gap is the identity a block needs to find the
+   * row it belongs to, since position in the segment list is not position in the plan.
+   */
+  stepIndex: number;
   startS: number;
   endS: number;
   fromW: number;
@@ -44,11 +50,13 @@ export function planSegments(
 ): PlanSegment[] {
   const segments: PlanSegment[] = [];
   let at = 0;
-  for (const step of steps) {
+  for (const [stepIndex, step] of steps.entries()) {
     const end = at + step.durationS;
     const fromW = targetWattsAt(step.power, 0, step.durationS, ftpW, scalePct);
     const toW = targetWattsAt(step.power, step.durationS, step.durationS, ftpW, scalePct);
-    if (fromW !== null && toW !== null) segments.push({ startS: at, endS: end, fromW, toW });
+    if (fromW !== null && toW !== null) {
+      segments.push({ stepIndex, startS: at, endS: end, fromW, toW });
+    }
     at = end;
   }
   return segments;

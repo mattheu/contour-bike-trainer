@@ -73,6 +73,13 @@ export interface TimeTick {
 
 export interface PlanBlock {
   d: string;
+  /**
+   * The expanded step this block draws, 0-based — the block's identity, and the only
+   * thing that lets a pointer on the chart name a row in the Steps panel. A free step
+   * has no block at all, so there is no index that resolves to nothing: the gap is an
+   * absence of hit area rather than a block that declines to answer.
+   */
+  stepIndex: number;
   zone: PowerZone;
   opacity: number;
 }
@@ -199,6 +206,7 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
         { x: x1, y: y1 },
         { x: x1, y: baselineY },
       ]).concat(' Z'),
+      stepIndex: segment.stepIndex,
       zone,
       opacity: ZONE_WASH_OPACITY[zone],
     };

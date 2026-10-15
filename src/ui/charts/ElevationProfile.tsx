@@ -1,4 +1,12 @@
-import { useEffect, useId, useImperativeHandle, useMemo, useRef, type RefObject } from 'react';
+import {
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+} from 'react';
 import type { Climb } from '../../route/climbs';
 import type { ProfileWindow, RouteProfile } from '../../route/profile';
 import type { Route } from '../../route/types';
@@ -16,9 +24,14 @@ const BUBBLE_R = 18.7;
 const DROP_GAP = 4;
 const SUMMIT_STALK = 10;
 
+/** Half the hover cross, so the arms run 2 x this. Smaller than the rider's dot. */
+const HOVER_ARM = 5;
+
 export interface ElevationProfileHandle {
   /** Called at 1 Hz. Mutates the ridden paths and the marker; never re-renders. */
   update(distanceM: number): void;
+  /** Moves or clears the hover marker. Mutates one node; never re-renders either. */
+  hover(distanceM: number | null): void;
 }
 
 export interface ElevationProfileProps {
@@ -30,6 +43,16 @@ export interface ElevationProfileProps {
   distanceM: number;
   width?: number;
   height?: number;
+  /**
+   * Where on the route the pointer is, in metres, or null when it leaves. Supplying it
+   * is what makes the chart hoverable at all: a profile nobody is listening to — the
+   * summary's — keeps no hit surface and grows no marker.
+   *
+   * Called straight out of the pointer handler, so it must not set state on a screen
+   * that would re-render under the mouse. The ride screen forwards it to the map's
+   * handle, which is the whole reason this is a callback rather than internal.
+   */
+  onHover?: (distanceM: number | null) => void;
   ref?: RefObject<ElevationProfileHandle | null>;
 }
 
@@ -41,6 +64,7 @@ export function ElevationProfile({
   distanceM,
   width = PROFILE_WIDTH,
   height = PROFILE_HEIGHT,
+  onHover,
   ref,
 }: ElevationProfileProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
@@ -58,6 +82,9 @@ export function ElevationProfile({
   const markerGroup = useRef<SVGGElement>(null);
   const dropLine = useRef<SVGLineElement>(null);
   const gradeText = useRef<SVGTSpanElement>(null);
+  const hoverGroup = useRef<SVGGElement>(null);
+  /** The hovered distance, kept out of React: a mousemove must not render anything. */
+  const hoveredM = useRef<number | null>(null);
 
   const paint = useMemo(() => {
     return (distance: number): void => {
@@ -79,13 +106,61 @@ export function ElevationProfile({
     };
   }, [geometry]);
 
-  useImperativeHandle(ref, () => ({ update: paint }), [paint]);
+  const paintHover = useMemo(() => {
+    return (distance: number | null): void => {
+      hoveredM.current = distance;
+      const node = hoverGroup.current;
+      if (node === null) return;
+      if (distance === null) {
+        node.setAttribute('visibility', 'hidden');
+        return;
+      }
+      const at = geometry.marker(distance);
+      node.setAttribute('transform', `translate(${String(at.x)},${String(at.y)})`);
+      node.setAttribute('visibility', 'visible');
+    };
+  }, [geometry]);
+
+  useImperativeHandle(ref, () => ({ update: paint, hover: paintHover }), [paint, paintHover]);
 
   // A new geometry (resize, zoom change, new route) leaves the mutated attributes
   // describing the old one, so repaint once after every render that replaces it.
   useEffect(() => {
     paint(distanceM);
   }, [paint, distanceM]);
+
+  // The hover marker has the same problem, with one extra case: on the 5 km view the
+  // window scrolls under a stationary pointer, so a point that was inside it can fall
+  // out. Still inside, it is re-placed; past the edge the pointer is no longer over it,
+  // and the map has to hear that or its marker is left behind on the route.
+  useEffect(() => {
+    const at = hoveredM.current;
+    if (at === null) return;
+    if (at < geometry.startM || at > geometry.endM) {
+      paintHover(null);
+      onHover?.(null);
+    } else {
+      paintHover(at);
+    }
+  }, [geometry, paintHover, onHover]);
+
+  const hoverable = onHover !== undefined;
+
+  function moveHover(event: ReactPointerEvent<SVGRectElement>): void {
+    // Hover is a pointing-device affordance. A tap would leave a marker stranded on the
+    // chart with no pointer to explain it, so touch and pen are left alone entirely.
+    if (event.pointerType !== 'mouse') return;
+    const box = event.currentTarget.getBoundingClientRect();
+    const at = geometry.distFor(event.clientX - box.left);
+    paintHover(at);
+    onHover?.(at);
+  }
+
+  function endHover(): void {
+    if (hoveredM.current === null) return;
+    paintHover(null);
+    onHover?.(null);
+  }
 
   return (
     <svg
@@ -227,6 +302,24 @@ export function ElevationProfile({
         {geometry.endLabel}
       </text>
 
+      {/* The hover marker. Ink and an open cross, where the rider is accent and solid:
+          design/DESIGN.md gives ink to marker ticks and accent to where the rider is, so
+          the colour already separates them, and the open form with no halo, stem, bubble
+          or drop line finishes the job. Drawn before the rider's marker so that on the
+          one pixel they share, the rider is the one on top. */}
+      {hoverable && (
+        <g
+          ref={hoverGroup}
+          data-testid="profile-hover"
+          visibility="hidden"
+          stroke="var(--color-ink)"
+          strokeWidth="var(--stroke-hairline)"
+        >
+          <line x1={-HOVER_ARM} y1={0} x2={HOVER_ARM} y2={0} />
+          <line x1={0} y1={-HOVER_ARM} x2={0} y2={HOVER_ARM} />
+        </g>
+      )}
+
       <line
         ref={dropLine}
         x1={0}
@@ -279,6 +372,25 @@ export function ElevationProfile({
           </text>
         </g>
       </g>
+
+      {/* One surface for the whole chart rather than handlers on the shapes: the pointer
+          is asking "what is at this distance", which every pixel of the frame answers.
+          Last, so nothing drawn over it can swallow a move; fill none with pointerEvents
+          all, so it is hit-testable without painting anything. The overflowing gradient
+          bubble sits outside it on purpose — hovering that is not hovering the route. */}
+      {hoverable && (
+        <rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fill="none"
+          pointerEvents="all"
+          onPointerMove={moveHover}
+          onPointerLeave={endHover}
+          onPointerCancel={endHover}
+        />
+      )}
     </svg>
   );
 }
