@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { createRng, noise } from '../ble/rng';
 import {
   ABSENT,
+  POWER_WINDOW_S,
   SMOOTHING_SECONDS,
   distance,
   duration,
@@ -9,6 +11,9 @@ import {
   smoothPower,
   stepLabel,
   stepTarget,
+  trailingMeanPower,
+  withinPowerWindow,
+  type PowerReading,
 } from './format';
 
 describe('duration', () => {
@@ -77,6 +82,174 @@ describe('percent', () => {
 
   it('dashes an absent percentage', () => {
     expect(percent(null)).toBe(ABSENT);
+  });
+});
+
+/**
+ * The series a trainer actually produces: one reading a second, each one the effort plus
+ * the reading noise a power meter carries. Deterministic, so the figures below are the
+ * same on every run.
+ */
+function recorded(watts: (second: number) => number, seconds: number, seed = 7): PowerReading[] {
+  const rng = createRng(seed);
+  return Array.from({ length: seconds }, (_, t) => ({
+    t: t + 1,
+    // ±28 W, which lands the second-to-second change at roughly the spread the first
+    // hardware ride showed: a single-figure median against a p95 several times it.
+    w: Math.max(0, Math.round(watts(t) + noise(rng, 28))),
+  }));
+}
+
+/** Second-to-second change in whatever a readout would have printed over that series. */
+function changes(values: readonly (number | null)[]): number[] {
+  const out: number[] = [];
+  for (let i = 1; i < values.length; i += 1) {
+    const a = values[i - 1];
+    const b = values[i];
+    if (a === null || a === undefined || b === null || b === undefined) continue;
+    out.push(Math.abs(b - a));
+  }
+  return out;
+}
+
+function quantile(values: readonly number[], fraction: number): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const at = Math.min(sorted.length - 1, Math.floor(sorted.length * fraction));
+  return sorted[at] ?? 0;
+}
+
+/** What the hero would print, second by second, over a whole series. */
+function displayed(readings: readonly PowerReading[]): (number | null)[] {
+  return readings.map((reading) => trailingMeanPower(readings, reading.t));
+}
+
+describe('trailingMeanPower', () => {
+  it('prints the first reading rather than withholding one until the window fills', () => {
+    expect(trailingMeanPower([{ t: 1, w: 243 }], 1)).toBe(243);
+    expect(
+      trailingMeanPower(
+        [
+          { t: 1, w: 200 },
+          { t: 2, w: 260 },
+        ],
+        2,
+      ),
+    ).toBe(230);
+  });
+
+  it('averages only the readings inside the window', () => {
+    const readings: PowerReading[] = [
+      { t: 1, w: 100 },
+      { t: 2, w: 200 },
+      { t: 3, w: 300 },
+      { t: 4, w: 400 },
+    ];
+    // At t=4 the window is (1, 4]: the 100 W reading has had its turn.
+    expect(trailingMeanPower(readings, 4)).toBe(300);
+  });
+
+  it('settles on a step change within the window', () => {
+    const readings: PowerReading[] = [];
+    for (let t = 1; t <= 6; t += 1) readings.push({ t, w: t <= 3 ? 150 : 300 });
+
+    expect(trailingMeanPower(readings, 3)).toBe(150);
+    // Moving, and visibly, from the first second after the step.
+    expect(trailingMeanPower(readings, 4)).toBeCloseTo(200, 6);
+    expect(trailingMeanPower(readings, 5)).toBeCloseTo(250, 6);
+    // Three seconds after the step the old effort is out of the window entirely.
+    expect(trailingMeanPower(readings, 6)).toBe(300);
+  });
+
+  it('attenuates a spike rather than erasing it', () => {
+    const steady: PowerReading[] = [
+      { t: 1, w: 200 },
+      { t: 2, w: 200 },
+      { t: 3, w: 800 },
+    ];
+    const shown = trailingMeanPower(steady, 3);
+    // A 600 W excursion still moves the readout by 200 W — a sprint reads as a sprint —
+    // without the hero printing a number the rider held for one second.
+    expect(shown).toBe(400);
+    expect(shown).toBeLessThan(800);
+    expect(shown).toBeGreaterThan(200);
+  });
+
+  it('goes absent rather than printing a confident number across a dropout', () => {
+    const readings: PowerReading[] = [
+      { t: 1, w: 240 },
+      { t: 2, w: 250 },
+      { t: 3, w: 245 },
+    ];
+    // Still inside the window a second later: the readings are real, just ageing.
+    expect(trailingMeanPower(readings, 4)).toBeCloseTo(247.5, 6);
+    // Three seconds of silence empties it, and the readout goes to a dash.
+    expect(trailingMeanPower(readings, 6)).toBeNull();
+    expect(trailingMeanPower(readings, 30)).toBeNull();
+  });
+
+  it('does not smear across the gap when the trainer comes back', () => {
+    const readings: PowerReading[] = [
+      { t: 1, w: 400 },
+      { t: 2, w: 400 },
+      { t: 3, w: 400 },
+      // Twelve seconds away, then back at a standstill.
+      { t: 15, w: 0 },
+    ];
+    // The first reading back stands alone: nothing is averaged over the hole.
+    expect(trailingMeanPower(readings, 15)).toBe(0);
+    expect(trailingMeanPower(readings, 16)).toBe(0);
+  });
+
+  it('ignores readings from the future and readings that are not numbers', () => {
+    const readings: PowerReading[] = [
+      { t: 1, w: 200 },
+      { t: 2, w: Number.NaN },
+      { t: Number.POSITIVE_INFINITY, w: 900 },
+      { t: 9, w: 900 },
+    ];
+    expect(trailingMeanPower(readings, 2)).toBe(200);
+    expect(trailingMeanPower(readings, Number.NaN)).toBeNull();
+  });
+
+  it('has nothing to average over an empty series', () => {
+    expect(trailingMeanPower([], 10)).toBeNull();
+    expect(trailingMeanPower([{ t: 1, w: 200 }], 1, 0)).toBeNull();
+  });
+
+  it('calms the recorded ride rather than flattening it', () => {
+    // Twenty minutes of the shape that made the hero unreadable: a steady effort with a
+    // real interval in the middle of it.
+    const readings = recorded((t) => (t % 300 < 120 ? 300 : 210), 1200);
+
+    const raw = changes(readings.map((reading) => reading.w));
+    const smoothed = changes(displayed(readings).map((w) => (w === null ? null : Math.round(w))));
+
+    expect(quantile(raw, 0.5)).toBeGreaterThan(quantile(smoothed, 0.5) * 1.5);
+    expect(quantile(raw, 0.95)).toBeGreaterThan(quantile(smoothed, 0.95) * 1.5);
+
+    // Calmer, not flatter: the interval still reads as an interval. The mean over the
+    // hard block stays near 300 and the mean over the easy block near 210.
+    const at = (second: number) => trailingMeanPower(readings, second) ?? 0;
+    expect(at(110)).toBeGreaterThan(270);
+    expect(at(290)).toBeLessThan(240);
+  });
+});
+
+describe('withinPowerWindow', () => {
+  it('keeps the buffer to the window rather than to a count of readings', () => {
+    const readings: PowerReading[] = [];
+    // 4 Hz, which real FTMS hardware does: thirty-two readings over eight seconds.
+    for (let i = 1; i <= 32; i += 1) readings.push({ t: i / 4, w: 200 });
+
+    const kept = withinPowerWindow(readings, 8);
+    expect(kept).toHaveLength(POWER_WINDOW_S * 4);
+    expect(kept[0]?.t).toBeCloseTo(5.25, 6);
+    // Trimming must not change what the mean says.
+    expect(trailingMeanPower(kept, 8)).toBe(trailingMeanPower(readings, 8));
+  });
+
+  it('empties itself when the readings stop', () => {
+    expect(withinPowerWindow([{ t: 1, w: 240 }], 10)).toEqual([]);
   });
 });
 

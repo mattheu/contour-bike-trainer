@@ -6,14 +6,20 @@ export const POWER_STRIP_WIDTH = 944;
 export const POWER_STRIP_HEIGHT = 74;
 
 export interface PowerStripHandle {
-  /** Called at 1 Hz. Moves and relabels the current reading; the washes come from props. */
-  update(distanceM: number, currentW: number | null): void;
+  /** Called at 1 Hz. Moves the rider's marker; the washes come from props. */
+  update(distanceM: number): void;
 }
 
 /**
- * 'live' draws the moving current-reading label; 'complete' leaves it out altogether,
- * because a finished ride has no current reading and a "— W" marker is a lie about a
- * trainer that is simply no longer being asked.
+ * 'live' draws the rider's marker; 'complete' leaves it out, because a finished ride has
+ * no "here" to mark — the strip is the whole of what was ridden.
+ *
+ * The distinction used to be about a moving current-reading label, which carried the
+ * watts. That label is gone: with the hero reading a 3 s trailing mean, a second figure
+ * on the same screen taken from the raw instant would show a different number for the
+ * same thing, which is worse than the jitter it was fixing. The strip takes no power
+ * reading at all now, so it has nothing to disagree with — what is left is position,
+ * which is the one thing the two modes genuinely differ about.
  */
 export type PowerStripMode = 'live' | 'complete';
 
@@ -23,9 +29,8 @@ export interface PowerStripProps {
   /** The distance window, shared with the elevation profile above. */
   startM: number;
   endM: number;
-  /** Where the marker label sits. Ignored in 'complete' mode. */
+  /** Where the rider's marker sits. Ignored in 'complete' mode. */
   distanceM?: number;
-  currentW?: number | null;
   mode?: PowerStripMode;
   width?: number;
   height?: number;
@@ -34,8 +39,8 @@ export interface PowerStripProps {
 
 /**
  * The zone washes are props, not ref mutations: their element count changes as new
- * zones are entered, so there is no fixed set of nodes to write to. Only the current
- * reading — the one thing that moves every second — goes through the ref.
+ * zones are entered, so there is no fixed set of nodes to write to. Only the rider's
+ * marker — the one thing that moves every second — goes through the ref.
  */
 export function PowerStrip({
   samples,
@@ -43,7 +48,6 @@ export function PowerStrip({
   startM,
   endM,
   distanceM = 0,
-  currentW = null,
   mode = 'live',
   width = POWER_STRIP_WIDTH,
   height = POWER_STRIP_HEIGHT,
@@ -54,22 +58,23 @@ export function PowerStrip({
     [samples, ftpW, startM, endM, width, height],
   );
 
-  const current = useRef<SVGTextElement>(null);
+  const marker = useRef<SVGLineElement>(null);
 
   const paint = useMemo(() => {
-    return (distance: number, watts: number | null): void => {
-      const node = current.current;
+    return (distance: number): void => {
+      const node = marker.current;
       if (!node) return;
-      node.setAttribute('x', String(geometry.xFor(distance) + 8));
-      node.textContent = `${num(watts)} W`;
+      const x = String(geometry.xFor(distance));
+      node.setAttribute('x1', x);
+      node.setAttribute('x2', x);
     };
   }, [geometry]);
 
   useImperativeHandle(ref, () => ({ update: paint }), [paint]);
 
   useEffect(() => {
-    paint(distanceM, currentW);
-  }, [paint, distanceM, currentW]);
+    paint(distanceM);
+  }, [paint, distanceM]);
 
   return (
     <svg
@@ -130,14 +135,17 @@ export function PowerStrip({
       >
         {`FTP ${num(ftpW)}`}
       </text>
+      {/* design/DESIGN.md > Palette gives ink to marker ticks. No number on it: the hero
+          above holds the watts, and it holds them once. */}
       {mode === 'live' && (
-        <text
-          ref={current}
-          x={0}
-          y={geometry.currentLabelY}
-          className="font-mono"
-          fontSize={11}
-          fill="var(--color-ink)"
+        <line
+          ref={marker}
+          x1={0}
+          y1={geometry.markerTopY}
+          x2={0}
+          y2={geometry.baselineY}
+          stroke="var(--color-ink)"
+          strokeWidth={1}
         />
       )}
       <text

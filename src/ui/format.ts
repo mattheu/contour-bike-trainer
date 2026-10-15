@@ -57,7 +57,7 @@ export function percent(value: Maybe, digits = 1): string {
 }
 
 /**
- * Seconds for a displayed power to close ~95 % of the gap to the actual. DESIGN.md: live
+ * Seconds for a displayed reading to close ~95 % of the gap to the actual. DESIGN.md: live
  * readings carry no effect, they just count, so the easing is in the value not the paint.
  */
 export const SMOOTHING_SECONDS = 3;
@@ -66,6 +66,9 @@ export const SMOOTHING_SECONDS = 3;
  * Exponential ease of a displayed reading toward its actual, called once per frame or
  * sample with the elapsed time since the last call. Absent actual stays absent — a missing
  * reading must not decay toward zero and look like a rider who stopped pedalling.
+ *
+ * The gradient readout, and only that: power is a trailing mean over the reading series
+ * below, because an ease has no window and so nothing to fall out of across a dropout.
  */
 export function smoothPower(displayed: Maybe, actual: Maybe, dtSeconds: number): number | null {
   if (isAbsent(actual) || !Number.isFinite(actual)) return null;
@@ -73,6 +76,66 @@ export function smoothPower(displayed: Maybe, actual: Maybe, dtSeconds: number):
   if (!Number.isFinite(dtSeconds) || dtSeconds <= 0) return displayed;
   const tau = SMOOTHING_SECONDS / 3;
   return displayed + (actual - displayed) * (1 - Math.exp(-dtSeconds / tau));
+}
+
+/**
+ * The window the displayed power is averaged over. Three seconds is what Garmin and
+ * Wahoo head units default to, and on the first hardware ride it took the mean
+ * second-to-second change from 14.7 W to 7.4 and the p95 from 50 W to 26.
+ */
+export const POWER_WINDOW_S = 3;
+
+/** One reading as it arrived. Seconds are monotonic; only differences are meaningful. */
+export interface PowerReading {
+  t: number;
+  w: number;
+}
+
+/**
+ * The trailing mean of every reading inside the window ending at `nowS`, or null when
+ * there is none — which is the whole of the dropout rule, rather than a case bolted on.
+ *
+ * A reading leaves the window by ageing out, so three seconds of silence empties it and
+ * the readout goes to a dash instead of printing a confident number against a trainer
+ * that is not there. The same ageing means a trainer coming back after a gap longer than
+ * the window finds the window already empty: its first reading stands alone and nothing
+ * is averaged across the hole. No warm-up either — one reading is its own mean, so the
+ * first second of a ride shows a number rather than withholding one.
+ *
+ * Pure, and given the series rather than holding it: the arithmetic is the part worth
+ * asserting, and a buffer inside a component is not reachable from a test.
+ */
+export function trailingMeanPower(
+  readings: readonly PowerReading[],
+  nowS: number,
+  windowS: number = POWER_WINDOW_S,
+): number | null {
+  if (!Number.isFinite(nowS) || !Number.isFinite(windowS) || windowS <= 0) return null;
+  const since = nowS - windowS;
+  let total = 0;
+  let count = 0;
+  for (const reading of readings) {
+    if (!Number.isFinite(reading.t) || !Number.isFinite(reading.w)) continue;
+    // Exclusive at the old end, inclusive at the new: a reading landing exactly now
+    // counts, and one exactly a window old has had its turn.
+    if (reading.t <= since || reading.t > nowS) continue;
+    total += reading.w;
+    count += 1;
+  }
+  return count === 0 ? null : total / count;
+}
+
+/**
+ * The readings still worth keeping as of `nowS`. The caller's buffer stays bounded by the
+ * window rather than by a sample count, so a trainer notifying at 4 Hz and one at 1 Hz
+ * both average over the same three seconds.
+ */
+export function withinPowerWindow(
+  readings: readonly PowerReading[],
+  nowS: number,
+  windowS: number = POWER_WINDOW_S,
+): PowerReading[] {
+  return readings.filter((reading) => reading.t > nowS - windowS && reading.t <= nowS);
 }
 
 /** Trailing zeros are noise on a target: `95`, not `95.0`, and `87.5` when it is. */

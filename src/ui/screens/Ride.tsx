@@ -117,7 +117,7 @@ export function Ride({
   const profile = useMemo(() => buildProfile(route), [route]);
   const climbs = useMemo(() => detectClimbs(route), [route]);
 
-  const { distanceM, displayPowerW } = snapshot;
+  const { distanceM } = snapshot;
 
   // design/DESIGN.md: a fault shows in the data too. The trainer's readings go stale
   // when it drops; heart rate follows the strap, which can fail on its own.
@@ -142,7 +142,7 @@ export function Ride({
   useEffect(() => {
     profileRef.current?.update(distanceM);
     mapRef.current?.update(distanceM);
-    stripRef.current?.update(distanceM, displayPowerW);
+    stripRef.current?.update(distanceM);
   });
 
   /**
@@ -178,14 +178,22 @@ export function Ride({
     return () => globalThis.removeEventListener('keydown', onKeyDown);
   }, [onPauseToggle]);
 
-  const power = powerLadder(snapshot.powerW, ftpW, targets.powerW, targetMarginPct);
+  // The hero, the ladder and the ladder's target band all read the one smoothed figure
+  // the store publishes. The raw reading is still on the snapshot, and the recorder and
+  // the devices panel still read it; nothing on this row does, because a hero and a
+  // ladder disagreeing about the same instant is what the smoothing is for.
+  //
+  // The FTP share goes with them. It is drawn inside the same Hero, on the same line: it
+  // is the hero's number restated as a percentage, so sourcing it separately would
+  // reproduce exactly the disagreement being fixed one slot to the right.
+  const power = powerLadder(snapshot.displayPowerW, ftpW, targets.powerW, targetMarginPct);
   const heart = heartRateLadder(
     snapshot.heartRateBpm,
     hrMaxBpm,
     targets.heartRateBpm,
     targetMarginPct,
   );
-  const share = ftpSharePercent(snapshot.powerW, ftpW);
+  const share = ftpSharePercent(snapshot.displayPowerW, ftpW);
 
   const startM = window?.startM ?? 0;
   const endM = window?.endM ?? route.totalDistanceM;
@@ -348,7 +356,6 @@ export function Ride({
                 startM={startM}
                 endM={endM}
                 distanceM={0}
-                currentW={null}
                 width={layout.profileWidth}
                 height={stack.stripHeight}
               />

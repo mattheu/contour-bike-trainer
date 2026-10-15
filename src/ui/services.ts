@@ -52,7 +52,14 @@ import { expandWorkout } from '../workout/expand';
 import { planWorkoutImport } from '../workout/import';
 import { parseWorkout } from '../workout/parse';
 import { DEFAULT_SCALE_PCT, nudgeScalePct, startRun, workoutFtp } from '../workout/runner';
-import { smoothPower, stepLabel } from './format';
+import {
+  POWER_WINDOW_S,
+  smoothPower,
+  stepLabel,
+  trailingMeanPower,
+  withinPowerWindow,
+  type PowerReading,
+} from './format';
 import type { RiderProfile } from './screens/rider-profile';
 import type { DeleteResult } from './screens/ride-delete';
 import type { ImportResult } from './screens/rides-import';
@@ -64,7 +71,7 @@ import {
   duplicateSource,
   type SaveResult,
 } from './screens/workout-editor';
-import { experimentStore, rideStore, type WorkoutSnapshot } from './store';
+import { experimentStore, rideStore, type RideSnapshot, type WorkoutSnapshot } from './store';
 import { createWakeLock } from './wake-lock';
 
 /**
@@ -194,9 +201,15 @@ wire(() => {
       speedKmh: d.speedKmh,
       hex,
     });
-    // The HUD shows the trainer's own readings even before a ride starts.
+    // An omitted field is not a new reading: the packet said nothing about power, so
+    // nothing enters the window. Same rule the engine applies to its own held value.
+    if (d.powerW !== undefined) recordPower(d.powerW);
+    // The HUD shows the trainer's own readings even before a ride starts, which is also
+    // why the displayed mean is derived here rather than in the engine: there is no
+    // engine before Start, and the hero must not change character when one appears.
     rideStore.update({
       powerW: d.powerW ?? null,
+      displayPowerW: displayPowerW(),
       cadenceRpm: d.cadenceRpm ?? null,
     });
   });
@@ -635,16 +648,59 @@ let engineOff: (() => void)[] = [];
  */
 const DISPLAY_REFRESH_MS = 100;
 setInterval(() => {
-  if (engine === null) return;
-  rideStore.update({ elapsedS: Math.floor(engine.elapsedSNow()) });
+  // The displayed power is recomputed here as well as on arrival, because a window that
+  // is only ever recomputed when a reading lands cannot empty: a trainer that goes
+  // silent would leave its last mean on the hero for ever. Ageing it on a clock is what
+  // turns a dropout into a dash. The store's change gate still holds this to a render
+  // only when the rounded figure actually moves.
+  const patch: Partial<RideSnapshot> = { displayPowerW: displayPowerW() };
+  if (engine !== null) patch.elapsedS = Math.floor(engine.elapsedSNow());
+  rideStore.update(patch);
 }, DISPLAY_REFRESH_MS);
 let saved: Promise<string | null> | null = null;
 
 // Display smoothing lives here rather than in the engine: the trainer gets the raw
 // grade, the rider gets one that does not twitch. DESIGN.md > Motion.
-let displayPowerW: number | null = null;
+//
+// Power is smoothed here for a second reason. The engine owns the 1 Hz sample stream
+// that becomes the stored ride and the exported TCX, and recorded data is never
+// smoothed, because it goes to Strava. Deriving the displayed figure downstream of the
+// engine keeps that a structural fact rather than a promise: there is no smoothed value
+// anywhere upstream of storage for a later edit to reach for. Same shape as ADR-0008,
+// which keeps the difficulty-scaled grade out of everything but the control point.
 let displayGradePercent: number | null = null;
 let lastBridgeAtMs = 0;
+
+/**
+ * The last few seconds of readings, as they arrived. Bounded by the window rather than
+ * by a count, so a trainer notifying at 4 Hz and one at 1 Hz average over the same three
+ * seconds. Appended to from the trainer's own callback — once per packet — rather than
+ * from the engine's publish, which fires several times a second and would weight one
+ * reading by however many times the ride happened to republish while it was current.
+ */
+let powerReadings: PowerReading[] = [];
+
+function nowS(): number {
+  return performance.now() / 1000;
+}
+
+function recordPower(watts: number): void {
+  const at = nowS();
+  powerReadings.push({ t: at, w: watts });
+  powerReadings = withinPowerWindow(powerReadings, at);
+}
+
+/**
+ * The one displayed power, read by the hero, the zone ladder and the ladder's target
+ * band. Whole watts: FTMS reports whole watts anyway, the readouts print whole watts, and
+ * rounding before publication means the store's change gate is not defeated by a
+ * sub-watt wobble — and that the hero and the ladder cannot be shown different numbers
+ * for the same instant, which is the point of there being one of these.
+ */
+function displayPowerW(): number | null {
+  const mean = trailingMeanPower(powerReadings, nowS(), POWER_WINDOW_S);
+  return mean === null ? null : Math.round(mean);
+}
 
 /**
  * The workout panel's state, republished only when it actually changes.
@@ -693,7 +749,6 @@ function bridge(snapshot: EngineSnapshot): void {
   const dt = lastBridgeAtMs === 0 ? 0 : (now - lastBridgeAtMs) / 1000;
   lastBridgeAtMs = now;
 
-  displayPowerW = smoothPower(displayPowerW, snapshot.powerW, dt);
   displayGradePercent = smoothPower(displayGradePercent, snapshot.gradePercent, dt);
 
   wakeLock.setActive(snapshot.state === 'running');
@@ -710,7 +765,6 @@ function bridge(snapshot: EngineSnapshot): void {
     gradePercent: displayGradePercent,
     speedKmh: snapshot.speedKmh,
     powerW: snapshot.powerW,
-    displayPowerW,
     cadenceRpm: snapshot.cadenceRpm,
     heartRateBpm: snapshot.heartRateBpm,
     avgPowerW: recorder?.avgPowerW ?? null,
@@ -777,7 +831,7 @@ function frozenSettings(ftp: number = settings.ftp) {
 /** Everything a new ride resets, whether it has a route under it or a workout in it. */
 function armRide(next: RideEngine): void {
   saved = null;
-  displayPowerW = null;
+  powerReadings = [];
   displayGradePercent = null;
   lastBridgeAtMs = 0;
   publishedWorkout = null;

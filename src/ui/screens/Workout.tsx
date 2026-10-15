@@ -158,7 +158,9 @@ export function Workout({
 
   // The target the ladder's accent window is drawn from is the workout's, not the panel's:
   // during a workout the plan is what you are aiming at.
-  const power = powerLadder(snapshot.powerW, ftpW, workout.targetW, targetMarginPct);
+  // The smoothed figure, as the hero above it shows: in ERG the rider reads actual
+  // against target, and only the actual is eased. The target is the plan and stays exact.
+  const power = powerLadder(snapshot.displayPowerW, ftpW, workout.targetW, targetMarginPct);
   const heart = heartRateLadder(
     snapshot.heartRateBpm,
     hrMaxBpm,

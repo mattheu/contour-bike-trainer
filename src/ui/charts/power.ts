@@ -16,8 +16,13 @@ export const BASELINE_FRACTION = 56 / 74;
  */
 export const MAX_FRACTION_OF_FTP = 1.6;
 
-/** The current-value label rides just under the FTP rule rather than chasing the line. */
-const CURRENT_LABEL_Y_FRACTION = 24 / 74;
+/**
+ * The rider's marker runs from just under the FTP rule down to the axis. It took the y
+ * the current-reading label used to sit at: the label was the only thing marking where
+ * the rider had got to, and dropping it without putting a tick there would have left the
+ * strip a shape with no position on it.
+ */
+const MARKER_TOP_Y_FRACTION = 24 / 74;
 
 /**
  * Three washes for six zones, as the mockups show. Zones 1-2 are "easier than threshold",
@@ -49,7 +54,8 @@ export interface PowerStripGeometry {
   height: number;
   baselineY: number;
   ftpY: number;
-  currentLabelY: number;
+  /** Top of the rider's marker; it runs from here to the baseline. */
+  markerTopY: number;
   xFor(distM: number): number;
   yFor(watts: number): number;
   fills: ZoneFill[];
@@ -125,7 +131,7 @@ export function powerStripGeometry(input: PowerStripInput): PowerStripGeometry {
     height,
     baselineY,
     ftpY: yFor(ftpW),
-    currentLabelY: height * CURRENT_LABEL_Y_FRACTION,
+    markerTopY: height * MARKER_TOP_Y_FRACTION,
     xFor,
     yFor,
     fills,
