@@ -1,0 +1,24 @@
+name: Aerobic builds
+description: An hour of blocks that climb and reset. After Zwift's Aerobic Builds, shortened from ninety minutes to sixty by dropping a set from each group.
+
+warmup: { duration: 10m, ramp: [45%, 65%] }
+
+steps:
+  # Short builds first: a minute at each step is over before it becomes work.
+  - repeat: 3
+    steps:
+      - { duration: 1m, power: 70% }
+      - { duration: 1m, power: 80% }
+      - { duration: 1m, power: 85% }
+      - { duration: 1m, power: 60%, name: Reset }
+  # The same shape stretched to three minutes, which is where it starts to tell.
+  - repeat: 2
+    steps:
+      - { duration: 3m, power: 60% }
+      - { duration: 3m, power: 70% }
+      - { duration: 3m, power: 80% }
+      - { duration: 3m, power: 90%, name: Top of the build }
+  - { duration: 4m, power: 80%, name: Tempo }
+  - { duration: 2m, power: 70%, name: Easy }
+
+cooldown: { duration: 8m, ramp: [55%, 45%] }

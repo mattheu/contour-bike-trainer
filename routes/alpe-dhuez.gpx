@@ -1,0 +1,3624 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.1" creator="GPS Visualizer http://www.gpsvisualizer.com/" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+  <metadata>
+    <name>Cyclo - Alpe d'Huez, la montée mythique</name>
+    <desc/>
+  </metadata>
+  <wpt lat="45.054516" lon="6.032438">
+    <ele>719.0</ele>
+    <name>Départ : Bourg d'Oisans (720 m)</name>
+    <desc>Garez-vous le parking du Vénéon. Puis suivre la direction de Briançon, traverser la Romanche et prendre à gauche la D211 ... direction Alpe d'Huez.</desc>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-start.png</sym>
+    </link>
+  </wpt>
+  <wpt lat="45.0651099" lon="6.0402918">
+    <ele>726.7</ele>
+    <name>Montée vers l'Alpe d'Huez (736 m)</name>
+    <desc>On passe du plat à LA Montée sans transition. L'effort est intense jusqu'à La Garde-en-Oisans.</desc>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-waypoint-01.png</sym>
+    </link>
+  </wpt>
+  <wpt lat="45.0672771" lon="6.04424">
+    <ele>980.1</ele>
+    <name>La Garde-en-Oisans (956 m)</name>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-waypoint-02.png</sym>
+    </link>
+  </wpt>
+  <wpt lat="45.07707" lon="6.05332">
+    <ele>1384.5</ele>
+    <name>Eglise Saint-Ferréol d'Huez (1365 m)</name>
+    <desc>On arrive en vue d' l'Alpe d'Huez. Profitez de la vue sur la vallée de Sarenne et la plaine de Bourg d'Oisans pour faire une halte</desc>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-waypoint-03.png</sym>
+    </link>
+  </wpt>
+  <wpt lat="45.0811877" lon="6.0593569">
+    <ele>1453.6</ele>
+    <name>Huez (1437 m)</name>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-waypoint-04.png</sym>
+    </link>
+  </wpt>
+  <wpt lat="45.0866571" lon="6.0587186">
+    <ele>1595.0</ele>
+    <name>La Patte d'Oie</name>
+    <desc>Continuer tout droit</desc>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-waypoint-05.png</sym>
+    </link>
+  </wpt>
+  <wpt lat="45.0909746" lon="6.0621089">
+    <ele>1760.3</ele>
+    <name>L'Alpe d'Huez (1752 m)</name>
+    <desc>Vous rentrez dans l'Alpe d'Huez, suivez la route jusqu'au rond-point des pistes.</desc>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-waypoint-06.png</sym>
+    </link>
+  </wpt>
+  <wpt lat="45.0950116" lon="6.0709977">
+    <ele>1842.5</ele>
+    <name>Arrivée (1841 m)</name>
+    <desc>Félicitations!! Le retour se fait re-descendant l'avenue du Rif Nel. Au rond-point de l'Europe, suivre la direction Bourg d'Oisans.</desc>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-stop.png</sym>
+    </link>
+  </wpt>
+  <wpt lat="45.1157526" lon="6.0867691">
+    <ele>2078.7</ele>
+    <name>Arrivée</name>
+    <desc>Parking du Lac Besson</desc>
+    <link>
+      <type>text/html</type>
+      <sym>http://oisans-files.oisans.com/maps/map-icon-variante-stop.png</sym>
+    </link>
+  </wpt>
+  <trk>
+    <trkseg>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05435" lon="6.03255">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05435" lon="6.03258">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05435" lon="6.03261">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05435" lon="6.03264">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05435" lon="6.03266">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05434" lon="6.03269">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05431" lon="6.03272">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05428" lon="6.03274">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05424" lon="6.03275">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05416" lon="6.03276">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05399" lon="6.03279">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05399" lon="6.03279">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05399" lon="6.0329">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.054" lon="6.03299">
+        <ele>719.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05407" lon="6.03327">
+        <ele>718.497</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0542" lon="6.03375">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0543" lon="6.03407">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0543" lon="6.03422">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05431" lon="6.03426">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05431" lon="6.03429">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05431" lon="6.03433">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0543" lon="6.03436">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0543" lon="6.03438">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05429" lon="6.0344">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05428" lon="6.03443">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05427" lon="6.03445">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05424" lon="6.03449">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05405" lon="6.03474">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05403" lon="6.03478">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05401" lon="6.03482">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.054" lon="6.03486">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05399" lon="6.0349">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05398" lon="6.03494">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05398" lon="6.03502">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05397" lon="6.03506">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05395" lon="6.03517">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05395" lon="6.03517">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05394" lon="6.03527">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05394" lon="6.03527">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05403" lon="6.03529">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05448" lon="6.03539">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05463" lon="6.03544">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05467" lon="6.03543">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05472" lon="6.0354">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05476" lon="6.03538">
+        <ele>717.95</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0548" lon="6.03535">
+        <ele>717.927</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05484" lon="6.03533">
+        <ele>717.92</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05487" lon="6.0353">
+        <ele>717.957</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05517" lon="6.03488">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05543" lon="6.0345">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05543" lon="6.0345">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05557" lon="6.03429">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0558" lon="6.03387">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0559" lon="6.0337">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0559" lon="6.0337">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05605" lon="6.03388">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05632" lon="6.03418">
+        <ele>717.964</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05645" lon="6.03431">
+        <ele>717.484</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05659" lon="6.03446">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0568" lon="6.03468">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0568" lon="6.03468">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05685" lon="6.03472">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05691" lon="6.03479">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05739" lon="6.03536">
+        <ele>716.396</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0579" lon="6.0359">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05819" lon="6.03626">
+        <ele>715.239</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05837" lon="6.03655">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05837" lon="6.03655">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05838" lon="6.03658">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05846" lon="6.0367">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05857" lon="6.03687">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05869" lon="6.03706">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05874" lon="6.03714">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05884" lon="6.03731">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05886" lon="6.03736">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05889" lon="6.03742">
+        <ele>715.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05894" lon="6.03751">
+        <ele>715.007</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05903" lon="6.03767">
+        <ele>715.311</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05903" lon="6.03768">
+        <ele>715.329</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05903" lon="6.03768">
+        <ele>715.329</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05908" lon="6.0378">
+        <ele>715.713</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05908" lon="6.0378">
+        <ele>715.713</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05908" lon="6.03783">
+        <ele>715.747</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05908" lon="6.03785">
+        <ele>715.769</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05908" lon="6.03788">
+        <ele>715.803</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05909" lon="6.03792">
+        <ele>715.865</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05911" lon="6.03797">
+        <ele>715.937</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05912" lon="6.03799">
+        <ele>715.96</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05914" lon="6.038">
+        <ele>715.981</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05916" lon="6.03802">
+        <ele>715.997</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05918" lon="6.03803">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05921" lon="6.03805">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05924" lon="6.03805">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05927" lon="6.03805">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0593" lon="6.03803">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05933" lon="6.03802">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05933" lon="6.03801">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05935" lon="6.03799">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05937" lon="6.03796">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05938" lon="6.03793">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0594" lon="6.03788">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05955" lon="6.03784">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05961" lon="6.03781">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0597" lon="6.03778">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.05984" lon="6.03777">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06001" lon="6.03774">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06011" lon="6.03773">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06016" lon="6.03774">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06027" lon="6.03771">
+        <ele>716.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06034" lon="6.03769">
+        <ele>716.153</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06048" lon="6.03765">
+        <ele>716.393</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06055" lon="6.03764">
+        <ele>716.494</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06055" lon="6.03764">
+        <ele>716.494</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06066" lon="6.03761">
+        <ele>716.396</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06082" lon="6.03758">
+        <ele>716.288</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06112" lon="6.03751">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0614" lon="6.03743">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06167" lon="6.03733">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06193" lon="6.0372">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06214" lon="6.03708">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06229" lon="6.037">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06233" lon="6.03699">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06238" lon="6.03698">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06242" lon="6.03697">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06247" lon="6.03697">
+        <ele>717.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06253" lon="6.03698">
+        <ele>717.108</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0626" lon="6.03699">
+        <ele>717.36</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06267" lon="6.03701">
+        <ele>717.612</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06267" lon="6.03701">
+        <ele>717.612</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06268" lon="6.03701">
+        <ele>717.648</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06282" lon="6.03705">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06288" lon="6.03707">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06296" lon="6.03718">
+        <ele>718.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06313" lon="6.0374">
+        <ele>717.904</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06362" lon="6.0381">
+        <ele>718.037</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06367" lon="6.03817">
+        <ele>718.299</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06371" lon="6.03822">
+        <ele>718.567</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06392" lon="6.03854">
+        <ele>720.083</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06412" lon="6.03882">
+        <ele>720.958</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06421" lon="6.03895">
+        <ele>721.22</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06426" lon="6.03903">
+        <ele>721.508</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06433" lon="6.03911">
+        <ele>721.796</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06439" lon="6.0392">
+        <ele>722.12</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06481" lon="6.03979">
+        <ele>723.617</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06497" lon="6.04001">
+        <ele>724.284</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06505" lon="6.04009">
+        <ele>724.463</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06509" lon="6.04012">
+        <ele>724.636</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06512" lon="6.04013">
+        <ele>724.679</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06514" lon="6.04013">
+        <ele>724.636</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06514" lon="6.04013">
+        <ele>724.636</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06517" lon="6.04013">
+        <ele>724.571</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06525" lon="6.04013">
+        <ele>724.4</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0654" lon="6.0401">
+        <ele>725.032</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06568" lon="6.03998">
+        <ele>724.823</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06609" lon="6.03981">
+        <ele>725.252</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06639" lon="6.03969">
+        <ele>725.21</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06672" lon="6.03959">
+        <ele>727.742</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06704" lon="6.03954">
+        <ele>730.998</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06738" lon="6.03949">
+        <ele>734.939</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06769" lon="6.03945">
+        <ele>739.39</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06782" lon="6.03942">
+        <ele>740.731</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06796" lon="6.03936">
+        <ele>741.031</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06811" lon="6.0393">
+        <ele>741.78</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06827" lon="6.03925">
+        <ele>742.86</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06835" lon="6.03925">
+        <ele>744.162</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06844" lon="6.03927">
+        <ele>745.729</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06854" lon="6.0393">
+        <ele>747.675</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06868" lon="6.03932">
+        <ele>750.234</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06872" lon="6.03931">
+        <ele>750.617</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06872" lon="6.03931">
+        <ele>750.617</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0689" lon="6.03929">
+        <ele>753.342</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0691" lon="6.03923">
+        <ele>759.041</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06928" lon="6.03918">
+        <ele>763.268</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0694" lon="6.03911">
+        <ele>764.316</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06962" lon="6.03899">
+        <ele>767.382</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06982" lon="6.03886">
+        <ele>768.551</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07005" lon="6.03877">
+        <ele>772.654</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07024" lon="6.03872">
+        <ele>776.077</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07039" lon="6.03871">
+        <ele>779.524</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07049" lon="6.03871">
+        <ele>782.044</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07051" lon="6.03871">
+        <ele>782.548</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07054" lon="6.03872">
+        <ele>783.88</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07073" lon="6.03875">
+        <ele>786.314</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07094" lon="6.03881">
+        <ele>788.588</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0712" lon="6.03891">
+        <ele>791.5</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0715" lon="6.03898">
+        <ele>793.52</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07172" lon="6.03902">
+        <ele>794.403</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07179" lon="6.03904">
+        <ele>794.626</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07182" lon="6.03905">
+        <ele>794.812</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07187" lon="6.0391">
+        <ele>797.028</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07188" lon="6.03911">
+        <ele>797.479</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07188" lon="6.03911">
+        <ele>797.479</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07189" lon="6.03916">
+        <ele>800.209</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07189" lon="6.03923">
+        <ele>804.236</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07187" lon="6.03927">
+        <ele>806.756</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07183" lon="6.0393">
+        <ele>808.916</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07177" lon="6.0393">
+        <ele>809.564</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0717" lon="6.03929">
+        <ele>809.744</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07159" lon="6.03925">
+        <ele>808.076</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07146" lon="6.03921">
+        <ele>806.24</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07131" lon="6.03917">
+        <ele>804.76</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07112" lon="6.03913">
+        <ele>803.956</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07094" lon="6.03914">
+        <ele>806.408</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07073" lon="6.03921">
+        <ele>811.224</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07054" lon="6.03931">
+        <ele>815.428</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07036" lon="6.03942">
+        <ele>817.336</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07022" lon="6.03955">
+        <ele>819.652</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07002" lon="6.03981">
+        <ele>823.9</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06991" lon="6.03997">
+        <ele>826.673</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06984" lon="6.04005">
+        <ele>827.532</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06969" lon="6.04019">
+        <ele>828.184</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0696" lon="6.0403">
+        <ele>829.885</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06951" lon="6.04042">
+        <ele>832.121</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06941" lon="6.04061">
+        <ele>837.328</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06934" lon="6.04073">
+        <ele>840.532</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06927" lon="6.0408">
+        <ele>841.036</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06927" lon="6.04081">
+        <ele>841.576</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06926" lon="6.04082">
+        <ele>841.648</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06918" lon="6.04088">
+        <ele>841.48</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06894" lon="6.04094">
+        <ele>841.453</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06849" lon="6.04103">
+        <ele>844.093</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06826" lon="6.04108">
+        <ele>848.789</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06799" lon="6.0412">
+        <ele>855.376</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06767" lon="6.04135">
+        <ele>857.851</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06755" lon="6.04143">
+        <ele>860.336</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06755" lon="6.04143">
+        <ele>860.336</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06732" lon="6.04156">
+        <ele>865.777</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06716" lon="6.04166">
+        <ele>869.507</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06681" lon="6.04189">
+        <ele>874.447</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06659" lon="6.04202">
+        <ele>875.285</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06648" lon="6.04207">
+        <ele>875.179</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06645" lon="6.0421">
+        <ele>876.01</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06644" lon="6.04212">
+        <ele>876.787</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06643" lon="6.04219">
+        <ele>880.02</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06643" lon="6.04219">
+        <ele>880.02</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06643" lon="6.04222">
+        <ele>881.484</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06645" lon="6.04225">
+        <ele>883.314</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06647" lon="6.04227">
+        <ele>884.597</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06649" lon="6.04228">
+        <ele>885.349</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06653" lon="6.04227">
+        <ele>885.35</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06667" lon="6.04219">
+        <ele>883.807</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06739" lon="6.04182">
+        <ele>881.644</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06757" lon="6.04177">
+        <ele>880.269</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0677" lon="6.04177">
+        <ele>880.856</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06788" lon="6.04185">
+        <ele>886.469</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06796" lon="6.04188">
+        <ele>888.872</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.068" lon="6.04193">
+        <ele>891.714</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.068" lon="6.04199">
+        <ele>894.991</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06798" lon="6.04206">
+        <ele>898.727</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06798" lon="6.04206">
+        <ele>898.727</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06794" lon="6.0421">
+        <ele>900.479</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06792" lon="6.0421">
+        <ele>900.223</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06776" lon="6.04199">
+        <ele>892.46</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06767" lon="6.04194">
+        <ele>889.764</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06761" lon="6.04192">
+        <ele>888.662</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06753" lon="6.04194">
+        <ele>889.747</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06743" lon="6.04198">
+        <ele>891.099</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06735" lon="6.04205">
+        <ele>893.67</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06722" lon="6.04218">
+        <ele>897.961</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06703" lon="6.04242">
+        <ele>903.447</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06691" lon="6.04255">
+        <ele>905.99</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06681" lon="6.04264">
+        <ele>908.432</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06669" lon="6.04273">
+        <ele>910.078</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06632" lon="6.04291">
+        <ele>912.76</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.066" lon="6.04307">
+        <ele>909.27</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06598" lon="6.04309">
+        <ele>908.862</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06597" lon="6.04309">
+        <ele>908.471</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06597" lon="6.04309">
+        <ele>908.471</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06596" lon="6.0431">
+        <ele>908.231</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06594" lon="6.04316">
+        <ele>908.227</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06593" lon="6.0432">
+        <ele>908.267</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06594" lon="6.04325">
+        <ele>909.422</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06595" lon="6.04327">
+        <ele>910.242</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.066" lon="6.04331">
+        <ele>913.763</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06606" lon="6.04333">
+        <ele>917.791</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0663" lon="6.04322">
+        <ele>924.106</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06637" lon="6.0432">
+        <ele>925.623</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06654" lon="6.04317">
+        <ele>929.2</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06673" lon="6.04313">
+        <ele>932.682</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06683" lon="6.04308">
+        <ele>933.421</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06693" lon="6.043">
+        <ele>932.342</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06701" lon="6.04293">
+        <ele>930.504</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06713" lon="6.04286">
+        <ele>930.155</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06716" lon="6.04284">
+        <ele>930.047</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06724" lon="6.04282">
+        <ele>931.242</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06731" lon="6.04282">
+        <ele>932.288</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06746" lon="6.04284">
+        <ele>935.528</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06756" lon="6.04285">
+        <ele>938.048</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06776" lon="6.04278">
+        <ele>938.743</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06795" lon="6.04268">
+        <ele>936.116</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06808" lon="6.04263">
+        <ele>935.525</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06822" lon="6.04262">
+        <ele>938.152</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06836" lon="6.04264">
+        <ele>942.264</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06853" lon="6.04264">
+        <ele>943.488</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06867" lon="6.04266">
+        <ele>944.61</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06883" lon="6.04268">
+        <ele>943.789</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06888" lon="6.04271">
+        <ele>944.972</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0689" lon="6.04274">
+        <ele>947.357</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06891" lon="6.04281">
+        <ele>952.835</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0689" lon="6.04284">
+        <ele>954.599</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0689" lon="6.04284">
+        <ele>954.599</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06889" lon="6.04286">
+        <ele>955.579</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06887" lon="6.04291">
+        <ele>959.712</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06882" lon="6.04293">
+        <ele>961.912</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06878" lon="6.04291">
+        <ele>960.853</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06866" lon="6.04287">
+        <ele>959.326</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06856" lon="6.04283">
+        <ele>956.545</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06847" lon="6.04281">
+        <ele>954.361</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0684" lon="6.04281">
+        <ele>953.828</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06831" lon="6.04282">
+        <ele>953.452</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06823" lon="6.04285">
+        <ele>953.596</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06817" lon="6.0429">
+        <ele>955.684</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.068" lon="6.04304">
+        <ele>961.125</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06789" lon="6.04314">
+        <ele>964.412</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06778" lon="6.04322">
+        <ele>966.32</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06756" lon="6.0434">
+        <ele>969.832</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0673" lon="6.04357">
+        <ele>972.201</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06721" lon="6.04367">
+        <ele>974.085</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06721" lon="6.04367">
+        <ele>974.085</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06718" lon="6.04376">
+        <ele>976.749</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06717" lon="6.04384">
+        <ele>979.698</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06718" lon="6.0439">
+        <ele>982.046</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0672" lon="6.04395">
+        <ele>982.248</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06724" lon="6.04402">
+        <ele>982.62</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06731" lon="6.04408">
+        <ele>983.895</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06735" lon="6.04413">
+        <ele>984.547</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06765" lon="6.04443">
+        <ele>985.576</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0678" lon="6.04453">
+        <ele>985.628</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06792" lon="6.0446">
+        <ele>985.52</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06808" lon="6.04467">
+        <ele>985.956</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06828" lon="6.04474">
+        <ele>985.836</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06859" lon="6.0448">
+        <ele>987.769</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06872" lon="6.04484">
+        <ele>988.766</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06884" lon="6.0449">
+        <ele>989.343</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06893" lon="6.04499">
+        <ele>988.945</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06901" lon="6.04509">
+        <ele>988.884</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0691" lon="6.04523">
+        <ele>988.488</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0691" lon="6.04523">
+        <ele>988.488</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06912" lon="6.04526">
+        <ele>988.416</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06923" lon="6.0454">
+        <ele>989.048</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06947" lon="6.04559">
+        <ele>991.791</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06974" lon="6.04571">
+        <ele>993.808</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.06995" lon="6.04582">
+        <ele>997.923</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07004" lon="6.04588">
+        <ele>999.936</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07013" lon="6.04598">
+        <ele>1002.283</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07032" lon="6.04632">
+        <ele>1006.416</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07047" lon="6.04661">
+        <ele>1008.183</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07057" lon="6.04678">
+        <ele>1009.594</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07064" lon="6.04688">
+        <ele>1010.645</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07074" lon="6.04698">
+        <ele>1012.408</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07102" lon="6.04724">
+        <ele>1017.594</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07131" lon="6.04752">
+        <ele>1022.016</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07141" lon="6.04761">
+        <ele>1023.714</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07148" lon="6.04769">
+        <ele>1024.24</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0717" lon="6.04795">
+        <ele>1025.331</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07181" lon="6.04808">
+        <ele>1025.235</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07181" lon="6.04808">
+        <ele>1025.235</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07182" lon="6.04809">
+        <ele>1025.212</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07187" lon="6.04815">
+        <ele>1024.671</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07192" lon="6.04814">
+        <ele>1026.803</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07196" lon="6.04811">
+        <ele>1029.449</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07197" lon="6.04807">
+        <ele>1031.435</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07199" lon="6.04801">
+        <ele>1034.417</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07198" lon="6.04796">
+        <ele>1035.804</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07195" lon="6.04792">
+        <ele>1036.09</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07192" lon="6.04789">
+        <ele>1035.975</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07176" lon="6.04776">
+        <ele>1033.586</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0715" lon="6.04746">
+        <ele>1032.211</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07138" lon="6.04727">
+        <ele>1033.042</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07132" lon="6.0472">
+        <ele>1032.536</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07131" lon="6.04717">
+        <ele>1033.081</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07115" lon="6.04691">
+        <ele>1032.541</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07109" lon="6.04675">
+        <ele>1031.325</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07105" lon="6.04662">
+        <ele>1031.524</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07103" lon="6.04641">
+        <ele>1033.144</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07104" lon="6.04622">
+        <ele>1035.068</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07106" lon="6.04573">
+        <ele>1039.272</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07109" lon="6.04518">
+        <ele>1043.172</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07109" lon="6.04498">
+        <ele>1044.679</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07105" lon="6.04482">
+        <ele>1045.261</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07096" lon="6.04462">
+        <ele>1045.721</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07091" lon="6.04452">
+        <ele>1046.701</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07088" lon="6.04441">
+        <ele>1049.059</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0709" lon="6.04434">
+        <ele>1051.87</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07092" lon="6.04429">
+        <ele>1053.947</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07094" lon="6.04427">
+        <ele>1054.959</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07094" lon="6.04427">
+        <ele>1054.959</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07098" lon="6.04425">
+        <ele>1056.27</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07102" lon="6.04427">
+        <ele>1056.218</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07106" lon="6.04432">
+        <ele>1055.194</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0711" lon="6.0444">
+        <ele>1053.246</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07114" lon="6.0445">
+        <ele>1052.136</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0712" lon="6.04464">
+        <ele>1052.064</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07126" lon="6.04478">
+        <ele>1052.534</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07131" lon="6.04497">
+        <ele>1053.684</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07139" lon="6.04538">
+        <ele>1056.428</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07147" lon="6.04582">
+        <ele>1062.332</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07153" lon="6.04615">
+        <ele>1064.34</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07159" lon="6.04632">
+        <ele>1066.356</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07173" lon="6.04657">
+        <ele>1071.236</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07194" lon="6.04682">
+        <ele>1076.912</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07227" lon="6.04711">
+        <ele>1085.521</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07254" lon="6.04733">
+        <ele>1086.535</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07279" lon="6.04754">
+        <ele>1084.948</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07295" lon="6.04764">
+        <ele>1084.012</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07307" lon="6.04768">
+        <ele>1085.241</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07322" lon="6.04769">
+        <ele>1087.363</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07335" lon="6.04772">
+        <ele>1088.34</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07346" lon="6.04782">
+        <ele>1088.304</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07349" lon="6.04786">
+        <ele>1088.71</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07351" lon="6.04789">
+        <ele>1089.034</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07355" lon="6.04798">
+        <ele>1089.603</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07358" lon="6.04809">
+        <ele>1090.238</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07365" lon="6.04842">
+        <ele>1092.421</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07366" lon="6.04845">
+        <ele>1092.72</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07366" lon="6.04845">
+        <ele>1092.72</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07368" lon="6.04856">
+        <ele>1093.003</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07368" lon="6.0487">
+        <ele>1094.249</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07366" lon="6.0488">
+        <ele>1095.216</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07363" lon="6.04888">
+        <ele>1095.522</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07355" lon="6.04898">
+        <ele>1095.244</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07346" lon="6.04911">
+        <ele>1095.243</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0734" lon="6.0492">
+        <ele>1095.206</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07336" lon="6.04934">
+        <ele>1096.884</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07331" lon="6.04953">
+        <ele>1099.064</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07327" lon="6.0497">
+        <ele>1101.476</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07318" lon="6.04993">
+        <ele>1103.395</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07294" lon="6.0503">
+        <ele>1103.157</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07266" lon="6.05071">
+        <ele>1105.621</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07248" lon="6.05102">
+        <ele>1108.262</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07244" lon="6.05109">
+        <ele>1108.558</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07243" lon="6.05115">
+        <ele>1110.115</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07244" lon="6.05123">
+        <ele>1113.666</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07246" lon="6.05128">
+        <ele>1116.89</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07246" lon="6.05128">
+        <ele>1116.89</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07251" lon="6.0513">
+        <ele>1121.165</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07254" lon="6.0513">
+        <ele>1123.222</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07259" lon="6.05127">
+        <ele>1125.356</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07264" lon="6.05115">
+        <ele>1123.32</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07267" lon="6.05107">
+        <ele>1121.595</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07274" lon="6.05094">
+        <ele>1119.848</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07286" lon="6.05081">
+        <ele>1119.756</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07301" lon="6.05068">
+        <ele>1120.692</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07315" lon="6.05058">
+        <ele>1122.504</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07348" lon="6.05032">
+        <ele>1128.543</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07369" lon="6.05009">
+        <ele>1133.204</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07378" lon="6.04996">
+        <ele>1135.024</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07389" lon="6.0498">
+        <ele>1136.284</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07395" lon="6.04973">
+        <ele>1136.449</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07404" lon="6.04966">
+        <ele>1137.078</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07413" lon="6.0496">
+        <ele>1137.898</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07428" lon="6.04957">
+        <ele>1140.275</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0745" lon="6.04957">
+        <ele>1144.926</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07463" lon="6.04955">
+        <ele>1147.462</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07468" lon="6.04951">
+        <ele>1147.624</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07475" lon="6.04943">
+        <ele>1147.94</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07482" lon="6.0493">
+        <ele>1148.624</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07492" lon="6.04901">
+        <ele>1148.126</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.075" lon="6.04874">
+        <ele>1150.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07502" lon="6.0487">
+        <ele>1151.152</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07503" lon="6.04853">
+        <ele>1152.864</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07502" lon="6.04842">
+        <ele>1153.854</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07497" lon="6.04827">
+        <ele>1153.054</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07487" lon="6.04802">
+        <ele>1151.76</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0748" lon="6.04786">
+        <ele>1150.782</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07478" lon="6.04778">
+        <ele>1151.051</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07477" lon="6.0477">
+        <ele>1149.6</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07478" lon="6.04766">
+        <ele>1149.384</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07478" lon="6.04766">
+        <ele>1149.384</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07478" lon="6.04763">
+        <ele>1148.952</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07481" lon="6.0476">
+        <ele>1149.6</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07486" lon="6.04758">
+        <ele>1151.112</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07491" lon="6.04761">
+        <ele>1153.344</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07494" lon="6.04766">
+        <ele>1155.144</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07496" lon="6.04772">
+        <ele>1156.728</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07496" lon="6.04782">
+        <ele>1157.212</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07497" lon="6.04792">
+        <ele>1156.785</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.075" lon="6.04806">
+        <ele>1156.952</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0751" lon="6.04828">
+        <ele>1159.907</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07515" lon="6.04844">
+        <ele>1160.771</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07522" lon="6.04863">
+        <ele>1162.672</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07525" lon="6.04879">
+        <ele>1164.4</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07526" lon="6.04903">
+        <ele>1167.008</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07526" lon="6.04927">
+        <ele>1170.836</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07524" lon="6.04949">
+        <ele>1173.525</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07522" lon="6.04966">
+        <ele>1175.099</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07517" lon="6.0498">
+        <ele>1175.745</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07513" lon="6.04992">
+        <ele>1177.294</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07507" lon="6.04999">
+        <ele>1176.718</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07501" lon="6.05004">
+        <ele>1176.432</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0749" lon="6.05008">
+        <ele>1175.463</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07488" lon="6.05008">
+        <ele>1174.949</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07477" lon="6.05012">
+        <ele>1174.497</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07465" lon="6.05016">
+        <ele>1174.452</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07454" lon="6.05022">
+        <ele>1175.801</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07447" lon="6.05026">
+        <ele>1176.58</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0744" lon="6.05036">
+        <ele>1178.33</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07437" lon="6.05046">
+        <ele>1180.861</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07432" lon="6.05059">
+        <ele>1183.307</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07422" lon="6.05078">
+        <ele>1186.266</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07385" lon="6.05127">
+        <ele>1187.372</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07351" lon="6.05173">
+        <ele>1185.978</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07337" lon="6.05184">
+        <ele>1186.465</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07325" lon="6.05193">
+        <ele>1186.055</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07321" lon="6.05199">
+        <ele>1187.577</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0732" lon="6.05204">
+        <ele>1189.77</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0732" lon="6.0521">
+        <ele>1192.941</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07322" lon="6.05211">
+        <ele>1194.647</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07322" lon="6.05211">
+        <ele>1194.647</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07323" lon="6.05212">
+        <ele>1195.8</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07329" lon="6.05213">
+        <ele>1200.038</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07333" lon="6.05211">
+        <ele>1201.128</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07338" lon="6.05207">
+        <ele>1201.803</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0734" lon="6.05205">
+        <ele>1201.502</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07354" lon="6.05193">
+        <ele>1197.431</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07375" lon="6.05169">
+        <ele>1198.844</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07394" lon="6.0515">
+        <ele>1205.002</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07418" lon="6.05126">
+        <ele>1208.099</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07421" lon="6.05124">
+        <ele>1208.463</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07437" lon="6.05111">
+        <ele>1210.192</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07451" lon="6.05101">
+        <ele>1210.878</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07454" lon="6.05099">
+        <ele>1210.798</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07467" lon="6.05091">
+        <ele>1210.948</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0748" lon="6.05083">
+        <ele>1210.545</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07499" lon="6.05076">
+        <ele>1211.626</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07513" lon="6.05072">
+        <ele>1213.657</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07533" lon="6.05069">
+        <ele>1218.166</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07549" lon="6.05059">
+        <ele>1218.677</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07562" lon="6.0505">
+        <ele>1219.059</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07573" lon="6.05042">
+        <ele>1220.343</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0758" lon="6.05032">
+        <ele>1219.863</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07589" lon="6.05015">
+        <ele>1220.87</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07595" lon="6.05001">
+        <ele>1221.495</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.076" lon="6.04981">
+        <ele>1220.854</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07611" lon="6.04952">
+        <ele>1222.029</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07622" lon="6.04927">
+        <ele>1224.222</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07631" lon="6.0491">
+        <ele>1227.536</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07637" lon="6.04892">
+        <ele>1230.799</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07638" lon="6.04879">
+        <ele>1232.848</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07638" lon="6.04869">
+        <ele>1234.288</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07636" lon="6.0485">
+        <ele>1236.045</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07632" lon="6.04824">
+        <ele>1236.545</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07629" lon="6.04808">
+        <ele>1235.055</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0763" lon="6.048">
+        <ele>1235.224</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07633" lon="6.04788">
+        <ele>1235.942</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07637" lon="6.04778">
+        <ele>1237.603</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07647" lon="6.04748">
+        <ele>1239.284</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07652" lon="6.04737">
+        <ele>1241.048</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07656" lon="6.04731">
+        <ele>1243.064</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0766" lon="6.0473">
+        <ele>1246.16</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07663" lon="6.04731">
+        <ele>1248.86</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07663" lon="6.04731">
+        <ele>1248.86</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07664" lon="6.04732">
+        <ele>1249.904</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07667" lon="6.04736">
+        <ele>1253.252</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07668" lon="6.04744">
+        <ele>1255.808</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07666" lon="6.04751">
+        <ele>1255.699</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07662" lon="6.04762">
+        <ele>1255.087</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07656" lon="6.04776">
+        <ele>1253.361</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07652" lon="6.04785">
+        <ele>1251.368</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07649" lon="6.04794">
+        <ele>1250.072</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0765" lon="6.04811">
+        <ele>1252.051</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07656" lon="6.04829">
+        <ele>1255.056</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07665" lon="6.04849">
+        <ele>1258.33</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07669" lon="6.04858">
+        <ele>1259.007</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07671" lon="6.04863">
+        <ele>1259.371</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07672" lon="6.0487">
+        <ele>1259.493</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07673" lon="6.04877">
+        <ele>1259.634</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07674" lon="6.04884">
+        <ele>1259.794</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07673" lon="6.04913">
+        <ele>1259.942</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07672" lon="6.0493">
+        <ele>1260.416</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07671" lon="6.04949">
+        <ele>1261.818</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07666" lon="6.04965">
+        <ele>1261.924</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07658" lon="6.04994">
+        <ele>1262.397</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07653" lon="6.05016">
+        <ele>1263.031</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07652" lon="6.05029">
+        <ele>1264.695</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07651" lon="6.05042">
+        <ele>1266.185</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07651" lon="6.05053">
+        <ele>1267.992</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07649" lon="6.05064">
+        <ele>1269.012</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07645" lon="6.05078">
+        <ele>1269.588</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07636" lon="6.05102">
+        <ele>1272.334</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07626" lon="6.05118">
+        <ele>1274.289</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07617" lon="6.05131">
+        <ele>1277.041</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07608" lon="6.05144">
+        <ele>1280.11</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07588" lon="6.05161">
+        <ele>1281.351</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07566" lon="6.05179">
+        <ele>1284.141</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07548" lon="6.05193">
+        <ele>1286.668</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07528" lon="6.05206">
+        <ele>1287.735</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07508" lon="6.05216">
+        <ele>1287.954</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07497" lon="6.05219">
+        <ele>1286.811</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07489" lon="6.05219">
+        <ele>1284.186</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07486" lon="6.0522">
+        <ele>1283.904</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07482" lon="6.05223">
+        <ele>1284.67</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07479" lon="6.05229">
+        <ele>1287.653</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07478" lon="6.05233">
+        <ele>1290.002</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07477" lon="6.05238">
+        <ele>1293.047</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07477" lon="6.0524">
+        <ele>1294.378</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07477" lon="6.05243">
+        <ele>1296.374</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07478" lon="6.05244">
+        <ele>1297.279</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07479" lon="6.05246">
+        <ele>1298.833</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07479" lon="6.05246">
+        <ele>1298.833</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0748" lon="6.05248">
+        <ele>1300.372</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0748" lon="6.0525">
+        <ele>1301.68</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07482" lon="6.05252">
+        <ele>1303.365</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07484" lon="6.05253">
+        <ele>1304.455</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07486" lon="6.05253">
+        <ele>1304.918</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07488" lon="6.05254">
+        <ele>1306.039</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07489" lon="6.05254">
+        <ele>1306.276</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07491" lon="6.05252">
+        <ele>1305.403</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07493" lon="6.05252">
+        <ele>1305.855</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07496" lon="6.05249">
+        <ele>1304.544</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07498" lon="6.05246">
+        <ele>1303.233</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.075" lon="6.05244">
+        <ele>1302.544</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07502" lon="6.05242">
+        <ele>1301.999</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07504" lon="6.0524">
+        <ele>1301.432</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07509" lon="6.05232">
+        <ele>1298.128</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07521" lon="6.05224">
+        <ele>1296.413</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07547" lon="6.05214">
+        <ele>1299.466</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07573" lon="6.052">
+        <ele>1299.378</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07589" lon="6.05195">
+        <ele>1300.796</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07599" lon="6.05193">
+        <ele>1302.175</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07626" lon="6.05189">
+        <ele>1306.577</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07644" lon="6.05183">
+        <ele>1308.3</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07661" lon="6.05178">
+        <ele>1311.468</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07678" lon="6.05168">
+        <ele>1314.724</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07694" lon="6.05151">
+        <ele>1318.23</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07704" lon="6.05134">
+        <ele>1319.448</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07718" lon="6.05107">
+        <ele>1321.658</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07722" lon="6.05096">
+        <ele>1321.604</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07733" lon="6.05075">
+        <ele>1323.835</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07743" lon="6.0506">
+        <ele>1325.539</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07755" lon="6.05042">
+        <ele>1326.304</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07799" lon="6.04968">
+        <ele>1338.52</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07805" lon="6.04948">
+        <ele>1340.931</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07806" lon="6.04937">
+        <ele>1341.48</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07806" lon="6.04932">
+        <ele>1341.663</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07806" lon="6.0493">
+        <ele>1341.736</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07802" lon="6.04916">
+        <ele>1340.426</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07799" lon="6.04908">
+        <ele>1340.033</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07796" lon="6.04903">
+        <ele>1339.158</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07795" lon="6.04893">
+        <ele>1339.82</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07795" lon="6.04874">
+        <ele>1342.165</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07795" lon="6.0484">
+        <ele>1346.531</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07788" lon="6.04815">
+        <ele>1344.583</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07783" lon="6.04802">
+        <ele>1342.148</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07782" lon="6.04792">
+        <ele>1341.903</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07782" lon="6.04788">
+        <ele>1342.112</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07784" lon="6.04783">
+        <ele>1344.062</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07788" lon="6.0478">
+        <ele>1347.664</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07788" lon="6.0478">
+        <ele>1347.664</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07791" lon="6.04779">
+        <ele>1350.317</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07794" lon="6.04781">
+        <ele>1352.697</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07796" lon="6.04784">
+        <ele>1354.079</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07798" lon="6.04787">
+        <ele>1355.415</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.078" lon="6.04797">
+        <ele>1355.847</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07802" lon="6.04816">
+        <ele>1354.856</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07808" lon="6.04843">
+        <ele>1355.364</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07816" lon="6.0487">
+        <ele>1355.927</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07828" lon="6.04892">
+        <ele>1358.299</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0784" lon="6.04915">
+        <ele>1359.96</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07844" lon="6.04928">
+        <ele>1361.414</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07845" lon="6.04945">
+        <ele>1361.628</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07845" lon="6.04973">
+        <ele>1365.136</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07842" lon="6.04995">
+        <ele>1367.592</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0784" lon="6.05015">
+        <ele>1369.89</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07832" lon="6.0504">
+        <ele>1370.291</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0782" lon="6.05075">
+        <ele>1371.376</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07802" lon="6.05121">
+        <ele>1373.39</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07786" lon="6.05166">
+        <ele>1376.969</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07779" lon="6.05197">
+        <ele>1381.444</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07772" lon="6.05225">
+        <ele>1385.967</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07762" lon="6.05246">
+        <ele>1387.266</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0775" lon="6.05272">
+        <ele>1386.752</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07745" lon="6.0528">
+        <ele>1386.694</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07741" lon="6.05286">
+        <ele>1386.632</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07736" lon="6.05292">
+        <ele>1386.29</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07732" lon="6.05297">
+        <ele>1386.12</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07729" lon="6.053">
+        <ele>1385.845</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07726" lon="6.05302">
+        <ele>1385.345</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07723" lon="6.05305">
+        <ele>1385.113</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0772" lon="6.05308">
+        <ele>1384.711</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07718" lon="6.05311">
+        <ele>1384.554</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07715" lon="6.05314">
+        <ele>1384.171</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07712" lon="6.0532">
+        <ele>1384.175</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07711" lon="6.05323">
+        <ele>1384.31</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07709" lon="6.05326">
+        <ele>1384.226</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07707" lon="6.05331">
+        <ele>1384.414</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07707" lon="6.05332">
+        <ele>1384.542</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07707" lon="6.05332">
+        <ele>1384.542</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07707" lon="6.05335">
+        <ele>1384.478</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07707" lon="6.05341">
+        <ele>1383.634</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07709" lon="6.05346">
+        <ele>1383.298</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07713" lon="6.05351">
+        <ele>1383.25</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07717" lon="6.05355">
+        <ele>1383.265</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0772" lon="6.05358">
+        <ele>1383.222</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07725" lon="6.05361">
+        <ele>1383.62</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07729" lon="6.05361">
+        <ele>1384.484</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07744" lon="6.05362">
+        <ele>1387.48</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07761" lon="6.05367">
+        <ele>1391.476</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07768" lon="6.05372">
+        <ele>1392.736</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07773" lon="6.05376">
+        <ele>1393.528</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07817" lon="6.05412">
+        <ele>1400.662</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07894" lon="6.05453">
+        <ele>1411.897</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0791" lon="6.0546">
+        <ele>1412.626</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07916" lon="6.05464">
+        <ele>1412.527</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07923" lon="6.05467">
+        <ele>1412.191</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07929" lon="6.05469">
+        <ele>1411.984</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07934" lon="6.05469">
+        <ele>1412.364</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07947" lon="6.05466">
+        <ele>1414.537</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07955" lon="6.05463">
+        <ele>1416.586</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07962" lon="6.05462">
+        <ele>1417.809</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0797" lon="6.05462">
+        <ele>1418.779</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07977" lon="6.05462">
+        <ele>1420.017</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.07982" lon="6.05462">
+        <ele>1421.03</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08008" lon="6.05465">
+        <ele>1424.89</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08038" lon="6.05475">
+        <ele>1425.946</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08059" lon="6.05486">
+        <ele>1426.201</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08067" lon="6.0549">
+        <ele>1428.247</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08073" lon="6.05496">
+        <ele>1429.501</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08077" lon="6.05502">
+        <ele>1430.148</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0808" lon="6.05512">
+        <ele>1429.572</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08082" lon="6.05522">
+        <ele>1428.55</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08082" lon="6.05523">
+        <ele>1428.372</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08082" lon="6.05523">
+        <ele>1428.372</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08082" lon="6.05531">
+        <ele>1427.669</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08082" lon="6.05538">
+        <ele>1427.994</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08079" lon="6.05546">
+        <ele>1427.71</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08077" lon="6.05551">
+        <ele>1427.7</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08068" lon="6.05558">
+        <ele>1427.721</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08044" lon="6.05568">
+        <ele>1428.723</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08032" lon="6.05574">
+        <ele>1429.482</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08026" lon="6.05578">
+        <ele>1429.964</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0802" lon="6.05585">
+        <ele>1430.97</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08016" lon="6.05597">
+        <ele>1432.698</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08012" lon="6.05612">
+        <ele>1434.552</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08008" lon="6.05645">
+        <ele>1436.147</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08006" lon="6.05657">
+        <ele>1435.217</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08006" lon="6.05667">
+        <ele>1434.913</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08006" lon="6.05668">
+        <ele>1434.821</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08006" lon="6.05668">
+        <ele>1434.821</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08007" lon="6.05676">
+        <ele>1434.429</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08008" lon="6.05678">
+        <ele>1434.603</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08012" lon="6.05693">
+        <ele>1434.863</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08018" lon="6.05713">
+        <ele>1435.322</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08031" lon="6.05742">
+        <ele>1438.107</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0804" lon="6.05765">
+        <ele>1439.155</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08061" lon="6.05818">
+        <ele>1442.976</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08089" lon="6.05876">
+        <ele>1446.764</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08101" lon="6.05892">
+        <ele>1449.459</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08113" lon="6.05909">
+        <ele>1452.349</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08122" lon="6.05926">
+        <ele>1455.368</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08129" lon="6.05943">
+        <ele>1457.78</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08136" lon="6.05961">
+        <ele>1460.094</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08147" lon="6.05989">
+        <ele>1462.773</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08147" lon="6.05989">
+        <ele>1462.773</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08148" lon="6.05992">
+        <ele>1462.995</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08166" lon="6.06048">
+        <ele>1468.943</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08182" lon="6.06103">
+        <ele>1472.443</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08189" lon="6.06128">
+        <ele>1473.682</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08196" lon="6.06158">
+        <ele>1474.183</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08198" lon="6.06167">
+        <ele>1474.119</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08206" lon="6.06199">
+        <ele>1473.988</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08215" lon="6.06221">
+        <ele>1476.031</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08218" lon="6.06228">
+        <ele>1476.617</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08222" lon="6.06231">
+        <ele>1478.936</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08228" lon="6.06231">
+        <ele>1482.914</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08232" lon="6.06229">
+        <ele>1485.958</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08234" lon="6.06227">
+        <ele>1487.673</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08234" lon="6.06227">
+        <ele>1487.673</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08235" lon="6.06225">
+        <ele>1488.726</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08235" lon="6.06224">
+        <ele>1488.925</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08235" lon="6.06224">
+        <ele>1488.925</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08236" lon="6.06221">
+        <ele>1490.104</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08235" lon="6.06216">
+        <ele>1490.194</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08233" lon="6.0621">
+        <ele>1489.843</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0823" lon="6.06204">
+        <ele>1488.953</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08217" lon="6.0618">
+        <ele>1484.184</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08213" lon="6.0617">
+        <ele>1482.916</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08211" lon="6.0616">
+        <ele>1482.949</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08209" lon="6.06146">
+        <ele>1483.494</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0821" lon="6.06128">
+        <ele>1485.524</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08215" lon="6.06079">
+        <ele>1489.817</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08218" lon="6.06029">
+        <ele>1493.132</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08221" lon="6.05987">
+        <ele>1495.94</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08221" lon="6.05979">
+        <ele>1496.228</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08223" lon="6.05922">
+        <ele>1498.336</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08224" lon="6.05885">
+        <ele>1499.631</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08224" lon="6.05872">
+        <ele>1499.601</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08225" lon="6.05847">
+        <ele>1499.341</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08225" lon="6.05835">
+        <ele>1498.866</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08226" lon="6.05829">
+        <ele>1498.911</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08227" lon="6.05816">
+        <ele>1498.645</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08227" lon="6.05814">
+        <ele>1498.56</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08232" lon="6.05792">
+        <ele>1498.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08236" lon="6.05782">
+        <ele>1497.928</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08239" lon="6.05779">
+        <ele>1498.36</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08239" lon="6.05779">
+        <ele>1498.36</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08242" lon="6.05776">
+        <ele>1498.792</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08249" lon="6.05769">
+        <ele>1499.8</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08254" lon="6.05765">
+        <ele>1500.196</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08264" lon="6.05762">
+        <ele>1501.312</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08272" lon="6.05761">
+        <ele>1502.356</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08289" lon="6.0576">
+        <ele>1504.033</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08306" lon="6.05759">
+        <ele>1505.333</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08316" lon="6.05758">
+        <ele>1506.012</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08331" lon="6.05754">
+        <ele>1506.54</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08353" lon="6.05749">
+        <ele>1507.221</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08361" lon="6.05747">
+        <ele>1507.345</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08364" lon="6.05747">
+        <ele>1507.549</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08366" lon="6.05747">
+        <ele>1507.685</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08367" lon="6.05748">
+        <ele>1507.977</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08369" lon="6.0575">
+        <ele>1508.568</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0837" lon="6.05753">
+        <ele>1509.215</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0837" lon="6.05754">
+        <ele>1509.406</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0837" lon="6.05754">
+        <ele>1509.406</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08371" lon="6.05756">
+        <ele>1509.869</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08371" lon="6.05759">
+        <ele>1510.447</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0837" lon="6.05764">
+        <ele>1511.321</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08369" lon="6.05767">
+        <ele>1511.802</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08367" lon="6.0577">
+        <ele>1512.177</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08361" lon="6.05773">
+        <ele>1512.132</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0835" lon="6.05779">
+        <ele>1512.42</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0834" lon="6.05787">
+        <ele>1513.14</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08331" lon="6.05799">
+        <ele>1514.568</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08324" lon="6.05813">
+        <ele>1516.064</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08312" lon="6.05845">
+        <ele>1519.376</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08307" lon="6.05858">
+        <ele>1520.708</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08304" lon="6.0588">
+        <ele>1522.704</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08303" lon="6.05888">
+        <ele>1523.352</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08302" lon="6.05921">
+        <ele>1526.268</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08303" lon="6.05955">
+        <ele>1528.932</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08305" lon="6.05979">
+        <ele>1531.064</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08309" lon="6.06013">
+        <ele>1533.766</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08312" lon="6.06028">
+        <ele>1535.554</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08312" lon="6.06028">
+        <ele>1535.554</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08319" lon="6.0606">
+        <ele>1538.885</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08331" lon="6.06123">
+        <ele>1545.312</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08342" lon="6.06168">
+        <ele>1547.678</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08344" lon="6.06185">
+        <ele>1547.795</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08347" lon="6.06199">
+        <ele>1548.641</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08348" lon="6.06218">
+        <ele>1548.144</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08348" lon="6.06234">
+        <ele>1547.496</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0835" lon="6.06251">
+        <ele>1547.95</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08352" lon="6.0626">
+        <ele>1548.602</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08356" lon="6.06263">
+        <ele>1550.686</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0836" lon="6.06264">
+        <ele>1552.876</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0836" lon="6.06264">
+        <ele>1552.876</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08362" lon="6.06263">
+        <ele>1554.093</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08365" lon="6.06261">
+        <ele>1556.069</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08366" lon="6.06258">
+        <ele>1556.829</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08367" lon="6.06252">
+        <ele>1557.729</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08367" lon="6.06244">
+        <ele>1557.986</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08364" lon="6.06231">
+        <ele>1556.485</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08361" lon="6.06203">
+        <ele>1555.635</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0836" lon="6.06178">
+        <ele>1555.487</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0836" lon="6.06161">
+        <ele>1555.732</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08361" lon="6.06149">
+        <ele>1556.591</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08372" lon="6.06116">
+        <ele>1561.49</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0839" lon="6.06074">
+        <ele>1563.581</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08398" lon="6.06058">
+        <ele>1563.874</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08404" lon="6.06048">
+        <ele>1564.028</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08411" lon="6.06041">
+        <ele>1564.515</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08421" lon="6.06034">
+        <ele>1565.245</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08432" lon="6.06028">
+        <ele>1565.693</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08447" lon="6.06022">
+        <ele>1566.755</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08457" lon="6.0602">
+        <ele>1568.664</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08514" lon="6.06">
+        <ele>1574.016</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08528" lon="6.05994">
+        <ele>1574.997</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0854" lon="6.05988">
+        <ele>1577.86</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08554" lon="6.0598">
+        <ele>1580.481</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08557" lon="6.05978">
+        <ele>1581.08</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08557" lon="6.05978">
+        <ele>1581.08</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08566" lon="6.0597">
+        <ele>1582.972</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08579" lon="6.05957">
+        <ele>1584.915</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08584" lon="6.05958">
+        <ele>1587.192</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0861" lon="6.05929">
+        <ele>1590.116</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08644" lon="6.05895">
+        <ele>1593.156</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08655" lon="6.05884">
+        <ele>1594.164</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08661" lon="6.05876">
+        <ele>1594.38</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08674" lon="6.05867">
+        <ele>1596.48</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08686" lon="6.05858">
+        <ele>1598.894</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08704" lon="6.05845">
+        <ele>1601.836</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08718" lon="6.05835">
+        <ele>1603.369</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08742" lon="6.05816">
+        <ele>1606.4</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08755" lon="6.05806">
+        <ele>1608.128</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08763" lon="6.05796">
+        <ele>1609.12</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08775" lon="6.05781">
+        <ele>1610.632</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08776" lon="6.05778">
+        <ele>1610.632</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08776" lon="6.05778">
+        <ele>1610.632</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08776" lon="6.05775">
+        <ele>1610.316</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08795" lon="6.05746">
+        <ele>1611.963</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08812" lon="6.05714">
+        <ele>1613.032</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08826" lon="6.05689">
+        <ele>1614.956</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08832" lon="6.05675">
+        <ele>1615.964</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08834" lon="6.05665">
+        <ele>1616.468</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08835" lon="6.05657">
+        <ele>1618.16</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08835" lon="6.05647">
+        <ele>1619.96</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08834" lon="6.05639">
+        <ele>1621.148</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08831" lon="6.05629">
+        <ele>1622.548</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08821" lon="6.05612">
+        <ele>1623.7</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08814" lon="6.05601">
+        <ele>1624.676</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08813" lon="6.05597">
+        <ele>1625.432</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08813" lon="6.05595">
+        <ele>1625.936</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08813" lon="6.05589">
+        <ele>1627.448</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08814" lon="6.05586">
+        <ele>1628.456</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08815" lon="6.05585">
+        <ele>1628.96</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08817" lon="6.05584">
+        <ele>1629.716</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08819" lon="6.05584">
+        <ele>1630.22</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08822" lon="6.05585">
+        <ele>1630.724</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08822" lon="6.05585">
+        <ele>1630.724</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08823" lon="6.05586">
+        <ele>1630.724</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08829" lon="6.05592">
+        <ele>1630.724</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0884" lon="6.05602">
+        <ele>1631.295</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08855" lon="6.05612">
+        <ele>1633.023</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08881" lon="6.05628">
+        <ele>1636.037</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08891" lon="6.05637">
+        <ele>1636.142</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08897" lon="6.05642">
+        <ele>1636.809</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08901" lon="6.05649">
+        <ele>1636.827</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08904" lon="6.0566">
+        <ele>1635.965</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08909" lon="6.05683">
+        <ele>1636.253</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08913" lon="6.0571">
+        <ele>1637.636</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08915" lon="6.05736">
+        <ele>1639.572</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08916" lon="6.05774">
+        <ele>1642.56</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08917" lon="6.05797">
+        <ele>1645.176</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08916" lon="6.05811">
+        <ele>1646.2</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08916" lon="6.05822">
+        <ele>1646.992</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08913" lon="6.05837">
+        <ele>1647.357</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08902" lon="6.05897">
+        <ele>1651.724</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08892" lon="6.05955">
+        <ele>1656.405</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08887" lon="6.05984">
+        <ele>1658.395</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08882" lon="6.06002">
+        <ele>1660.084</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08878" lon="6.06013">
+        <ele>1661.013</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08871" lon="6.06029">
+        <ele>1661.684</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0887" lon="6.06032">
+        <ele>1661.897</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0887" lon="6.06032">
+        <ele>1661.897</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08869" lon="6.06036">
+        <ele>1662.256</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08869" lon="6.06041">
+        <ele>1663.027</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08869" lon="6.06045">
+        <ele>1663.644</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08872" lon="6.06048">
+        <ele>1664.941</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08876" lon="6.06048">
+        <ele>1666.054</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08879" lon="6.06046">
+        <ele>1666.554</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08881" lon="6.06045">
+        <ele>1666.936</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08884" lon="6.0604">
+        <ele>1666.891</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0889" lon="6.06032">
+        <ele>1667.08</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08894" lon="6.06025">
+        <ele>1666.954</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08902" lon="6.06018">
+        <ele>1667.85</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08921" lon="6.06001">
+        <ele>1669.77</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0895" lon="6.05974">
+        <ele>1674.72</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08966" lon="6.05957">
+        <ele>1676.24</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08971" lon="6.05951">
+        <ele>1676.636</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.08986" lon="6.05932">
+        <ele>1677.68</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09008" lon="6.05901">
+        <ele>1679.9</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09024" lon="6.05878">
+        <ele>1682.653</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09024" lon="6.05878">
+        <ele>1682.653</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09038" lon="6.0586">
+        <ele>1685.207</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09054" lon="6.05833">
+        <ele>1688.405</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09071" lon="6.05808">
+        <ele>1690.107</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09083" lon="6.05785">
+        <ele>1691.436</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0911" lon="6.05733">
+        <ele>1697.988</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0912" lon="6.05713">
+        <ele>1700.536</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09125" lon="6.05699">
+        <ele>1701.328</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09131" lon="6.05682">
+        <ele>1702.712</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09137" lon="6.05664">
+        <ele>1704.224</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09141" lon="6.05648">
+        <ele>1705.342</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09142" lon="6.0564">
+        <ele>1705.599</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09142" lon="6.05618">
+        <ele>1706.404</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09141" lon="6.05596">
+        <ele>1707.187</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09139" lon="6.05574">
+        <ele>1708.063</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09138" lon="6.05565">
+        <ele>1708.692</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09137" lon="6.05551">
+        <ele>1709.738</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09136" lon="6.05545">
+        <ele>1709.903</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09139" lon="6.0554">
+        <ele>1711.172</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09142" lon="6.05537">
+        <ele>1712.792</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09146" lon="6.05537">
+        <ele>1714.664</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09146" lon="6.05537">
+        <ele>1714.664</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09147" lon="6.05537">
+        <ele>1715.132</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0915" lon="6.05539">
+        <ele>1716.392</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09154" lon="6.05545">
+        <ele>1717.832</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09155" lon="6.05551">
+        <ele>1717.868</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09156" lon="6.05568">
+        <ele>1716.94</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09157" lon="6.05583">
+        <ele>1716.156</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09159" lon="6.05595">
+        <ele>1716.6</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09162" lon="6.05609">
+        <ele>1717.569</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09171" lon="6.05648">
+        <ele>1719.442</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09178" lon="6.05672">
+        <ele>1721.002</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09182" lon="6.05697">
+        <ele>1722.06</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09184" lon="6.05712">
+        <ele>1723.248</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09185" lon="6.0573">
+        <ele>1724.405</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09184" lon="6.0574">
+        <ele>1724.655</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09184" lon="6.05751">
+        <ele>1725.326</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09181" lon="6.05781">
+        <ele>1726.936</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09179" lon="6.05816">
+        <ele>1729.359</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09177" lon="6.05843">
+        <ele>1731.136</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09176" lon="6.05869">
+        <ele>1733.737</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09174" lon="6.0589">
+        <ele>1735.76</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09171" lon="6.05908">
+        <ele>1736.624</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09169" lon="6.05922">
+        <ele>1737.752</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09166" lon="6.05936">
+        <ele>1739.192</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09164" lon="6.05945">
+        <ele>1739.914</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09159" lon="6.05972">
+        <ele>1741.485</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09159" lon="6.05972">
+        <ele>1741.485</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09155" lon="6.05991">
+        <ele>1742.532</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09139" lon="6.06069">
+        <ele>1746.49</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0913" lon="6.0611">
+        <ele>1749.933</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09127" lon="6.0613">
+        <ele>1752.639</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09119" lon="6.06159">
+        <ele>1755.694</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0911" lon="6.0618">
+        <ele>1757.181</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09107" lon="6.06188">
+        <ele>1757.986</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09104" lon="6.06197">
+        <ele>1758.992</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09103" lon="6.06201">
+        <ele>1759.595</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09094" lon="6.06235">
+        <ele>1763.351</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09088" lon="6.06263">
+        <ele>1764.944</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09078" lon="6.06304">
+        <ele>1766.68</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09076" lon="6.06326">
+        <ele>1767.888</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09073" lon="6.0635">
+        <ele>1768.968</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09072" lon="6.06368">
+        <ele>1769.947</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09071" lon="6.06375">
+        <ele>1770.114</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09071" lon="6.06375">
+        <ele>1770.114</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0907" lon="6.06376">
+        <ele>1769.935</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09065" lon="6.06394">
+        <ele>1769.685</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09062" lon="6.06403">
+        <ele>1769.522</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09057" lon="6.06418">
+        <ele>1769.406</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09054" lon="6.06431">
+        <ele>1769.779</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09051" lon="6.06447">
+        <ele>1770.364</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0905" lon="6.06455">
+        <ele>1770.76</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0905" lon="6.06455">
+        <ele>1770.76</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09048" lon="6.06471">
+        <ele>1771.552</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09046" lon="6.06491">
+        <ele>1772.865</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09046" lon="6.06495">
+        <ele>1773.202</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09046" lon="6.06495">
+        <ele>1773.202</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09045" lon="6.06504">
+        <ele>1773.823</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09045" lon="6.06504">
+        <ele>1773.823</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09044" lon="6.06521">
+        <ele>1775.162</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09044" lon="6.06521">
+        <ele>1775.162</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09052" lon="6.06542">
+        <ele>1777.771</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09052" lon="6.06542">
+        <ele>1777.771</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09073" lon="6.06551">
+        <ele>1778.775</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09073" lon="6.06551">
+        <ele>1778.775</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09093" lon="6.06543">
+        <ele>1779.435</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09093" lon="6.06543">
+        <ele>1779.435</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09101" lon="6.06516">
+        <ele>1779.272</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09101" lon="6.06516">
+        <ele>1779.272</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09099" lon="6.06486">
+        <ele>1778.908</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09099" lon="6.06486">
+        <ele>1778.908</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09102" lon="6.06469">
+        <ele>1778.978</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09102" lon="6.06469">
+        <ele>1778.978</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0911" lon="6.06437">
+        <ele>1779.829</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0911" lon="6.06437">
+        <ele>1779.829</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09118" lon="6.06412">
+        <ele>1781.072</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09118" lon="6.06412">
+        <ele>1781.072</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09127" lon="6.06391">
+        <ele>1781.936</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09127" lon="6.06391">
+        <ele>1781.936</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09154" lon="6.06353">
+        <ele>1784.813</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09154" lon="6.06353">
+        <ele>1784.813</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09177" lon="6.06317">
+        <ele>1787.953</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09177" lon="6.06317">
+        <ele>1787.953</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09193" lon="6.06285">
+        <ele>1789.402</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09193" lon="6.06285">
+        <ele>1789.402</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.092" lon="6.06267">
+        <ele>1789.546</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.092" lon="6.06267">
+        <ele>1789.546</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09217" lon="6.06236">
+        <ele>1790.046</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09217" lon="6.06236">
+        <ele>1790.046</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09241" lon="6.06204">
+        <ele>1793.329</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09241" lon="6.06204">
+        <ele>1793.329</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09257" lon="6.0618">
+        <ele>1795.708</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09257" lon="6.0618">
+        <ele>1795.708</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09265" lon="6.06149">
+        <ele>1795.588</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09265" lon="6.06149">
+        <ele>1795.588</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09272" lon="6.06126">
+        <ele>1795.736</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09272" lon="6.06126">
+        <ele>1795.736</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09278" lon="6.06121">
+        <ele>1797.153</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09278" lon="6.06121">
+        <ele>1797.153</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09283" lon="6.06131">
+        <ele>1800.081</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09283" lon="6.06131">
+        <ele>1800.081</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09277" lon="6.06165">
+        <ele>1800.628</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09277" lon="6.06165">
+        <ele>1800.628</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0927" lon="6.06214">
+        <ele>1803.085</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0927" lon="6.06214">
+        <ele>1803.085</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09265" lon="6.06267">
+        <ele>1805.544</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09265" lon="6.06267">
+        <ele>1805.544</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09261" lon="6.06304">
+        <ele>1807.626</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09261" lon="6.06304">
+        <ele>1807.626</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09258" lon="6.06336">
+        <ele>1809.208</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09258" lon="6.06336">
+        <ele>1809.208</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0926" lon="6.06377">
+        <ele>1812.092</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0926" lon="6.06377">
+        <ele>1812.092</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09268" lon="6.06458">
+        <ele>1817.184</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09268" lon="6.06458">
+        <ele>1817.184</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09275" lon="6.06508">
+        <ele>1819.941</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09275" lon="6.06508">
+        <ele>1819.941</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09281" lon="6.06529">
+        <ele>1821.039</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09281" lon="6.06529">
+        <ele>1821.039</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09286" lon="6.06563">
+        <ele>1822.1</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09286" lon="6.06563">
+        <ele>1822.1</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09291" lon="6.06593">
+        <ele>1822.808</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09291" lon="6.06593">
+        <ele>1822.808</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09295" lon="6.06626">
+        <ele>1823.831</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09295" lon="6.06626">
+        <ele>1823.831</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09295" lon="6.06652">
+        <ele>1823.427</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09295" lon="6.06652">
+        <ele>1823.427</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09299" lon="6.06685">
+        <ele>1823.316</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09299" lon="6.06685">
+        <ele>1823.316</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09306" lon="6.06703">
+        <ele>1823.783</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09306" lon="6.06703">
+        <ele>1823.783</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0932" lon="6.06724">
+        <ele>1825.536</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0932" lon="6.06724">
+        <ele>1825.536</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0933" lon="6.06742">
+        <ele>1826.688</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0933" lon="6.06742">
+        <ele>1826.688</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09336" lon="6.06757">
+        <ele>1827.132</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09336" lon="6.06757">
+        <ele>1827.132</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09327" lon="6.06778">
+        <ele>1824.86</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09327" lon="6.06778">
+        <ele>1824.86</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09315" lon="6.06807">
+        <ele>1822.734</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09315" lon="6.06807">
+        <ele>1822.734</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09308" lon="6.06824">
+        <ele>1822.046</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09308" lon="6.06824">
+        <ele>1822.046</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09303" lon="6.06829">
+        <ele>1821.582</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09303" lon="6.06829">
+        <ele>1821.582</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09295" lon="6.06832">
+        <ele>1820.83</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09295" lon="6.06832">
+        <ele>1820.83</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09291" lon="6.06836">
+        <ele>1820.478</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09291" lon="6.06836">
+        <ele>1820.478</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09289" lon="6.06845">
+        <ele>1820.462</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09289" lon="6.06845">
+        <ele>1820.462</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09291" lon="6.06857">
+        <ele>1820.874</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09291" lon="6.06857">
+        <ele>1820.874</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09292" lon="6.06864">
+        <ele>1821.077</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09292" lon="6.06864">
+        <ele>1821.077</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0928" lon="6.06891">
+        <ele>1820.386</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0928" lon="6.06891">
+        <ele>1820.386</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09272" lon="6.06914">
+        <ele>1821.412</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09272" lon="6.06914">
+        <ele>1821.412</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09258" lon="6.06944">
+        <ele>1821.56</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09258" lon="6.06944">
+        <ele>1821.56</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09253" lon="6.06962">
+        <ele>1821.216</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09253" lon="6.06962">
+        <ele>1821.216</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09247" lon="6.06981">
+        <ele>1820.892</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09247" lon="6.06981">
+        <ele>1820.892</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09244" lon="6.07012">
+        <ele>1820.691</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09244" lon="6.07012">
+        <ele>1820.691</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09243" lon="6.07051">
+        <ele>1820.496</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09243" lon="6.07051">
+        <ele>1820.496</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09245" lon="6.07081">
+        <ele>1820.64</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09245" lon="6.07081">
+        <ele>1820.64</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09246" lon="6.07119">
+        <ele>1820.712</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09246" lon="6.07119">
+        <ele>1820.712</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0925" lon="6.07144">
+        <ele>1821.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0925" lon="6.07144">
+        <ele>1821.0</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09252" lon="6.07166">
+        <ele>1821.144</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09252" lon="6.07166">
+        <ele>1821.144</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09252" lon="6.07183">
+        <ele>1821.102</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09252" lon="6.07183">
+        <ele>1821.102</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09248" lon="6.07197">
+        <ele>1820.843</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09248" lon="6.07197">
+        <ele>1820.843</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0925" lon="6.07206">
+        <ele>1820.584</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0925" lon="6.07206">
+        <ele>1820.584</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09258" lon="6.07217">
+        <ele>1820.476</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09258" lon="6.07217">
+        <ele>1820.476</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0927" lon="6.07211">
+        <ele>1821.124</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.0927" lon="6.07211">
+        <ele>1821.124</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09278" lon="6.07196">
+        <ele>1821.968</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09278" lon="6.07196">
+        <ele>1821.968</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09291" lon="6.07187">
+        <ele>1823.696</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09291" lon="6.07187">
+        <ele>1823.696</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09306" lon="6.07174">
+        <ele>1825.768</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09306" lon="6.07174">
+        <ele>1825.768</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09337" lon="6.07157">
+        <ele>1828.566</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09337" lon="6.07157">
+        <ele>1828.566</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09376" lon="6.07136">
+        <ele>1831.927</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09376" lon="6.07136">
+        <ele>1831.927</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09416" lon="6.07115">
+        <ele>1838.665</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09416" lon="6.07115">
+        <ele>1838.665</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09444" lon="6.07103">
+        <ele>1839.989</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09444" lon="6.07103">
+        <ele>1839.989</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09471" lon="6.07091">
+        <ele>1840.692</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09471" lon="6.07091">
+        <ele>1840.692</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09491" lon="6.07081">
+        <ele>1842.409</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09491" lon="6.07081">
+        <ele>1842.409</ele>
+      </trkpt>
+      <trkpt xmlns="http://www.topografix.com/GPX/1/1" lat="45.09497" lon="6.07068">
+        <ele>1843.276</ele>
+      </trkpt>
+  </trkseg>
+  </trk>
+</gpx>

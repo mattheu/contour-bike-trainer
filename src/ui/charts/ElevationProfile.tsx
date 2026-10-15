@@ -1,0 +1,438 @@
+import {
+  useEffect,
+  useId,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  type PointerEvent as ReactPointerEvent,
+  type RefObject,
+} from 'react';
+import type { Climb } from '../../route/climbs';
+import type { ProfileWindow, RouteProfile } from '../../route/profile';
+import type { Route } from '../../route/types';
+import { percent } from '../format';
+import { AHEAD_BAND_OPACITY, RIDDEN_BAND_OPACITY, elevationGeometry } from './elevation';
+
+export const PROFILE_WIDTH = 944;
+export const PROFILE_HEIGHT = 220;
+
+/** The rider dot, stem, bubble and drop line, from design/mockups/ride.html. */
+const DOT_R = 3;
+const STEM_TOP = -10.2;
+const BUBBLE_CY = -28.9;
+const BUBBLE_R = 18.7;
+const DROP_GAP = 4;
+const SUMMIT_STALK = 10;
+
+/** Half the hover cross, so the arms run 2 x this. Smaller than the rider's dot. */
+const HOVER_ARM = 5;
+
+export interface ElevationProfileHandle {
+  /** Called at 1 Hz. Mutates the ridden paths and the marker; never re-renders. */
+  update(distanceM: number): void;
+  /**
+   * Moves or clears the hover marker. Mutates one node; never re-renders either.
+   *
+   * Drawing only. It cannot call onHover — the emit lives in the pointer handlers and
+   * nowhere else — so the map driving this marker cannot drive a hover back out, and
+   * the two charts cannot push each other around a loop.
+   */
+  hover(distanceM: number | null): void;
+}
+
+export interface ElevationProfileProps {
+  route: Route;
+  profile: RouteProfile;
+  climbs?: readonly Climb[];
+  /** Zoom window from profile.projectWindow; omit or null for the whole route. */
+  window?: ProfileWindow | null;
+  distanceM: number;
+  width?: number;
+  height?: number;
+  /**
+   * Where on the route *this chart's own pointer* is, in metres, or null when it
+   * leaves. Supplying it is what makes the chart hoverable at all: a profile nobody is
+   * listening to — the summary's — keeps no hit surface and grows no marker.
+   *
+   * Only a pointer on this chart's hit surface produces one. A marker put here through
+   * the handle is drawn and nothing more, which is what keeps the map and the profile
+   * from driving each other.
+   *
+   * Called straight out of the pointer handler, so it must not set state on a screen
+   * that would re-render under the mouse. The ride screen forwards it to the map's
+   * handle, which is the whole reason this is a callback rather than internal.
+   */
+  onHover?: (distanceM: number | null) => void;
+  ref?: RefObject<ElevationProfileHandle | null>;
+}
+
+export function ElevationProfile({
+  route,
+  profile,
+  climbs = [],
+  window: win = null,
+  distanceM,
+  width = PROFILE_WIDTH,
+  height = PROFILE_HEIGHT,
+  onHover,
+  ref,
+}: ElevationProfileProps) {
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
+  const geometry = useMemo(
+    () => elevationGeometry({ route, profile, climbs, window: win, width, height }),
+    [route, profile, climbs, win, width, height],
+  );
+
+  const knockout = useRef<SVGPathElement>(null);
+  const riddenHatch = useRef<SVGPathElement>(null);
+  const riddenLine = useRef<SVGPathElement>(null);
+  const riddenClip = useRef<SVGRectElement>(null);
+  const aheadClip = useRef<SVGRectElement>(null);
+  const dot = useRef<SVGCircleElement>(null);
+  const markerGroup = useRef<SVGGElement>(null);
+  const dropLine = useRef<SVGLineElement>(null);
+  const gradeText = useRef<SVGTSpanElement>(null);
+  const hoverGroup = useRef<SVGGElement>(null);
+  /** The marked distance, kept out of React: a mousemove must not render anything. */
+  const hoveredM = useRef<number | null>(null);
+  /**
+   * The same distance, but only while this chart's own pointer is the one putting it
+   * there. Written by the pointer handlers and by nothing else, so it is the chart's
+   * answer to "is the mouse on me" — which is the only thing that entitles it to speak.
+   */
+  const pointerM = useRef<number | null>(null);
+
+  const paint = useMemo(() => {
+    return (distance: number): void => {
+      const marker = geometry.marker(distance);
+      const area = geometry.riddenAreaPath(distance);
+      knockout.current?.setAttribute('d', area);
+      riddenHatch.current?.setAttribute('d', area);
+      riddenLine.current?.setAttribute('d', geometry.riddenLinePath(distance));
+      riddenClip.current?.setAttribute('width', String(marker.x));
+      aheadClip.current?.setAttribute('x', String(marker.x));
+      aheadClip.current?.setAttribute('width', String(Math.max(0, geometry.width - marker.x)));
+      dot.current?.setAttribute('cx', String(marker.x));
+      dot.current?.setAttribute('cy', String(marker.y));
+      markerGroup.current?.setAttribute('transform', `translate(${marker.x},${marker.y})`);
+      dropLine.current?.setAttribute('x1', String(marker.x));
+      dropLine.current?.setAttribute('x2', String(marker.x));
+      dropLine.current?.setAttribute('y1', String(marker.y + DROP_GAP));
+      if (gradeText.current) gradeText.current.textContent = percent(marker.gradePercent);
+    };
+  }, [geometry]);
+
+  const paintHover = useMemo(() => {
+    return (distance: number | null): void => {
+      hoveredM.current = distance;
+      const node = hoverGroup.current;
+      if (node === null) return;
+      // Outside the window there is no x to draw it at: marker() clamps, so the cross
+      // would sit on the edge of the chart naming a distance the pointer is nowhere
+      // near. The map can ask for one — it hovers the whole route however this chart
+      // happens to be zoomed — so this is the case, not an impossible one.
+      if (distance === null || distance < geometry.startM || distance > geometry.endM) {
+        node.setAttribute('visibility', 'hidden');
+        return;
+      }
+      const at = geometry.marker(distance);
+      node.setAttribute('transform', `translate(${String(at.x)},${String(at.y)})`);
+      node.setAttribute('visibility', 'visible');
+    };
+  }, [geometry]);
+
+  useImperativeHandle(ref, () => ({ update: paint, hover: paintHover }), [paint, paintHover]);
+
+  // A new geometry (resize, zoom change, new route) leaves the mutated attributes
+  // describing the old one, so repaint once after every render that replaces it.
+  useEffect(() => {
+    paint(distanceM);
+  }, [paint, distanceM]);
+
+  // The hover marker has the same problem, with one extra case: on the 5 km view the
+  // window scrolls under a stationary pointer, so a point that was inside it can fall
+  // out. Still inside, it is re-placed; past the edge the pointer is no longer over it,
+  // and the map has to hear that or its marker is left behind on the route.
+  useEffect(() => {
+    const at = hoveredM.current;
+    if (at === null) return;
+    if (pointerM.current !== null && (at < geometry.startM || at > geometry.endM)) {
+      pointerM.current = null;
+      paintHover(null);
+      onHover?.(null);
+      return;
+    }
+    // A marker the map put here has a pointer of its own somewhere else on the screen,
+    // so it is kept rather than dropped: hidden while the window is past it, drawn
+    // again if the window scrolls back over it. Telling the map its hover had ended
+    // would wipe the crosshair out from under a mouse that has not moved.
+    paintHover(at);
+  }, [geometry, paintHover, onHover]);
+
+  const hoverable = onHover !== undefined;
+
+  function moveHover(event: ReactPointerEvent<SVGRectElement>): void {
+    // Hover is a pointing-device affordance. A tap would leave a marker stranded on the
+    // chart with no pointer to explain it, so touch and pen are left alone entirely.
+    if (event.pointerType !== 'mouse') return;
+    const box = event.currentTarget.getBoundingClientRect();
+    const at = geometry.distFor(event.clientX - box.left);
+    pointerM.current = at;
+    paintHover(at);
+    onHover?.(at);
+  }
+
+  function endHover(): void {
+    if (pointerM.current === null) return;
+    pointerM.current = null;
+    paintHover(null);
+    onHover?.(null);
+  }
+
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      style={{ display: 'block', overflow: 'visible' }}
+      aria-label="Elevation profile"
+    >
+      <defs>
+        <Hatch id={`hatch-muted-${uid}`} stroke="var(--color-muted)" />
+        <Hatch id={`hatch-accent-${uid}`} stroke="var(--color-accent)" />
+        <clipPath id={`ridden-${uid}`}>
+          <rect ref={riddenClip} x={0} y={0} width={0} height={height} />
+        </clipPath>
+        <clipPath id={`ahead-${uid}`}>
+          <rect ref={aheadClip} x={0} y={0} width={width} height={height} />
+        </clipPath>
+      </defs>
+
+      <path d={geometry.areaPath} fill={`url(#hatch-muted-${uid})`} opacity={0.45} />
+      <path ref={knockout} d="" fill="var(--color-ground)" />
+      <path ref={riddenHatch} d="" fill={`url(#hatch-accent-${uid})`} opacity={0.75} />
+
+      <g clipPath={`url(#ahead-${uid})`}>
+        {geometry.bands.map((band) => (
+          <path
+            key={`ahead-${band.startM}`}
+            d={band.d}
+            fill="var(--color-ink)"
+            opacity={AHEAD_BAND_OPACITY[band.band]}
+          />
+        ))}
+      </g>
+      <g clipPath={`url(#ridden-${uid})`}>
+        {geometry.bands.map((band) => (
+          <path
+            key={`ridden-${band.startM}`}
+            d={band.d}
+            fill="var(--color-accent)"
+            opacity={RIDDEN_BAND_OPACITY[band.band]}
+          />
+        ))}
+      </g>
+
+      <line
+        x1={0}
+        y1={geometry.baselineY}
+        x2={width}
+        y2={geometry.baselineY}
+        stroke="var(--color-muted)"
+        strokeWidth={1}
+      />
+      {geometry.ticks.map((tick) => (
+        <line
+          key={tick.distM}
+          x1={tick.x}
+          y1={geometry.baselineY}
+          x2={tick.x}
+          y2={geometry.baselineY + (tick.long ? 8 : 4)}
+          stroke="var(--color-muted)"
+          strokeWidth={1}
+        />
+      ))}
+
+      <path
+        d={geometry.linePath}
+        fill="none"
+        stroke="var(--color-muted)"
+        strokeWidth="var(--stroke-chart)"
+        strokeLinejoin="round"
+      />
+      <path
+        ref={riddenLine}
+        d=""
+        fill="none"
+        stroke="var(--color-accent)"
+        strokeWidth="var(--stroke-ridden)"
+        strokeLinejoin="round"
+      />
+
+      {geometry.showEndCircles && (
+        <>
+          <circle
+            cx={0}
+            cy={geometry.baselineY}
+            r={3.5}
+            fill="var(--color-ground)"
+            stroke="var(--color-muted)"
+            strokeWidth={1.25}
+          />
+          <circle
+            cx={width}
+            cy={geometry.baselineY}
+            r={3.5}
+            fill="var(--color-ground)"
+            stroke="var(--color-muted)"
+            strokeWidth={1.25}
+          />
+        </>
+      )}
+
+      {geometry.summits.map((summit) => (
+        <g key={summit.x}>
+          <line
+            x1={summit.x}
+            y1={summit.y}
+            x2={summit.x}
+            y2={summit.y - SUMMIT_STALK}
+            stroke="var(--color-hairline)"
+            strokeWidth={1}
+          />
+          <text
+            x={summit.x}
+            y={summit.y - SUMMIT_STALK - 7}
+            textAnchor="middle"
+            className="font-mono"
+            fontSize={11}
+            fill="var(--color-muted)"
+          >
+            {summit.label}
+          </text>
+        </g>
+      ))}
+
+      {geometry.startLabel !== null && (
+        <text x={8} y={height - 6} className="font-mono" fontSize={12} fill="var(--color-muted)">
+          {geometry.startLabel}
+        </text>
+      )}
+      <text
+        x={width - 8}
+        y={height - 6}
+        textAnchor="end"
+        className="font-mono"
+        fontSize={12}
+        fill="var(--color-muted)"
+      >
+        {geometry.endLabel}
+      </text>
+
+      {/* The hover marker. Ink and an open cross, where the rider is accent and solid:
+          design/DESIGN.md gives ink to marker ticks and accent to where the rider is, so
+          the colour already separates them, and the open form with no halo, stem, bubble
+          or drop line finishes the job. Drawn before the rider's marker so that on the
+          one pixel they share, the rider is the one on top. */}
+      {hoverable && (
+        <g
+          ref={hoverGroup}
+          data-testid="profile-hover"
+          visibility="hidden"
+          stroke="var(--color-ink)"
+          strokeWidth="var(--stroke-hairline)"
+        >
+          <line x1={-HOVER_ARM} y1={0} x2={HOVER_ARM} y2={0} />
+          <line x1={0} y1={-HOVER_ARM} x2={0} y2={HOVER_ARM} />
+        </g>
+      )}
+
+      <line
+        ref={dropLine}
+        x1={0}
+        y1={0}
+        x2={0}
+        y2={geometry.baselineY}
+        stroke="var(--color-accent)"
+        strokeWidth={1}
+        strokeDasharray="2 4"
+      />
+      {/* The one handle the integration tests need: its cx is where the rider is. */}
+      <circle
+        ref={dot}
+        data-testid="profile-rider"
+        cx={0}
+        cy={0}
+        r={DOT_R}
+        fill="var(--color-accent)"
+      />
+      <g ref={markerGroup}>
+        <line
+          x1={0}
+          y1={-2}
+          x2={0}
+          y2={STEM_TOP}
+          stroke="var(--color-accent)"
+          strokeWidth="var(--stroke-chart)"
+        />
+        <g transform={`translate(0,${BUBBLE_CY})`}>
+          <circle
+            cx={0}
+            cy={0}
+            r={BUBBLE_R}
+            fill="var(--color-ground)"
+            stroke="var(--color-accent)"
+            strokeWidth={1.75}
+          />
+          <text
+            x={0}
+            y={3.8}
+            textAnchor="middle"
+            className="font-mono"
+            fontSize={11}
+            fill="var(--color-ink)"
+          >
+            <tspan ref={gradeText} />
+            <tspan fill="var(--color-muted)" fontSize={7.6}>
+              %
+            </tspan>
+          </text>
+        </g>
+      </g>
+
+      {/* One surface for the whole chart rather than handlers on the shapes: the pointer
+          is asking "what is at this distance", which every pixel of the frame answers.
+          Last, so nothing drawn over it can swallow a move; fill none with pointerEvents
+          all, so it is hit-testable without painting anything. The overflowing gradient
+          bubble sits outside it on purpose — hovering that is not hovering the route. */}
+      {hoverable && (
+        <rect
+          x={0}
+          y={0}
+          width={width}
+          height={height}
+          fill="none"
+          pointerEvents="all"
+          onPointerMove={moveHover}
+          onPointerLeave={endHover}
+          onPointerCancel={endHover}
+        />
+      )}
+    </svg>
+  );
+}
+
+/** DESIGN.md: a single 45-degree hatch, 8 px pitch, 0.8 px lines. */
+function Hatch({ id, stroke }: { id: string; stroke: string }) {
+  return (
+    <pattern
+      id={id}
+      patternUnits="userSpaceOnUse"
+      width={8}
+      height={8}
+      patternTransform="rotate(45)"
+    >
+      <line x1={0} y1={0} x2={0} y2={8} stroke={stroke} strokeWidth={0.8} />
+    </pattern>
+  );
+}

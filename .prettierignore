@@ -1,0 +1,9 @@
+dist
+coverage
+package-lock.json
+
+# Hand-maintained prose; leave its line wrapping alone.
+SPEC.md
+
+# Design tool output. Reformatting would fight whatever regenerates it.
+design

@@ -1,0 +1,137 @@
+import { describe, expect, it } from 'vitest';
+import {
+  ROUTE_SUBJECT,
+  WORKOUT_SUBJECT,
+  cancelDelete,
+  deleteAlert,
+  deleteWording,
+  returnToAfterDelete,
+  isArmed,
+  pressDelete,
+  retainArmed,
+} from './ride-delete';
+
+describe('pressDelete', () => {
+  it('arms a ride that was not armed', () => {
+    expect(pressDelete(null, 'a')).toEqual({ armed: 'a', deleted: null });
+  });
+
+  it('deletes on the second press of the same ride', () => {
+    expect(pressDelete('a', 'a')).toEqual({ armed: null, deleted: 'a' });
+  });
+
+  it('moves the confirmation rather than arming two rides', () => {
+    expect(pressDelete('a', 'b')).toEqual({ armed: 'b', deleted: null });
+  });
+
+  it('leaves nothing armed once a ride is deleted, so a third press re-arms', () => {
+    const first = pressDelete(null, 'a');
+    const second = pressDelete(first.armed, 'a');
+    expect(pressDelete(second.armed, 'a')).toEqual({ armed: 'a', deleted: null });
+  });
+});
+
+describe('isArmed', () => {
+  it('is true only for the armed ride', () => {
+    expect(isArmed('a', 'a')).toBe(true);
+    expect(isArmed('a', 'b')).toBe(false);
+    expect(isArmed(null, 'a')).toBe(false);
+  });
+});
+
+describe('cancelDelete', () => {
+  it('disarms', () => {
+    expect(cancelDelete()).toBeNull();
+  });
+});
+
+describe('retainArmed', () => {
+  it('keeps a ride that is still on screen', () => {
+    expect(retainArmed('a', ['a', 'b'])).toBe('a');
+  });
+
+  it('drops a ride a filter has hidden', () => {
+    expect(retainArmed('a', ['b', 'c'])).toBeNull();
+  });
+
+  it('drops a ride that has left the list entirely', () => {
+    expect(retainArmed('a', [])).toBeNull();
+  });
+
+  it('passes nothing through as nothing', () => {
+    expect(retainArmed(null, ['a'])).toBeNull();
+  });
+});
+
+describe('deleteWording', () => {
+  it('asks rather than warns about a ride that just finished', () => {
+    expect(deleteWording('finished')).toEqual({
+      action: 'Discard ride',
+      prompt: 'Discard?',
+      confirm: 'Discard',
+      cancel: 'Keep',
+    });
+  });
+
+  it('says a historic ride cannot be undone', () => {
+    expect(deleteWording('history')).toEqual({
+      action: 'Delete ride',
+      prompt: "Sure? Can't be undone",
+      confirm: 'Delete',
+      cancel: 'Keep',
+    });
+  });
+
+  it('offers a worded way out of both, not just a click elsewhere', () => {
+    expect(deleteWording('finished').cancel).not.toBe('');
+    expect(deleteWording('history').cancel).not.toBe('');
+  });
+});
+
+describe('returnToAfterDelete', () => {
+  it('sends a discarded ride back to the list it was started from', () => {
+    expect(returnToAfterDelete('finished', false)).toBe('routes');
+    expect(returnToAfterDelete('finished', true)).toBe('workouts');
+  });
+
+  it('sends a historic ride back to the history, whatever it was', () => {
+    expect(returnToAfterDelete('history', false)).toBe('rides');
+    expect(returnToAfterDelete('history', true)).toBe('rides');
+  });
+});
+
+describe('deleteAlert', () => {
+  it('names the thing the rider actually removed, not always a ride', () => {
+    // The same two presses run all three lists, so without this the routes list reports a
+    // failure as "that ride could not be deleted" and reads like a different bug.
+    expect(
+      deleteAlert({ status: 'failed', reason: 'it is closed' }, 'Alpe', ROUTE_SUBJECT),
+    ).toEqual({ level: 'fault', message: 'That route could not be deleted: it is closed' });
+    expect(
+      deleteAlert({ status: 'failed', reason: 'it is closed' }, 'Sweet Spot', WORKOUT_SUBJECT),
+    ).toEqual({ level: 'fault', message: 'That workout could not be deleted: it is closed' });
+  });
+
+  it('reports a removed route as removed, matching the control that was pressed', () => {
+    expect(deleteAlert({ status: 'done' }, 'Alpe', ROUTE_SUBJECT).message).toBe('Alpe removed.');
+    expect(deleteAlert({ status: 'done' }, 'Sweet Spot', WORKOUT_SUBJECT).message).toBe(
+      'Sweet Spot deleted.',
+    );
+  });
+
+  it('names the ride and clears itself when the delete worked', () => {
+    expect(deleteAlert({ status: 'done' }, 'Ditchling Beacon Loop')).toEqual({
+      level: 'info',
+      message: 'Ditchling Beacon Loop deleted.',
+    });
+  });
+
+  it('blocks on a failure, because the ride the rider thinks is gone is still there', () => {
+    expect(
+      deleteAlert({ status: 'failed', reason: 'the database is closed' }, 'Free ride'),
+    ).toEqual({
+      level: 'fault',
+      message: 'That ride could not be deleted: the database is closed',
+    });
+  });
+});

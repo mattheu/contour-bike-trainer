@@ -1,0 +1,19 @@
+name: Thirty by thirty
+description: Half an hour, two sets of short maximal efforts. The shortest session here and the hardest minute for minute.
+
+warmup: { duration: 7m, ramp: [50%, 80%] }
+
+steps:
+  - repeat: 5
+    steps:
+      - { duration: 40s, power: 120%, cadence: [95, 105], name: Hard }
+      - { duration: 50s, power: 50%, name: Spin }
+  # Written between the sets rather than inside one: a recovery block inside the repeat
+  # would also play after the last effort, which the cooldown is already there for.
+  - { duration: 3m, power: 55%, name: Between sets }
+  - repeat: 5
+    steps:
+      - { duration: 40s, power: 120%, cadence: [95, 105], name: Hard }
+      - { duration: 50s, power: 50%, name: Spin }
+
+cooldown: { duration: 5m, ramp: [55%, 40%] }

@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Contour — Interval change</title>
+</head>
+<body>
+
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&amp;family=IBM+Plex+Sans:wght@400;500&amp;family=Instrument+Serif:ital@0;1&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0C0C0B;color:#E8E4DA;font-family:'IBM Plex Sans',sans-serif}
+a{color:#E8E4DA}a:hover{color:#FF5A1F}
+.serif{font-family:'Instrument Serif',serif;font-style:italic;font-weight:400;letter-spacing:-0.01em}
+.mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums}
+.lbl{font-family:'IBM Plex Sans',sans-serif;font-size:14px;letter-spacing:0.14em;text-transform:uppercase;color:#8A867C}
+.btn{font-family:'IBM Plex Sans',sans-serif;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:#E8E4DA;background:transparent;border:1px solid #2E2D2A;border-radius:0;padding:12px 22px;cursor:pointer;min-height:48px}
+.btn:hover{border-color:#E8E4DA}
+.btn.acc{color:#FF5A1F;border-color:#FF5A1F}
+.ghost{font-family:'IBM Plex Sans',sans-serif;font-size:14px;letter-spacing:0.08em;text-transform:uppercase;color:#8A867C;background:transparent;border:1px solid #2E2D2A;border-radius:0;padding:12px 20px;cursor:pointer;min-height:48px;min-width:48px}
+.ghost:hover{color:#E8E4DA;border-color:#8A867C}
+.ghost.primary{color:#FF5A1F;border-color:#FF5A1F}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;height:44px;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:#2E2D2A}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:#0C0C0B;border:1.5px solid #E8E4DA;margin-top:-6.5px}
+
+@keyframes band-l{0.00%{left:54.666666666666664%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}3.33%{left:42.0%}33.32%{left:42.0%}33.33%{left:42.0%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}36.67%{left:10.666666666666668%}66.66%{left:10.666666666666668%}66.67%{left:10.666666666666668%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}70.00%{left:54.666666666666664%}99.99%{left:54.666666666666664%}}
+@keyframes band-w{0.00%{width:9.333333333333336%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}3.33%{width:8.0%}33.32%{width:8.0%}33.33%{width:8.0%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}36.67%{width:8.999999999999996%}66.66%{width:8.999999999999996%}66.67%{width:8.999999999999996%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}70.00%{width:9.333333333333336%}99.99%{width:9.333333333333336%}}
+@keyframes tick{0%{left:60.0%}5.56%{left:60.0%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}11.11%{left:48.66666666666667%}38.88%{left:48.66666666666667%}38.89%{left:48.66666666666667%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}44.44%{left:16.666666666666664%}72.21%{left:16.666666666666664%}72.22%{left:16.666666666666664%;animation-timing-function:cubic-bezier(.2,.7,.2,1)}77.78%{left:60.0%}100.00%{left:60.0%}}
+@keyframes lit0{0%{opacity:0.1}8.33%{opacity:0.1;animation-timing-function:linear}11.67%{opacity:0.1}41.66%{opacity:0.1}41.67%{opacity:0.1;animation-timing-function:linear}45.00%{opacity:0.1}74.99%{opacity:0.1}75.00%{opacity:0.1;animation-timing-function:linear}78.33%{opacity:0.1}100.00%{opacity:0.1}}
+@keyframes lit1{0%{opacity:0.1}8.33%{opacity:0.1;animation-timing-function:linear}11.67%{opacity:0.1}41.66%{opacity:0.1}41.67%{opacity:0.1;animation-timing-function:linear}45.00%{opacity:0.45}74.99%{opacity:0.45}75.00%{opacity:0.45;animation-timing-function:linear}78.33%{opacity:0.1}100.00%{opacity:0.1}}
+@keyframes lit2{0%{opacity:0.1}8.33%{opacity:0.1;animation-timing-function:linear}11.67%{opacity:0.1}41.66%{opacity:0.1}41.67%{opacity:0.1;animation-timing-function:linear}45.00%{opacity:0.1}74.99%{opacity:0.1}75.00%{opacity:0.1;animation-timing-function:linear}78.33%{opacity:0.1}100.00%{opacity:0.1}}
+@keyframes lit3{0%{opacity:0.1}8.33%{opacity:0.1;animation-timing-function:linear}11.67%{opacity:0.45}41.66%{opacity:0.45}41.67%{opacity:0.45;animation-timing-function:linear}45.00%{opacity:0.1}74.99%{opacity:0.1}75.00%{opacity:0.1;animation-timing-function:linear}78.33%{opacity:0.1}100.00%{opacity:0.1}}
+@keyframes lit4{0%{opacity:0.45}8.33%{opacity:0.45;animation-timing-function:linear}11.67%{opacity:0.1}41.66%{opacity:0.1}41.67%{opacity:0.1;animation-timing-function:linear}45.00%{opacity:0.1}74.99%{opacity:0.1}75.00%{opacity:0.1;animation-timing-function:linear}78.33%{opacity:0.45}100.00%{opacity:0.45}}
+@keyframes lit5{0%{opacity:0.1}8.33%{opacity:0.1;animation-timing-function:linear}11.67%{opacity:0.1}41.66%{opacity:0.1}41.67%{opacity:0.1;animation-timing-function:linear}45.00%{opacity:0.1}74.99%{opacity:0.1}75.00%{opacity:0.1;animation-timing-function:linear}78.33%{opacity:0.1}100.00%{opacity:0.1}}
+@keyframes show0{0%,33.32%{opacity:1}33.33%,100%{opacity:0}}
+@keyframes show1{0%,33.32%{opacity:0}33.33%,66.66%{opacity:1}66.67%,100%{opacity:0}}
+@keyframes show2{0%,66.66%{opacity:0}66.67%,99.99%{opacity:1}100.00%,100%{opacity:0}}
+@keyframes pop00{0.00%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}3.33%,33.32%{opacity:1;transform:translateY(0);filter:blur(0)}33.33%,100%{opacity:0}}
+@keyframes pop01{0%,0.43%{opacity:0;transform:translateY(8px);filter:blur(2px)}0.44%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}3.78%,33.32%{opacity:1;transform:translateY(0);filter:blur(0)}33.33%,100%{opacity:0}}
+@keyframes pop02{0%,0.88%{opacity:0;transform:translateY(8px);filter:blur(2px)}0.89%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}4.22%,33.32%{opacity:1;transform:translateY(0);filter:blur(0)}33.33%,100%{opacity:0}}
+@keyframes pop10{0%,33.32%{opacity:0;transform:translateY(8px);filter:blur(2px)}33.33%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}36.67%,66.66%{opacity:1;transform:translateY(0);filter:blur(0)}66.67%,100%{opacity:0}}
+@keyframes pop11{0%,33.77%{opacity:0;transform:translateY(8px);filter:blur(2px)}33.78%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}37.11%,66.66%{opacity:1;transform:translateY(0);filter:blur(0)}66.67%,100%{opacity:0}}
+@keyframes pop12{0%,34.21%{opacity:0;transform:translateY(8px);filter:blur(2px)}34.22%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}37.56%,66.66%{opacity:1;transform:translateY(0);filter:blur(0)}66.67%,100%{opacity:0}}
+@keyframes pop20{0%,66.66%{opacity:0;transform:translateY(8px);filter:blur(2px)}66.67%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}70.00%,99.99%{opacity:1;transform:translateY(0);filter:blur(0)}100.00%,100%{opacity:0}}
+@keyframes pop21{0%,67.10%{opacity:0;transform:translateY(8px);filter:blur(2px)}67.11%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}70.44%,99.99%{opacity:1;transform:translateY(0);filter:blur(0)}100.00%,100%{opacity:0}}
+@keyframes pop22{0%,67.55%{opacity:0;transform:translateY(8px);filter:blur(2px)}67.56%{opacity:0;transform:translateY(8px);filter:blur(2px);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}70.89%,99.99%{opacity:1;transform:translateY(0);filter:blur(0)}100.00%,100%{opacity:0}}
+@keyframes pulse{0.00%{transform:scale(1);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}1.67%{transform:scale(1.10)}3.33%{transform:scale(1)}33.33%{transform:scale(1);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}35.00%{transform:scale(1.10)}36.67%{transform:scale(1)}66.67%{transform:scale(1);animation-timing-function:cubic-bezier(.34,1.45,.64,1)}68.33%{transform:scale(1.10)}70.00%{transform:scale(1)}100%{transform:scale(1)}}
+@keyframes flash{0%{color:#8A867C}0.00%{color:#E8E4DA}6.67%{color:#8A867C}33.33%{color:#E8E4DA}40.00%{color:#8A867C}66.67%{color:#E8E4DA}73.33%{color:#8A867C}100%{color:#8A867C}}
+@keyframes rule{0%{background:#2E2D2A}0.00%{background:#FF5A1F}6.67%{background:#2E2D2A}33.33%{background:#FF5A1F}40.00%{background:#2E2D2A}66.67%{background:#FF5A1F}73.33%{background:#2E2D2A}100%{background:#2E2D2A}}
+@keyframes cd3{0%{opacity:0}16.66%{opacity:0}16.67%,22.21%{opacity:1}22.22%{opacity:0}49.99%{opacity:0}50.00%,55.55%{opacity:1}55.56%{opacity:0}83.32%{opacity:0}83.33%,88.88%{opacity:1}88.89%{opacity:0}100%{opacity:0}}
+@keyframes cd2{0%{opacity:0}22.21%{opacity:0}22.22%,27.77%{opacity:1}27.78%{opacity:0}55.55%{opacity:0}55.56%,61.10%{opacity:1}61.11%{opacity:0}88.88%{opacity:0}88.89%,94.43%{opacity:1}94.44%{opacity:0}100%{opacity:0}}
+@keyframes cd1{0%{opacity:0}27.77%{opacity:0}27.78%,33.32%{opacity:1}33.33%{opacity:0}61.10%{opacity:0}61.11%,66.66%{opacity:1}66.67%{opacity:0}94.43%{opacity:0}94.44%,99.99%{opacity:1}100.00%{opacity:0}100%{opacity:0}}
+@keyframes marker{0%{transform:translateX(262px)}100%{transform:translateX(1050px)}}
+@keyframes drop{0.00%{top:-23.076923076923094px;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}3.33%{top:0px}33.32%{top:0px}33.33%{top:0px;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}36.67%{top:53.84615384615384px}66.66%{top:53.84615384615384px}66.67%{top:53.84615384615384px;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}70.00%{top:-23.076923076923094px}99.99%{top:-23.076923076923094px}}
+@keyframes wash0{0.00%{opacity:0.06;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}3.33%{opacity:0.22}33.32%{opacity:0.22}33.33%{opacity:0.22;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}36.67%{opacity:0.06}66.66%{opacity:0.06}66.67%{opacity:0.06;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}70.00%{opacity:0.06}99.99%{opacity:0.06}}
+@keyframes wash1{0.00%{opacity:0.06;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}3.33%{opacity:0.06}33.32%{opacity:0.06}33.33%{opacity:0.06;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}36.67%{opacity:0.22}66.66%{opacity:0.22}66.67%{opacity:0.22;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}70.00%{opacity:0.06}99.99%{opacity:0.06}}
+@keyframes wash2{0.00%{opacity:0.22;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}3.33%{opacity:0.06}33.32%{opacity:0.06}33.33%{opacity:0.06;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}36.67%{opacity:0.06}66.66%{opacity:0.06}66.67%{opacity:0.06;animation-timing-function:cubic-bezier(.34,1.45,.64,1)}70.00%{opacity:0.22}99.99%{opacity:0.22}}
+.loop{animation-duration:9.0s;animation-iteration-count:infinite;animation-timing-function:linear}
+@property --n{syntax:'<integer>';inherits:false;initial-value:246}
+@keyframes num{0%{--n:280}5.56%{--n:280;animation-timing-function:cubic-bezier(.2,.7,.2,1)}11.11%{--n:246}38.88%{--n:246}38.89%{--n:246;animation-timing-function:cubic-bezier(.2,.7,.2,1)}44.44%{--n:150}72.21%{--n:150}72.22%{--n:150;animation-timing-function:cubic-bezier(.2,.7,.2,1)}77.78%{--n:280}100.00%{--n:280}}
+.big::after{counter-reset:n var(--n);content:counter(n)}
+</style>
+
+<div style="width:1440px;height:640px;box-sizing:border-box;padding:56px 64px;display:flex;flex-direction:column;gap:56px;background:#0C0C0B;position:relative;z-index:0;overflow:hidden">
+<div style="display:flex;justify-content:space-between;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:10px;width:420px">
+<div style="display:flex;justify-content:space-between;align-items:baseline"><div class="lbl">Power</div><div style="position:relative;height:16px;width:190px;text-align:right"><div class="mono loop" style="position:absolute;right:0;top:0;font-size:12px;animation-name:show0,flash;animation-duration:9.0s,9.0s">target 90 % FTP</div><div class="mono loop" style="position:absolute;right:0;top:0;font-size:12px;animation-name:show1,flash;animation-duration:9.0s,9.0s">recovery · 55 % FTP</div><div class="mono loop" style="position:absolute;right:0;top:0;font-size:12px;animation-name:show2,flash;animation-duration:9.0s,9.0s">rep · 105 % FTP</div></div></div>
+<div style="display:flex;align-items:baseline;gap:12px;white-space:nowrap"><div class="mono" style="font-size:108px;font-weight:300;line-height:0.95;letter-spacing:-0.03em;min-width:200px">246</div>
+<div style="position:relative;width:150px;height:44px"><div class="mono loop" style="position:absolute;left:0;top:0;font-size:44px;font-weight:300;letter-spacing:-0.02em;animation-name:show0,flash;animation-duration:9.0s,9.0s"><span style="color:#2E2D2A;margin:0 6px">/</span>239</div><div class="mono loop" style="position:absolute;left:0;top:0;font-size:44px;font-weight:300;letter-spacing:-0.02em;animation-name:show1,flash;animation-duration:9.0s,9.0s"><span style="color:#2E2D2A;margin:0 6px">/</span>146</div><div class="mono loop" style="position:absolute;left:0;top:0;font-size:44px;font-weight:300;letter-spacing:-0.02em;animation-name:show2,flash;animation-duration:9.0s,9.0s"><span style="color:#2E2D2A;margin:0 6px">/</span>278</div></div>
+<div class="mono" style="font-size:20px;color:#8A867C">W</div></div>
+<div style="position:relative;height:30px;margin-top:14px">
+<div style="position:absolute;left:0;right:0;top:5px;height:1px;background:#2E2D2A"></div><div class="loop" style="position:absolute;left:0.0%;width:15.3%;top:4px;height:3px;background:#E8E4DA;animation-name:lit0"></div><div class="loop" style="position:absolute;left:15.3%;width:17.7%;top:4px;height:3px;background:#E8E4DA;animation-name:lit1"></div><div class="loop" style="position:absolute;left:33.0%;width:13.0%;top:4px;height:3px;background:#E8E4DA;animation-name:lit2"></div><div class="loop" style="position:absolute;left:46.0%;width:13.3%;top:4px;height:3px;background:#E8E4DA;animation-name:lit3"></div><div class="loop" style="position:absolute;left:59.3%;width:13.3%;top:4px;height:3px;background:#E8E4DA;animation-name:lit4"></div><div class="loop" style="position:absolute;left:72.7%;width:27.3%;top:4px;height:3px;background:#E8E4DA;animation-name:lit5"></div>
+<div class="loop" style="position:absolute;top:3px;height:5px;background:#FF5A1F;animation-name:band-l,band-w;animation-duration:9.0s,9.0s"></div>
+<div class="loop" style="position:absolute;top:0;width:2px;height:12px;background:#E8E4DA;animation-name:tick"></div><div class="mono" style="position:absolute;left:7.7%;top:17px;font-size:11px;color:#8A867C;opacity:.45;transform:translateX(-50%)">1</div><div class="mono" style="position:absolute;left:24.2%;top:17px;font-size:11px;color:#8A867C;opacity:.45;transform:translateX(-50%)">2</div><div class="mono" style="position:absolute;left:39.5%;top:17px;font-size:11px;color:#8A867C;opacity:.45;transform:translateX(-50%)">3</div><div class="mono" style="position:absolute;left:52.7%;top:17px;font-size:11px;color:#8A867C;opacity:.45;transform:translateX(-50%)">4</div><div class="mono" style="position:absolute;left:66.0%;top:17px;font-size:11px;color:#8A867C;opacity:.45;transform:translateX(-50%)">5</div><div class="mono" style="position:absolute;left:86.3%;top:17px;font-size:11px;color:#8A867C;opacity:.45;transform:translateX(-50%)">6</div></div>
+</div>
+<div style="max-width:560px;font-size:14px;line-height:1.55;color:#8A867C">9-second loop, three steps: 90 % → 55 % recovery → 105 % rep. Every change is 0.3 s: the target cuts to the new figure in white and settles to grey over 0.6 s, the band slides to the new window, the chart's wash and drop line move to the new block. The band slides in 0.3 s; the live number and the white tick wait 0.5 s then move together over 0.5 s to simulate the rider adjusting; the grey zone fades to follow the tick. A 3-2-1 cue runs beside the sign for the last 1.5 s of each step.</div>
+</div>
+<div style="position:relative;width:1312px;height:240px">
+<svg width="1312" height="200" viewBox="0 0 1312 200" style="display:block;overflow:visible;position:absolute;left:0;top:0">
+<defs><pattern id="hm-T" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#8A867C" stroke-width="0.8"/></pattern></defs>
+<line x1="0" y1="46.2" x2="1312" y2="46.2" stroke="#FF5A1F" stroke-width="1" stroke-dasharray="2 5" opacity="0.7"/>
+<rect class="loop" x="0.0" y="61.5" width="524.8" height="138.5" fill="#FF5A1F" style="animation-name:wash0"/><rect class="loop" x="524.8" y="115.4" width="262.4" height="84.6" fill="#FF5A1F" style="animation-name:wash1"/><rect class="loop" x="787.2" y="38.5" width="262.4" height="161.5" fill="#FF5A1F" style="animation-name:wash2"/>
+<rect x="1049.6" y="61.5" width="262.4" height="138.5" fill="url(#hm-T)" opacity="0.45"/>
+<line x1="0" y1="200" x2="1312" y2="200" stroke="#8A867C" stroke-width="1"/>
+<path d="M0.0,61.5 L524.8,61.5 L524.8,115.4 L787.2,115.4 L787.2,38.5 L1049.6,38.5 L1049.6,61.5 L1312.0,61.5" fill="none" stroke="#8A867C" stroke-width="1.5" stroke-linejoin="round"/>
+<text x="262" y="222" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#8A867C">10 min @ 90 %</text>
+<text x="656" y="222" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#8A867C">5 min @ 55 %</text>
+<text x="918" y="222" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#8A867C">5 min @ 105 %</text>
+</svg>
+<div class="loop" style="position:absolute;left:0;top:0;animation-name:marker">
+<div class="loop" style="position:absolute;left:0;top:62px;animation-name:drop">
+<div style="position:absolute;left:-1px;top:0;width:2px;height:162px;background:#FF5A1F;opacity:.8"></div>
+<div style="position:absolute;left:-22px;top:-58px"><div style="position:absolute;left:0;top:0;width:44px;height:44px;border-radius:50%;background:#0C0C0B;border:1.75px solid #FF5A1F;display:flex;align-items:center;justify-content:center"><div class="mono" style="font-size:12px;color:#E8E4DA">5:00</div></div>
+<div class="mono loop" style="position:absolute;left:56px;top:12px;font-size:12px;color:#FF5A1F;animation-name:cd3">next in 3</div>
+<div class="mono loop" style="position:absolute;left:56px;top:12px;font-size:12px;color:#FF5A1F;animation-name:cd2">next in 2</div>
+<div class="mono loop" style="position:absolute;left:56px;top:12px;font-size:12px;color:#FF5A1F;animation-name:cd1">next in 1</div></div>
+</div>
+</div>
+</div>
+</div>
+
+</body>
+</html>
