@@ -13,6 +13,30 @@ export const SLIDE =
   'transition-transform duration-300 ease-[cubic-bezier(.2,.7,.2,1)] motion-reduce:transition-none';
 
 /**
+ * The size half of a slide, for a bar whose far edge moves as well as its near one.
+ *
+ * Width rather than a scaled transform on purpose: these bars are 3 to 5 px tall and
+ * scaling one would stretch its ends, and design/DESIGN.md > Motion rules scale out of the
+ * vocabulary entirely. Width is not a composited property, but the elements carrying it
+ * are a handful of hairline bars that move once a step rather than once a frame.
+ *
+ * Paired with SLIDE, never used alone: a band that eases its left edge while its right
+ * edge jumps is worse than one that cuts to the new window outright.
+ */
+export const SLIDE_SIZE =
+  'transition-[width] duration-300 ease-[cubic-bezier(.2,.7,.2,1)] motion-reduce:transition-none';
+
+/**
+ * A cross-fade, for the one thing on the zone ladder that is neither type nor position:
+ * the lit segment, which changes opacity as the tick crosses a boundary.
+ * design/DESIGN.md > Motion asks for exactly that — "the lit zone crossfades as the tick
+ * crosses a boundary" — and a segment that snapped while the tick slid read as two
+ * separate events rather than one.
+ */
+export const FADE =
+  'transition-opacity duration-300 ease-[cubic-bezier(.2,.7,.2,1)] motion-reduce:transition-none';
+
+/**
  * DESIGN.md > Controls: the only motion on a control is a 0.3 s colour change — hover,
  * focus and tone all cross-fade, nothing moves.
  */
@@ -33,10 +57,17 @@ function reducedMotion(): boolean {
 }
 
 /**
- * Cut to ink when `value` changes, then settle back to muted over 0.6 s. Returns the
- * colour classes to spread onto the element; the first render never pulses.
+ * Whether the thing `value` identifies has just changed, for exactly one painted frame.
+ *
+ * The flash's trigger, separated from what the flash looks like, because one change can
+ * have to announce itself in more than one way: on the workout screen a step change lights
+ * the hero's target and most of the Steps panel as type, and the one row that just became
+ * current as a fill, since solid ink has nowhere brighter to go. Both read the same
+ * boolean, so they are one event and cannot drift a frame apart.
+ *
+ * False on the first render: there is no change to mark on the way in.
  */
-export function usePulse(value: unknown): string {
+export function useFlash(value: unknown): boolean {
   const [lit, setLit] = useState(false);
   const seen = useRef(true);
 
@@ -66,5 +97,14 @@ export function usePulse(value: unknown): string {
   // the effect so the lit state stays one unconditional step — and because every caller
   // has to make its change legible from the resting state anyway. A pulse announces a
   // change that is already visible; it never carries one on its own.
-  return lit && !reducedMotion() ? 'text-ink' : `text-muted ${PULSE_SETTLE}`;
+  return lit && !reducedMotion();
+}
+
+/**
+ * The flash as type: ink while lit, muted settling back over 0.6 s. The resting value is
+ * the muted these elements would otherwise be written as, so between changes it is not a
+ * treatment at all.
+ */
+export function pulseTone(lit: boolean): string {
+  return lit ? 'text-ink' : `text-muted ${PULSE_SETTLE}`;
 }

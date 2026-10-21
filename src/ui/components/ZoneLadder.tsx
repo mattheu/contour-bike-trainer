@@ -1,5 +1,5 @@
 import { MONO } from './styles';
-import { SLIDE } from './motion';
+import { FADE, SLIDE, SLIDE_SIZE } from './motion';
 
 export interface LadderSegment {
   zone: number;
@@ -70,6 +70,20 @@ const pct = (fraction: number) => `${(fraction * 100).toFixed(4)}%`;
  * Equal segments over a hairline, one lit. Absolutely-positioned divs rather than
  * SVG: the ladder sits in the text flow beside a hero and has to share its width.
  * Marker and band slide by transform, so nothing animates layout.
+ *
+ * The step change as design/mockups/animation-guide.html runs it: the band slides to the
+ * new window — both edges, so a window that narrows does not jump its far end — the tick
+ * follows the rider's own power, and the lit segment cross-fades as the tick crosses a
+ * boundary rather than snapping under it. All three at 0.3 s on the one ease-out curve,
+ * and all three cuts under prefers-reduced-motion, where the band's new position and the
+ * lit segment's new opacity are the still equivalent: both are states, not announcements.
+ *
+ * The guide holds the tick 0.5 s and then moves it over 0.5 s, "to simulate the rider
+ * adjusting". Not reproduced, and deliberately: here the tick is the rider's measured
+ * power, which already takes as long as it takes to arrive and is smoothed over three
+ * seconds before it does. Delaying it again would be the app inventing a lag on a live
+ * reading, which design/DESIGN.md > Motion rules out in the same breath — "live readings
+ * carry no effect".
  */
 export function ZoneLadder({ count, zone, marker, target, label }: ZoneLadderProps) {
   const tick = clamp(marker);
@@ -84,7 +98,7 @@ export function ZoneLadder({ count, zone, marker, target, label }: ZoneLadderPro
       {segments.map((segment) => (
         <div key={segment.zone}>
           <div
-            className="bg-ink absolute top-[4px] h-[3px]"
+            className={`bg-ink absolute top-[4px] h-[3px] ${FADE}`}
             style={{
               left: `${String(segment.leftPct)}%`,
               width: `${String(segment.widthPct)}%`,
@@ -92,7 +106,7 @@ export function ZoneLadder({ count, zone, marker, target, label }: ZoneLadderPro
             }}
           />
           <div
-            className={`${MONO} text-micro text-muted absolute top-[17px] -translate-x-1/2`}
+            className={`${MONO} text-micro text-muted absolute top-[17px] -translate-x-1/2 ${FADE}`}
             style={{ left: `${String(segment.centrePct)}%`, opacity: segment.lit ? 0.9 : 0.45 }}
           >
             {segment.zone}
@@ -105,7 +119,7 @@ export function ZoneLadder({ count, zone, marker, target, label }: ZoneLadderPro
           className={`absolute top-[3px] left-0 w-full ${SLIDE}`}
           style={{ transform: `translateX(${pct(from)})` }}
         >
-          <div className="bg-accent h-[5px]" style={{ width: pct(width) }} />
+          <div className={`bg-accent h-[5px] ${SLIDE_SIZE}`} style={{ width: pct(width) }} />
         </div>
       )}
 

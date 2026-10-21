@@ -17,7 +17,7 @@ import { CONTROL_SIZE } from '../components/control';
 import { Hero } from '../components/Hero';
 import { RideHeader } from '../components/RideHeader';
 import { Segmented } from '../components/Segmented';
-import { SLIDE, usePulse } from '../components/motion';
+import { PULSE_SETTLE, SLIDE, SLIDE_SIZE, pulseTone, useFlash } from '../components/motion';
 import { Stat } from '../components/Stat';
 import { LABEL, MONO } from '../components/styles';
 import { ZoneKey } from '../components/ZoneKey';
@@ -178,6 +178,27 @@ export function Workout({
   const layout = useMemo(() => planRowLayout(rowWidth), [rowWidth]);
   const chartHeight = useMemo(() => planChartHeight(chartAreaHeight), [chartAreaHeight]);
 
+  /**
+   * The step change, as one event.
+   *
+   * design/mockups/animation-guide.html runs its interval change as a single beat — the
+   * target cuts to ink and settles, the band slides, the chart steps — so the three places
+   * on this screen that announce it read one boolean rather than each keeping its own. Two
+   * hooks on two keys would light in the same frame today and drift the moment either key
+   * changed for a different reason.
+   *
+   * Keyed on the step and not on the target: a block that asks for the same watts as the
+   * one before it is still a new block, with its own clock and its own place in the list,
+   * and a target that declined to flash would say the plan had not moved on.
+   *
+   * Under prefers-reduced-motion useFlash never lights, and the change is left to say
+   * itself: the target figure and its note carry new numbers, the accent band is over a
+   * new window, and the Steps panel has carried a different row into its middle. All of
+   * that is state rather than announcement, which is the point — a flash marks a change
+   * that is already visible and never carries one on its own.
+   */
+  const stepFlash = useFlash(workout.stepIndex);
+
   const hero = powerHero(workout.targetW, ftpW);
   const cadence = cadenceBand(workout.cadence, snapshot.cadenceRpm);
   const interval = intervalClock(workout);
@@ -227,6 +248,7 @@ export function Workout({
             testId="workout-power"
             label="Power"
             note={hero.note}
+            pulse={pulseTone(stepFlash)}
             value={num(snapshot.displayPowerW)}
             target={hero.target ?? undefined}
             unit="W"
@@ -366,6 +388,7 @@ export function Workout({
             rows={rows}
             heading={stepsHeading(workout.steps)}
             skippable={canSkip(workout)}
+            flash={stepFlash}
             hovered={hoveredRow}
             onHoverRow={(rowNumber) => {
               setHoveredStep(stepIndexForRow(rows, rowNumber));
@@ -422,6 +445,7 @@ function Steps({
   rows,
   heading,
   skippable,
+  flash,
   hovered,
   onHoverRow,
   onSkip,
@@ -429,6 +453,9 @@ function Steps({
   rows: readonly StepRow[];
   heading: string;
   skippable: boolean;
+  /** Whether the screen's step change is in its lit frame. Handed down rather than kept
+   *  here, so the panel and the power hero announce one event and not two. */
+  flash: boolean;
   /** The row the hovered step points at, by number, or null for none. Whichever end the
    *  pointer is on: the chart sets the step, and so does a row. */
   hovered: number | null;
@@ -446,15 +473,18 @@ function Steps({
    * target readout. Nothing moves and no box changes, so it reads over the per-zone wash
    * the rows already carry rather than fighting it.
    *
-   * Keyed on the current row, so it fires when the plan advances and not on every tick.
+   * The row that just became current flashes too, and had to be given something of its
+   * own: it is already solid ink with ground text, so there is no ink left to cut to and
+   * the one row the change is actually about was the one row saying nothing about it. It
+   * takes the same beat as a fill instead — see currentFrame.
    *
-   * Under prefers-reduced-motion the settle is cut and the flash with it. The still
+   * Under prefers-reduced-motion the settle is cut and both flashes with it. The still
    * equivalent is not a weaker flash but the thing that is permanently true: the row that
    * is current is solid ink with ground text and an accent left edge, it has just moved to
    * the middle of the panel, and the interval countdown beside it is accent. All three are
    * state rather than transient, so the change is just as findable without the announcement.
    */
-  const pulse = usePulse(current);
+  const pulse = pulseTone(flash);
 
   // Keyed on the step rather than the tick, because a step change is minutes apart: the
   // panel moves once when the plan advances and sits still for the whole block after it.
@@ -506,6 +536,7 @@ function Steps({
             row={row}
             hovered={row.number === hovered}
             pulse={pulse}
+            lit={flash}
             onHover={onHoverRow}
             ref={row.number === current ? currentRow : undefined}
           />
@@ -595,13 +626,41 @@ const HOVERED = {
   duration: 'text-ink',
 };
 
+/** The current row's box, without the fill that is the one thing about it that moves. */
+const CURRENT_BOX = 'border-hairline border-l-accent border-t border-l-2 pl-[12px]';
+
+/**
+ * The current row's half of the step change.
+ *
+ * The other rows flash as type, muted cutting to ink and settling back. This one cannot:
+ * it is already solid ink with ground text, so there is no brighter ink to reach for and
+ * the row the change is actually about would be the only one not announcing it. So it
+ * flashes as fill instead — the row cuts to accent and settles back to ink over the same
+ * 0.6 s, on the same lit frame, so the panel reads as one event and not two.
+ *
+ * Accent is what is left above ink, and it is not a new liberty on this screen: the row
+ * already carries the panel's accent left edge, design/mockups/animation-guide.html keeps
+ * a `rule` keyframe that is this exact move on a background, and the interval countdown
+ * beside it already took the same exception. It is also the honest colour — accent marks
+ * what the rider is aiming at, and this is the step they have just been given.
+ *
+ * The text stays ground throughout rather than re-toning under the fill: ground on accent
+ * is the pairing design/DESIGN.md > Controls already uses for the accent button's hover,
+ * and holding the type still is what keeps this a change of state rather than a second
+ * animation running inside the first. The accent left edge separates again as the body
+ * settles to ink, so the row resolves into its resting shape rather than arriving in it.
+ */
+function currentFrame(lit: boolean): string {
+  return lit ? `${CURRENT_BOX} bg-accent` : `${CURRENT_BOX} bg-ink ${PULSE_SETTLE}`;
+}
+
 const ROW_TONE: Record<
   StepRow['state'],
   { frame: string; number: string; name: string; target: string; duration: string }
 > = {
   done: { ...QUIET, frame: `${QUIET.frame} opacity-45` },
   current: {
-    frame: 'border-hairline border-l-accent bg-ink border-t border-l-2 pl-[12px]',
+    frame: `${CURRENT_BOX} bg-ink`,
     number: 'text-ground',
     name: 'text-ground font-medium',
     target: 'text-ground',
@@ -634,18 +693,18 @@ function ruleColour(rule: number): string {
 }
 
 /**
- * The row's four cells, given the pulse the list is running.
+ * The row's four cells and its box, given the flash the list is running.
  *
- * Three layers, in the order they win. The current row takes none of it: it is already
- * solid ink with ground text, so there is nothing to raise and a pulse would be invisible
- * on it anyway. A hovered row takes the pointer's answer, because a flash is over in 0.6 s
- * and the pointer is still there after it. Everything else takes the pulse, whose resting
- * value is the muted these cells would otherwise be written as — so between step changes
- * this changes nothing at all.
+ * Three layers, in the order they win. The current row takes the flash on its fill and
+ * none of it on its type: there is no ink above ground text on solid ink, so the beat it
+ * takes is the one currentFrame draws. A hovered row takes the pointer's answer, because
+ * a flash is over in 0.6 s and the pointer is still there after it. Everything else takes
+ * the pulse, whose resting value is the muted these cells would otherwise be written as —
+ * so between step changes this changes nothing at all.
  */
-function toneFor(row: StepRow, hovered: boolean, pulse: string) {
+function toneFor(row: StepRow, hovered: boolean, pulse: string, lit: boolean) {
   const base = ROW_TONE[row.state];
-  if (row.state === 'current') return base;
+  if (row.state === 'current') return { ...base, frame: currentFrame(lit) };
   if (hovered) return { ...base, ...HOVERED };
   return { ...base, number: pulse, name: pulse, target: pulse, duration: pulse };
 }
@@ -654,6 +713,7 @@ function Step({
   row,
   hovered,
   pulse,
+  lit,
   onHover,
   ref,
 }: {
@@ -661,10 +721,12 @@ function Step({
   hovered: boolean;
   /** The colour classes the list's step-change flash is currently on. */
   pulse: string;
+  /** The same flash as a boolean, for the current row, which takes it as a fill. */
+  lit: boolean;
   onHover: (rowNumber: number | null) => void;
   ref?: React.Ref<HTMLDivElement>;
 }) {
-  const tone = toneFor(row, hovered, pulse);
+  const tone = toneFor(row, hovered, pulse, lit);
   return (
     <div
       ref={ref}
@@ -767,7 +829,12 @@ function CadenceBand({ band }: { band: CadenceBandView }) {
         className={`absolute top-[3px] left-0 w-full ${SLIDE}`}
         style={{ transform: `translateX(${pct(band.from)})` }}
       >
-        <div className="bg-accent h-[5px]" style={{ width: pct(band.to - band.from) }} />
+        {/* Both edges slide, as the zone ladder's band does: a window that narrows on the
+            step change must not ease its near edge and jump its far one. */}
+        <div
+          className={`bg-accent h-[5px] ${SLIDE_SIZE}`}
+          style={{ width: pct(band.to - band.from) }}
+        />
       </div>
       {band.marker !== null && (
         <div

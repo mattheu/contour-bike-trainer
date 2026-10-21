@@ -38,6 +38,20 @@ describe('zoneKeyEntries', () => {
     expect(entries[ZONE_COUNT - 1]?.band).toBe(`> ${percent(ZONE_FRACTIONS.at(-1))}`);
   });
 
+  /**
+   * The plan chart used to rule the top of zone 6 at its own ceiling, which claimed a
+   * boundary the model does not have and the key has never printed. The rule is gone and
+   * the key is the thing that now says what the shade at the top of the chart means, so
+   * it has to keep saying it: six entries, the darkest one open-ended, and the wash still
+   * the one the chart paints a zone 6 block with.
+   */
+  it('still explains the band the chart no longer rules or labels', () => {
+    const top = zoneKeyEntries()[ZONE_COUNT - 1];
+    expect(top?.zone).toBe(ZONE_COUNT);
+    expect(top?.band.startsWith('>')).toBe(true);
+    expect(top?.wash).toBe(ZONE_WASH_OPACITY[ZONE_COUNT]);
+  });
+
   it('bounds the middle zones by the boundaries either side of them', () => {
     const bands = zoneKeyEntries()
       .slice(1, -1)

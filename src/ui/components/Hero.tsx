@@ -50,6 +50,16 @@ interface HeroProps {
    * "target 85–95 rpm". The workout screen's heroes carry one; a free ride's do not.
    */
   note?: string;
+  /**
+   * The colour classes the target and its note are on, for a caller that flashes them when
+   * what is being asked for changes — design/mockups/animation-guide.html runs its `flash`
+   * on both, and design/DESIGN.md > Motion calls it the first beat of an interval change.
+   * See pulseTone, whose resting value is the muted written here.
+   *
+   * Passed in rather than decided here: the hero renders, and only the screen above it
+   * knows what counts as a change worth marking. A hero given nothing never flashes.
+   */
+  pulse?: string;
   /** A handle for the integration tests. A Tailwind class is not a contract. */
   testId?: string;
 }
@@ -62,6 +72,7 @@ export function Hero({
   figure,
   figureUnit,
   note,
+  pulse = 'text-muted',
   tone = 'ink',
   size = 108,
   testId,
@@ -73,7 +84,7 @@ export function Hero({
       <div className="flex items-baseline justify-between gap-[12px]">
         <div className={LABEL}>{label}</div>
         {note !== undefined && (
-          <div className={`${MONO} text-caption text-muted whitespace-nowrap`}>{note}</div>
+          <div className={`${MONO} text-caption whitespace-nowrap ${pulse}`}>{note}</div>
         )}
       </div>
       <div className="flex items-baseline gap-[12px] whitespace-nowrap">
@@ -84,8 +95,11 @@ export function Hero({
         >
           {value}
         </div>
+        {/* The slash keeps its hairline through the flash: it is punctuation between two
+            figures, not one of them, and lighting it would widen the mark the eye is
+            meant to land on. design/mockups/animation-guide.html draws it the same way. */}
         {target !== undefined && (
-          <div className={`${MONO} ${s.target} text-muted tracking-[-0.02em]`}>
+          <div className={`${MONO} ${s.target} tracking-[-0.02em] ${pulse}`}>
             <span className="text-hairline mx-[6px]">/</span>
             {target}
           </div>

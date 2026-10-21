@@ -132,6 +132,16 @@ export function PlanChart({
         <clipPath id={`plan-ahead-${uid}`}>
           <rect x={aheadX} y={0} width={Math.max(0, width - aheadX)} height={height} />
         </clipPath>
+        {/* The chart's own area, for the one thing drawn here that is allowed to leave it.
+            The plan sets the ceiling so a block always fits, but actual power does not:
+            a sprint over the top is clamped to the top edge by the geometry and then
+            paints 1.25 px of its 2.5 px stroke above the box, which this cuts off. The
+            svg stays overflow: visible — the zone figures sit in the gutter to its right,
+            the tick figures below it, and the hovered block's outline runs along its very
+            edges — so the confinement has to be here, on the trace alone. */}
+        <clipPath id={`plan-area-${uid}`}>
+          <rect x={0} y={0} width={width} height={height} />
+        </clipPath>
       </defs>
 
       {geometry.zoneLines.map((line) => (
@@ -261,19 +271,27 @@ export function PlanChart({
         />
       )}
 
-      {geometry.actualAreaPaths.map((d) => (
-        <path key={`area-${d}`} d={d} fill={`url(#ridden-hatch-${uid})`} opacity={0.75} />
-      ))}
-      {geometry.actualPaths.map((d) => (
-        <path
-          key={`actual-${d}`}
-          d={d}
-          fill="none"
-          stroke="var(--color-accent)"
-          strokeWidth="var(--stroke-ridden)"
-          strokeLinejoin="round"
-        />
-      ))}
+      {/* Power the rider actually produced, and the only thing on the chart with no
+          ceiling of its own. A spike past the top of the scale runs along the top edge
+          and is cut there: with no rule across the top of zone 6 any more, the edge
+          claims no boundary, so a trace that reaches it reads as going off rather than
+          as holding a value. No autoscale, no mark on the clipped span — the chart is
+          the plan's, and live power is not allowed to redraw it. */}
+      <g clipPath={`url(#plan-area-${uid})`}>
+        {geometry.actualAreaPaths.map((d) => (
+          <path key={`area-${d}`} d={d} fill={`url(#ridden-hatch-${uid})`} opacity={0.75} />
+        ))}
+        {geometry.actualPaths.map((d) => (
+          <path
+            key={`actual-${d}`}
+            d={d}
+            fill="none"
+            stroke="var(--color-accent)"
+            strokeWidth="var(--stroke-ridden)"
+            strokeLinejoin="round"
+          />
+        ))}
+      </g>
 
       {marker !== null && (
         <>

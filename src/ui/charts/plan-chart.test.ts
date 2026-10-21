@@ -4,13 +4,16 @@ import { expandWorkout, type ExpandedStep } from '../../workout/expand';
 import { parseWorkout } from '../../workout/parse';
 import { workoutFtp } from '../../workout/runner';
 import {
+  CEILING_HEADROOM,
   TRACE_WINDOW_S,
   blockForStep,
+  planCeilingW,
   planChartGeometry,
   smoothTrace,
   type PlanChartSample,
 } from './plan-chart';
 import { ZONE_WASH_OPACITY } from './plan';
+import { MAX_FRACTION_OF_FTP } from './power';
 
 const FTP = 250;
 const WIDTH = 912;
@@ -338,13 +341,27 @@ describe('the marker', () => {
 });
 
 describe('the axes', () => {
-  it('rules every zone, with the top of zone 6 at the chart ceiling', () => {
+  it('rules the top of every zone that has one, which is five of the six', () => {
     const { zoneLines, height } = geometry([step(600, 60)]);
-    expect(zoneLines.map((line) => line.zone)).toEqual([1, 2, 3, 4, 5, 6]);
-    expect(zoneLines[5]?.y).toBe(0);
+    expect(zoneLines.map((line) => line.zone)).toEqual([1, 2, 3, 4, 5]);
     // Ascending zones climb the chart.
     for (let i = 1; i < zoneLines.length; i += 1) {
       expect(zoneLines[i]?.y).toBeLessThan(zoneLines[i - 1]?.y ?? height);
+    }
+  });
+
+  /**
+   * Zone 6 is "over 120 % of FTP" and has no top in the model, so a rule across the chart
+   * was drawing a boundary that does not exist — and once the ceiling follows the plan it
+   * was a line that moved with the tallest step, which is worse again. The band's space
+   * still runs to the top; the line and the figure under it are what go.
+   */
+  it('leaves zone 6 open: no rule across the top of the chart, and no figure for it', () => {
+    for (const plan of [[step(600, 60)], [step(600, 200)], [step(600, 130)]]) {
+      const { zoneLines } = geometry(plan);
+      expect(zoneLines.some((line) => line.zone === 6)).toBe(false);
+      expect(zoneLines.some((line) => line.label === 'Z6')).toBe(false);
+      expect(zoneLines.some((line) => line.y === 0)).toBe(false);
     }
   });
 
@@ -374,6 +391,151 @@ describe('the axes', () => {
     const { ticks, width } = geometry([step(3600, 60)]);
     const last = ticks.filter((tick) => tick.label !== null).at(-1);
     expect(last?.x).toBeLessThanOrEqual(width - 52);
+  });
+});
+
+/**
+ * The chart used to stop at 160 % of FTP whatever the plan asked for, so a 200 % sprint
+ * and a 160 % one drew at exactly the same height — and the parser accepts targets to
+ * 300 % of FTP or 2000 W, which difficulty then multiplies by up to half as much again.
+ * Showing the plan is the chart's whole job, so the plan sets the top of it.
+ */
+describe('the ceiling covers the plan', () => {
+  /** Where a block's top edge sits, 0 at the ceiling and 1 on the axis. */
+  function topOf(chart: ReturnType<typeof geometry>, index = 0): number {
+    return (points(chart.blocks[index]?.d ?? '')[1]?.y as number) / chart.baselineY;
+  }
+
+  it('is the power strip ceiling for a plan that fits under it', () => {
+    expect(geometry([step(600, 90), step(600, 120)]).ceilingW).toBe(FTP * MAX_FRACTION_OF_FTP);
+  });
+
+  it('rises to clear a target the old ceiling could not draw', () => {
+    const chart = geometry([step(600, 200)]);
+    expect(chart.ceilingW).toBeGreaterThan(FTP * 2);
+    expect(chart.ceilingW).toBeCloseTo(FTP * 2 * (1 + CEILING_HEADROOM), 6);
+  });
+
+  it('draws a 200 % step above a 160 % one, which at a fixed ceiling it could not', () => {
+    // Both were clamped to the old 160 % ceiling and came out identical. The comparison is
+    // within one plan: the ceiling follows the tallest step, so a plan of nothing but a
+    // sprint fills the chart whatever the sprint is, and it is the steps beside it that
+    // the height has to be read against.
+    const chart = geometry([step(600, 160), step(600, 200)]);
+    expect(topOf(chart, 1)).toBeLessThan(topOf(chart, 0));
+    // And at their true ratio, not merely in the right order.
+    expect((1 - topOf(chart, 0)) / (1 - topOf(chart, 1))).toBeCloseTo(160 / 200, 3);
+  });
+
+  it('never puts the tallest block flush with the top edge', () => {
+    for (const percent of [160, 200, 300]) {
+      const chart = geometry([step(600, percent)]);
+      expect(topOf(chart)).toBeGreaterThan(0);
+      // The air above it is the headroom, and is there at every peak.
+      expect(topOf(chart)).toBeCloseTo(CEILING_HEADROOM / (1 + CEILING_HEADROOM), 3);
+    }
+  });
+
+  it('leaves the blocks below in proportion rather than squashing them together', () => {
+    const chart = geometry([step(600, 200), step(600, 100), step(600, 50)]);
+    const [tall, middle, low] = [topOf(chart, 0), topOf(chart, 1), topOf(chart, 2)];
+    // Heights, not depths: twice the target is twice the block, at any ceiling.
+    expect((1 - middle) / (1 - tall)).toBeCloseTo(0.5, 3);
+    expect((1 - low) / (1 - middle)).toBeCloseTo(0.5, 3);
+  });
+
+  it('counts a ramp by the end of it that goes highest', () => {
+    expect(geometry([ramp(600, 60, 200)]).ceilingW).toBe(geometry([step(600, 200)]).ceilingW);
+    expect(geometry([ramp(600, 200, 60)]).ceilingW).toBe(geometry([step(600, 200)]).ceilingW);
+  });
+
+  it('ignores a free step, which asks for nothing and so asks for no room', () => {
+    expect(geometry([step(600, 'free')]).ceilingW).toBe(FTP * MAX_FRACTION_OF_FTP);
+  });
+});
+
+/**
+ * A scale that moves while it is being read is a scale you cannot read: every block under
+ * the rider would be redrawn mid-interval. Only the plan sets it, and only the rider
+ * deliberately asking for more work can lift it.
+ */
+describe('the ceiling holds still through a session', () => {
+  const plan = [step(600, 200), step(600, 60)];
+
+  it('does not follow live power, however far over the top it goes', () => {
+    const quiet = geometry(plan);
+    const spiking = geometry(plan, {
+      samples: Array.from({ length: 60 }, (_, t) => ({ t, powerW: FTP * 3 })),
+    });
+    expect(spiking.ceilingW).toBe(quiet.ceilingW);
+  });
+
+  it('does not move as the session runs', () => {
+    expect(geometry(plan, { elapsedS: 900 }).ceilingW).toBe(geometry(plan).ceilingW);
+  });
+
+  it('does not move under a skip, which shortens a step rather than dropping it', () => {
+    expect(geometry([step(42, 200), step(600, 60)]).ceilingW).toBe(geometry(plan).ceilingW);
+  });
+
+  it('rises when the rider makes the session harder, which is a deliberate act', () => {
+    expect(geometry(plan, { scalePct: 150 }).ceilingW).toBeGreaterThan(geometry(plan).ceilingW);
+  });
+
+  it('does not drop when they make it easier: the plan as written is still drawn', () => {
+    // The faint unscaled line is as much the plan as the blocks are, and clipping it would
+    // make the one comparison difficulty exists for a line along the top of the chart.
+    const eased = geometry(plan, { scalePct: 50 });
+    expect(eased.ceilingW).toBe(geometry(plan).ceilingW);
+    expect(points(eased.historyPaths[0] as string)[0]?.y).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The author's words: "spikes in power can go off the edge". No autoscale, no mark on the
+ * clipped span — with no rule across the top of zone 6 the edge claims no boundary, so a
+ * trace that reaches it reads as going off rather than as holding a value.
+ */
+describe('actual power above the ceiling clips', () => {
+  const traceY = (watts: number) =>
+    points(
+      geometry([step(600, 90)], {
+        samples: Array.from({ length: 30 }, (_, t) => ({ t, powerW: watts })),
+      }).actualPaths[0] as string,
+    ).map((point) => point.y);
+
+  it('draws a 300 % spike along the top edge rather than off the chart', () => {
+    const ys = traceY(FTP * 3);
+    expect(Math.min(...ys)).toBe(0);
+    // Never above it: the geometry clamps, and PlanChart cuts the stroke at the same line.
+    expect(ys.every((y) => y >= 0)).toBe(true);
+  });
+
+  it('clips at the ceiling and not at 160 % of FTP, which is no longer the ceiling', () => {
+    const chart = geometry([step(600, 200)], {
+      samples: Array.from({ length: 30 }, (_, t) => ({ t, powerW: FTP * 1.9 })),
+    });
+    // 190 % is over the old ceiling and under this plan's, so it draws at its own height.
+    expect(points(chart.actualPaths[0] as string)[0]?.y).toBeGreaterThan(0);
+  });
+
+  it('holds the plan inside the chart, so only the trace ever reaches the edge', () => {
+    for (const percent of [160, 200, 300]) {
+      const chart = geometry([step(600, percent)]);
+      expect(chart.ceilingW).toBeGreaterThan(FTP * (percent / 100));
+    }
+  });
+});
+
+describe('planCeilingW', () => {
+  it('is a pure read of the plan: the same steps give the same ceiling', () => {
+    const steps = [step(600, 200), step(600, 60)];
+    expect(planCeilingW(steps, FTP, 100)).toBe(planCeilingW(steps, FTP, 100));
+  });
+
+  it('survives a nonsense FTP rather than dividing the chart by nought', () => {
+    expect(planCeilingW([step(600, 90)], 0, 100)).toBe(MAX_FRACTION_OF_FTP);
+    expect(planCeilingW([], FTP, 100)).toBe(FTP * MAX_FRACTION_OF_FTP);
   });
 });
 

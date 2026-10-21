@@ -149,10 +149,71 @@ const ZONE_LABEL_BASELINE = 4;
 
 export interface ZoneLine {
   zone: PowerZone;
-  /** The top of this zone's band, which is the rule drawn for it. */
+  /** The top of this zone's band, which is the rule drawn for it. Zone 6 has neither:
+   *  it is open-ended, so it never appears here. */
   y: number;
   labelY: number;
   label: string;
+}
+
+/**
+ * Air above the tallest block, as a fraction of its own height.
+ *
+ * The ceiling has to clear the plan rather than meet it: a block whose top edge is the
+ * chart's top edge reads as a block that ran out of room, which is exactly what the trace
+ * above it is now allowed to say and must not be confused with. A fraction of the peak
+ * rather than a fixed number of watts so the gap looks the same whatever the plan reaches
+ * — 8 % is about 16 px on the 220 px chart the desktop screen draws and still some 7 px on
+ * the shortest window the layout will hand it, which is a gap and not a rounding.
+ *
+ * Deliberately smaller than a zone band is tall, so the space over the plan never reads as
+ * another band that nothing is labelling.
+ */
+export const CEILING_HEADROOM = 0.08;
+
+/** The tallest target in a plan, before any ceiling clamps it. */
+function peakOf(segments: readonly PlanSegment[]): number {
+  let peak = 0;
+  for (const segment of segments) peak = Math.max(peak, segment.fromW, segment.toW);
+  return peak;
+}
+
+/**
+ * The watts at the top of the chart.
+ *
+ * The power strip's 160 % of FTP is the floor of it, so an ordinary session is drawn at
+ * the height it has always been drawn at and a watt is the same height on both screens.
+ * Above that the ceiling follows the plan: the parser takes a target up to 300 % of FTP
+ * or 2000 W, difficulty multiplies it by half as much again, and a chart that stopped at
+ * 160 % drew a 200 % sprint and a 160 % one at exactly the same height. Showing the plan
+ * is the chart's whole job, so the plan sets the top of it.
+ *
+ * Read off the plan and nothing else — never off the samples. Live power moving the scale
+ * would redraw every block under the rider mid-interval, and a chart that rescales itself
+ * while being read is a chart you cannot read. Actual power above this simply clips; see
+ * PlanChart, where the trace is confined to the chart's own area.
+ *
+ * Both the plan being ridden and the plan as written, so the two never disagree about how
+ * high the chart is. The faint unscaled line is drawn whenever difficulty is off 100 % and
+ * it is as much the plan as the scaled blocks are. It also makes the ceiling steadier than
+ * taking the scaled peak alone would: easing a hard session off does not shrink the chart
+ * around it, and raising difficulty — a deliberate act, and the one thing allowed to move
+ * the scale — is the only thing that lifts it.
+ *
+ * A skip cannot move it either: skipStep shortens the step it ends rather than dropping
+ * it, so its target is still in the plan and still counted here.
+ */
+export function planCeilingW(
+  steps: readonly ExpandedStep[],
+  ftpW: number,
+  scalePct: number,
+): number {
+  const ftp = Math.max(ftpW, 1);
+  const peak = Math.max(
+    peakOf(planSegments(steps, ftp, scalePct)),
+    peakOf(planSegments(steps, ftp, DEFAULT_SCALE_PCT)),
+  );
+  return Math.max(ftp * MAX_FRACTION_OF_FTP, peak * (1 + CEILING_HEADROOM));
 }
 
 export interface TimeTick {
@@ -179,6 +240,8 @@ export interface PlanChartGeometry {
   width: number;
   height: number;
   baselineY: number;
+  /** The watts at the top of the chart. Power above it clips; see planCeilingW. */
+  ceilingW: number;
   totalS: number;
   /** `63 min`, bottom right, of the plan that will actually be ridden. */
   totalLabel: string;
@@ -243,9 +306,7 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
 
   const totalS = planTotalSeconds(steps);
   const ftp = Math.max(ftpW, 1);
-  // The power strip's ceiling, so a watt is the same height on both charts and a block
-  // that filled two thirds of the list sparkline fills two thirds of this one.
-  const ceilingW = ftp * MAX_FRACTION_OF_FTP;
+  const ceilingW = planCeilingW(steps, ftp, scalePct);
   const baselineY = height;
 
   const xFor = (seconds: number): number =>
@@ -253,9 +314,12 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
   const yFor = (watts: number): number =>
     baselineY - (Math.min(Math.max(watts, 0), ceilingW) / ceilingW) * baselineY;
 
-  // The zone bands, bottom to top: each rule is the top of its own band, and the last
-  // one is the chart's own ceiling rather than an open-ended zone 6.
-  const edges = [0, ...zoneBoundaries(ftp), ceilingW];
+  // The zone bands, bottom to top: each rule is the top of its own band, which is where
+  // the next zone starts. There are five of them for six zones, and zone 6 is the one
+  // with none — it is "over 120 %", so it has no top, and a rule across the chart would
+  // be drawing a boundary the model does not have. Its space still runs to the top of
+  // the chart; what it does not get is a line, or a figure sitting under one.
+  const edges = [0, ...zoneBoundaries(ftp)];
   const zoneLines: ZoneLine[] = [];
   for (let zone = 1; zone <= edges.length - 1; zone += 1) {
     const bottomY = yFor(edges[zone - 1] as number);
@@ -359,6 +423,7 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
     width,
     height,
     baselineY,
+    ceilingW,
     totalS,
     totalLabel: totalLabel(totalS),
     zoneLines,
