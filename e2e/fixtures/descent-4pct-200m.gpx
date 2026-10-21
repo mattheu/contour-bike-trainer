@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="contour test fixture" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Fixture: 200 m at -4 %</name></metadata>
+  <trk>
+    <name>Fixture: 200 m at -4 %</name>
+    <trkseg>
+      <trkpt lat="51.5000000" lon="-1.5000000"><ele>100.00</ele></trkpt>
+      <trkpt lat="51.5000899" lon="-1.5000000"><ele>99.60</ele></trkpt>
+      <trkpt lat="51.5001799" lon="-1.5000000"><ele>99.20</ele></trkpt>
+      <trkpt lat="51.5002698" lon="-1.5000000"><ele>98.80</ele></trkpt>
+      <trkpt lat="51.5003597" lon="-1.5000000"><ele>98.40</ele></trkpt>
+      <trkpt lat="51.5004497" lon="-1.5000000"><ele>98.00</ele></trkpt>
+      <trkpt lat="51.5005396" lon="-1.5000000"><ele>97.60</ele></trkpt>
+      <trkpt lat="51.5006295" lon="-1.5000000"><ele>97.20</ele></trkpt>
+      <trkpt lat="51.5007195" lon="-1.5000000"><ele>96.80</ele></trkpt>
+      <trkpt lat="51.5008094" lon="-1.5000000"><ele>96.40</ele></trkpt>
+      <trkpt lat="51.5008993" lon="-1.5000000"><ele>96.00</ele></trkpt>
+      <trkpt lat="51.5009893" lon="-1.5000000"><ele>95.60</ele></trkpt>
+      <trkpt lat="51.5010792" lon="-1.5000000"><ele>95.20</ele></trkpt>
+      <trkpt lat="51.5011691" lon="-1.5000000"><ele>94.80</ele></trkpt>
+      <trkpt lat="51.5012590" lon="-1.5000000"><ele>94.40</ele></trkpt>
+      <trkpt lat="51.5013490" lon="-1.5000000"><ele>94.00</ele></trkpt>
+      <trkpt lat="51.5014389" lon="-1.5000000"><ele>93.60</ele></trkpt>
+      <trkpt lat="51.5015288" lon="-1.5000000"><ele>93.20</ele></trkpt>
+      <trkpt lat="51.5016188" lon="-1.5000000"><ele>92.80</ele></trkpt>
+      <trkpt lat="51.5017087" lon="-1.5000000"><ele>92.40</ele></trkpt>
+      <trkpt lat="51.5017986" lon="-1.5000000"><ele>92.00</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

@@ -1,0 +1,13 @@
+name: VO2 max 5x3
+description: Forty-five minutes of work and a five-minute ramp down. Three minutes is long enough to reach maximal oxygen uptake and short enough to do five of them.
+
+warmup: { duration: 10m, ramp: [50%, 80%] }
+
+steps:
+  - repeat: 5
+    steps:
+      - { duration: 3m, power: 115%, cadence: [90, 100], name: VO2 max }
+      - { duration: 3m, power: 55%, name: Recovery }
+  - { duration: 5m, power: 65%, name: Steady }
+
+cooldown: { duration: 5m, ramp: [55%, 40%] }

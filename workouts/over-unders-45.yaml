@@ -1,0 +1,18 @@
+name: Over-unders
+description: Forty-five minutes alternating side to side of threshold. The point is clearing lactate while still working, so the unders are recovery in name only.
+
+warmup: { duration: 10m, ramp: [50%, 75%] }
+
+steps:
+  - repeat: 3
+    steps:
+      - { duration: 2m, power: 95%, name: Under }
+      - { duration: 2m, power: 105%, name: Over }
+  # Between the sets, not inside one — see thirty-by-thirty for the same note.
+  - { duration: 5m, power: 55%, name: Easy }
+  - repeat: 3
+    steps:
+      - { duration: 2m, power: 95%, name: Under }
+      - { duration: 2m, power: 105%, name: Over }
+
+cooldown: { duration: 6m, ramp: [60%, 40%] }
