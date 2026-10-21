@@ -34,6 +34,7 @@ import {
 } from './ride-view';
 import { RideSettings, type DevicesView, type Targets } from './RideSettings';
 import {
+  anticipationDepth,
   cadenceBand,
   cadenceNote,
   canSkip,
@@ -389,6 +390,7 @@ export function Workout({
             heading={stepsHeading(workout.steps)}
             skippable={canSkip(workout)}
             flash={stepFlash}
+            anticipate={anticipationDepth(workout)}
             hovered={hoveredRow}
             onHoverRow={(rowNumber) => {
               setHoveredStep(stepIndexForRow(rows, rowNumber));
@@ -446,6 +448,7 @@ function Steps({
   heading,
   skippable,
   flash,
+  anticipate,
   hovered,
   onHoverRow,
   onSkip,
@@ -456,6 +459,8 @@ function Steps({
   /** Whether the screen's step change is in its lit frame. Handed down rather than kept
    *  here, so the panel and the power hero announce one event and not two. */
   flash: boolean;
+  /** How deep the current row's anticipation cue should swell, 0 for no cue at all. */
+  anticipate: number;
   /** The row the hovered step points at, by number, or null for none. Whichever end the
    *  pointer is on: the chart sets the step, and so does a row. */
   hovered: number | null;
@@ -537,6 +542,7 @@ function Steps({
             hovered={row.number === hovered}
             pulse={pulse}
             lit={flash}
+            anticipate={anticipate}
             onHover={onHoverRow}
             ref={row.number === current ? currentRow : undefined}
           />
@@ -626,8 +632,17 @@ const HOVERED = {
   duration: 'text-ink',
 };
 
-/** The current row's box, without the fill that is the one thing about it that moves. */
-const CURRENT_BOX = 'border-hairline border-l-accent border-t border-l-2 pl-[12px]';
+/**
+ * The current row's box, without the fill that is the one thing about it that moves.
+ *
+ * `relative isolate` is for the anticipation cue's veil, which is a child rather than a
+ * second background on the row: the row's own background-color is already carrying the
+ * step-change flash and its settle, and two things animating one property is one of them
+ * losing. Isolated so the veil can sit at a negative z-index — above the row's fill,
+ * below its four cells — which is what keeps the type out from under it. See Swell.
+ */
+const CURRENT_BOX =
+  'border-hairline border-l-accent relative isolate border-t border-l-2 pl-[12px]';
 
 /**
  * The current row's half of the step change.
@@ -652,6 +667,43 @@ const CURRENT_BOX = 'border-hairline border-l-accent border-t border-l-2 pl-[12p
  */
 function currentFrame(lit: boolean): string {
   return lit ? `${CURRENT_BOX} bg-accent` : `${CURRENT_BOX} bg-ink ${PULSE_SETTLE}`;
+}
+
+/**
+ * The anticipation cue: the current row warming towards accent and back, once a second,
+ * through the last ten seconds of a step — "this is about to switch", said before it does
+ * rather than as it does.
+ *
+ * It has to be unmistakably not the change. The change is a single hard cut to solid
+ * accent settling back over 0.6 s: sharp, once, and all the way. So this is the opposite
+ * gesture on the same colour — soft at both ends, repeating, and never more than
+ * ANTICIPATION_MAX of the way there. Depth is the one thing that moves with the clock: it
+ * opens as barely a warmth at ten seconds and is unambiguous from three, so the cue says
+ * how close the change is and not only that it is coming. The beat does not change with
+ * it — a swell that sped up as well would be two readings of the same fact, and a cue
+ * that accelerates towards a boundary is how a warning becomes an alarm.
+ *
+ * A veil rather than a fill, for the reason CURRENT_BOX gives: the row's own background
+ * is the flash's. The veil is accent at the depth asked for, faded from nothing to all of
+ * it and back, so what the rider sees is the row's ink fill taking on warmth — the type
+ * sits above it and the accent left edge outside it, both untouched at every depth.
+ *
+ * Withheld entirely under prefers-reduced-motion, as every other pulse on this screen is.
+ * The still equivalent is not a dimmer swell but the thing that is already true for the
+ * same ten seconds and is colour rather than motion: the interval countdown beside the
+ * panel is accent — see intervalTone.
+ */
+function Swell({ depth }: { depth: number }) {
+  if (depth <= 0) return null;
+  return (
+    <div
+      aria-hidden="true"
+      className="animate-step-anticipate pointer-events-none absolute inset-0 -z-10 motion-reduce:hidden"
+      style={{
+        backgroundColor: `color-mix(in srgb, var(--color-accent) ${String(depth * 100)}%, transparent)`,
+      }}
+    />
+  );
 }
 
 const ROW_TONE: Record<
@@ -714,6 +766,7 @@ function Step({
   hovered,
   pulse,
   lit,
+  anticipate,
   onHover,
   ref,
 }: {
@@ -723,6 +776,9 @@ function Step({
   pulse: string;
   /** The same flash as a boolean, for the current row, which takes it as a fill. */
   lit: boolean;
+  /** How deep to swell the cue that this step is about to end. Only the current row has
+   *  an end to be near; every other row is given it and ignores it. */
+  anticipate: number;
   onHover: (rowNumber: number | null) => void;
   ref?: React.Ref<HTMLDivElement>;
 }) {
@@ -747,6 +803,7 @@ function Step({
       }
       aria-current={row.state === 'current' ? 'step' : undefined}
     >
+      {row.state === 'current' && <Swell depth={anticipate} />}
       <div className={`${MONO} text-micro w-[16px] ${tone.number}`}>{row.number}</div>
       <div className={`text-label grow font-sans ${tone.name}`}>{row.name}</div>
       <div className={`${MONO} text-caption ${tone.target}`}>{row.target}</div>

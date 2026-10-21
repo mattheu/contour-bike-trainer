@@ -78,6 +78,35 @@
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
   --font-sans: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
   --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+
+  /*
+   * The workout Steps panel's anticipation cue: the current row swells and recedes once a
+   * second through the last ten seconds of a step. One beat a second, matched to the
+   * countdown ticking beside it, and far under the three a second that stops being a
+   * design choice and becomes a seizure risk.
+   *
+   * Two deviations from design/DESIGN.md > Motion, both to keep this from reading as the
+   * step change itself, which is a single hard cut to accent settling over 0.6 s:
+   *
+   * - ease-in-out, not the one ease-out curve. An ease-out swell attacks hard at both
+   *   ends, which is the flash's gesture repeated rather than a different one.
+   * - it repeats. The guide's colour pulse fires once; a warning that fired once would be
+   *   indistinguishable from the change it is warning about.
+   *
+   * The 0.5 s ceiling holds: each movement is 0.5 s exactly, out and back, so the cycle is
+   * a second. Depth is set per row from anticipationDepth, not here — the beat is fixed
+   * so a cue that is building never also sounds like it is speeding up.
+   */
+  --animate-step-anticipate: step-anticipate 500ms ease-in-out infinite alternate;
+
+  @keyframes step-anticipate {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
 
 /*

@@ -232,7 +232,8 @@ export function intervalClock(workout: WorkoutSnapshot): Clock {
 }
 
 /**
- * Where the interval countdown turns accent.
+ * Where a step is close enough to its end to say so: the interval countdown turns accent
+ * and the current row's anticipation cue starts.
  *
  * The snapshot's remaining seconds are rounded up — a clock showing 0:00 while the step is
  * still running lies for its last second — so a readout of 0:10 means ten seconds or fewer
@@ -252,16 +253,78 @@ export const FINAL_SECONDS = 10;
  * the guide's three seconds to the ten the rider asked for after riding it.
  *
  * It is also the one part of a step change that is colour rather than motion, which is
- * why it is the part that survives prefers-reduced-motion untouched.
+ * why it is the part that survives prefers-reduced-motion untouched — and so the part
+ * that has to carry the whole warning on its own when the row's cue is withheld.
  *
  * Ink once the plan has run out: there is no step left to be in the last seconds of, and
  * an accent dash would be a warning about nothing.
  */
 export function intervalTone(workout: WorkoutSnapshot): 'ink' | 'accent' {
-  if (currentStep(workout) === null) return 'ink';
+  return finalSecondsLeft(workout) === null ? 'ink' : 'accent';
+}
+
+/**
+ * Seconds left of the step the rider is on while it is inside its final window, or null
+ * at every other moment — through the body of a step, once the plan has run out, and on a
+ * figure that is not a count of seconds at all.
+ *
+ * One rule, read twice. The countdown's colour and the Steps panel's anticipation cue are
+ * the same signal in two places, so "is this step about to end" is answered once: a second
+ * threshold written beside this one would be a cue that could turn on without the clock
+ * agreeing, which is worse than no cue.
+ */
+function finalSecondsLeft(workout: WorkoutSnapshot): number | null {
+  if (currentStep(workout) === null) return null;
   const remaining = workout.stepRemainingS;
-  if (!Number.isFinite(remaining) || remaining < 0) return 'ink';
-  return remaining <= FINAL_SECONDS ? 'accent' : 'ink';
+  if (!Number.isFinite(remaining) || remaining < 0) return null;
+  return remaining <= FINAL_SECONDS ? remaining : null;
+}
+
+/**
+ * Where the anticipation cue stops building and sits at full depth. The guide's own cue —
+ * the `cd3`/`cd2`/`cd1` keyframes in design/mockups/animation-guide.html — is a "next in
+ * 3/2/1" that only appears for the last three seconds, so three is where the designed
+ * answer says the rider is meant to be certain.
+ */
+export const ANTICIPATION_FULL_SECONDS = 3;
+
+/**
+ * How much accent the cue swells to, as a share of the current row's ink fill: the floor
+ * it opens at ten seconds out and the ceiling it reaches at three.
+ *
+ * The ceiling is well short of 1 on purpose. A step change takes the whole row to solid
+ * accent, so leaving the top of the range unused is what keeps the cue readable as "about
+ * to switch" rather than as the switch — the change can still go somewhere the warning
+ * never reaches.
+ */
+export const ANTICIPATION_MIN = 0.1;
+export const ANTICIPATION_MAX = 0.45;
+
+/**
+ * How deep the current row's anticipation cue should swell, 0 through 1, where 0 is no cue
+ * at all.
+ *
+ * It builds rather than running flat. Ten seconds is the window the rider asked for and
+ * the one the countdown already turns accent at, but ten seconds of an unchanging pulse at
+ * every step — twenty of them in a session — is nagging rather than useful. So the depth
+ * carries the information the guide's 3/2/1 carried: barely a warmth at ten seconds, where
+ * it only has to be noticed if you look, and unmistakable from three, where it has to be
+ * read without looking. Both ends of the window say something different, which is what
+ * makes it worth running for the whole of it.
+ *
+ * The depth only, never the rhythm: the swell beats at a fixed one a second whatever this
+ * returns, so a cue that is building is never also a cue that is speeding up.
+ */
+export function anticipationDepth(workout: WorkoutSnapshot): number {
+  const left = finalSecondsLeft(workout);
+  if (left === null) return 0;
+  const built = clamp01(
+    (FINAL_SECONDS - left) / (FINAL_SECONDS - Math.min(ANTICIPATION_FULL_SECONDS, FINAL_SECONDS)),
+  );
+  // Weighted both ends rather than min plus a share of the span: the span form lands a
+  // float short of the ceiling at the bottom of the window, and the ceiling is a number
+  // the cue is supposed to actually reach.
+  return (1 - built) * ANTICIPATION_MIN + built * ANTICIPATION_MAX;
 }
 
 /**

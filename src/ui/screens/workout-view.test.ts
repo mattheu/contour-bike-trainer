@@ -16,6 +16,10 @@ import {
   intervalClock,
   intervalTone,
   FINAL_SECONDS,
+  anticipationDepth,
+  ANTICIPATION_FULL_SECONDS,
+  ANTICIPATION_MIN,
+  ANTICIPATION_MAX,
   currentRowNumber,
   hoveredRowNumber,
   powerHero,
@@ -388,6 +392,54 @@ describe('intervalTone', () => {
   it('is ink on a figure that is not a count of seconds at all', () => {
     expect(intervalTone(snapshot({ stepRemainingS: Number.NaN }))).toBe('ink');
     expect(intervalTone(snapshot({ stepRemainingS: -5 }))).toBe('ink');
+  });
+});
+
+describe('anticipationDepth', () => {
+  it('is nothing at all through the body of a step', () => {
+    expect(anticipationDepth(snapshot({ stepRemainingS: 402 }))).toBe(0);
+    expect(anticipationDepth(snapshot({ stepRemainingS: 11 }))).toBe(0);
+  });
+
+  it('opens on the same figure the countdown turns accent on, and no sooner', () => {
+    // One window, read twice: a cue that could start without the clock agreeing would be
+    // two warnings about one thing.
+    expect(anticipationDepth(snapshot({ stepRemainingS: 10 }))).toBe(ANTICIPATION_MIN);
+    expect(intervalTone(snapshot({ stepRemainingS: 10 }))).toBe('accent');
+  });
+
+  it('builds from barely there to unmistakable across the window', () => {
+    const depths = [10, 9, 8, 7, 6, 5, 4, 3].map((left) =>
+      anticipationDepth(snapshot({ stepRemainingS: left })),
+    );
+    expect(depths[0]).toBe(ANTICIPATION_MIN);
+    expect(depths.at(-1)).toBe(ANTICIPATION_MAX);
+    // Monotonic, so the cue never reads as backing off while the step runs down.
+    expect(depths).toEqual([...depths].sort((a, b) => a - b));
+  });
+
+  it('holds at full depth from three seconds down to the rollover', () => {
+    expect(ANTICIPATION_FULL_SECONDS).toBe(3);
+    expect(anticipationDepth(snapshot({ stepRemainingS: 3 }))).toBe(ANTICIPATION_MAX);
+    expect(anticipationDepth(snapshot({ stepRemainingS: 1 }))).toBe(ANTICIPATION_MAX);
+    expect(anticipationDepth(snapshot({ stepRemainingS: 0 }))).toBe(ANTICIPATION_MAX);
+  });
+
+  it('leaves the step change somewhere to go that the warning never reaches', () => {
+    expect(ANTICIPATION_MAX).toBeLessThan(1);
+  });
+
+  it('stops the moment the next step starts, which is the rollover itself', () => {
+    expect(anticipationDepth(snapshot({ stepIndex: 2, stepRemainingS: 300 }))).toBe(0);
+  });
+
+  it('warns about nothing once the plan has run out', () => {
+    expect(anticipationDepth(snapshot({ stepIndex: STEPS.length, stepRemainingS: 0 }))).toBe(0);
+  });
+
+  it('is no cue on a figure that is not a count of seconds at all', () => {
+    expect(anticipationDepth(snapshot({ stepRemainingS: Number.NaN }))).toBe(0);
+    expect(anticipationDepth(snapshot({ stepRemainingS: -5 }))).toBe(0);
   });
 });
 
