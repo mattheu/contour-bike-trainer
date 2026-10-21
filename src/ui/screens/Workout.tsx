@@ -17,7 +17,7 @@ import { CONTROL_SIZE } from '../components/control';
 import { Hero } from '../components/Hero';
 import { RideHeader } from '../components/RideHeader';
 import { Segmented } from '../components/Segmented';
-import { SLIDE } from '../components/motion';
+import { SLIDE, usePulse } from '../components/motion';
 import { Stat } from '../components/Stat';
 import { LABEL, MONO } from '../components/styles';
 import { ZoneKey } from '../components/ZoneKey';
@@ -43,6 +43,7 @@ import {
   ERG_MODE_OPTIONS,
   hoveredRowNumber,
   intervalClock,
+  intervalTone,
   powerHero,
   scaleLabel,
   stepIndexForRow,
@@ -287,11 +288,15 @@ export function Workout({
           through, and a readout that never moves is worse than an absent one. */}
       <div className="grid grid-cols-4 gap-[32px] px-[64px] pt-[28px]">
         <Secondary>
+          {/* Accent through the last ten seconds of a step. The one part of the step
+              change that is colour rather than motion, so it reads the same under
+              prefers-reduced-motion as it does without it — see intervalTone. */}
           <Stat
             testId="workout-interval"
             label="Interval"
             value={interval.value}
             total={interval.total}
+            tone={intervalTone(workout)}
           />
         </Secondary>
         <Secondary divided>
@@ -434,12 +439,38 @@ function Steps({
   const current = currentRowNumber(rows);
   const currentRow = useRef<HTMLDivElement>(null);
 
+  /**
+   * The list's half of the step change: every row that is not current cuts to ink and
+   * settles back to muted over 0.6 s, which is design/DESIGN.md's colour pulse and the
+   * `flash` the interval sequence in design/mockups/animation-guide.html runs on its
+   * target readout. Nothing moves and no box changes, so it reads over the per-zone wash
+   * the rows already carry rather than fighting it.
+   *
+   * Keyed on the current row, so it fires when the plan advances and not on every tick.
+   *
+   * Under prefers-reduced-motion the settle is cut and the flash with it. The still
+   * equivalent is not a weaker flash but the thing that is permanently true: the row that
+   * is current is solid ink with ground text and an accent left edge, it has just moved to
+   * the middle of the panel, and the interval countdown beside it is accent. All three are
+   * state rather than transient, so the change is just as findable without the announcement.
+   */
+  const pulse = usePulse(current);
+
   // Keyed on the step rather than the tick, because a step change is minutes apart: the
   // panel moves once when the plan advances and sits still for the whole block after it.
-  // `nearest` leaves a row that is already on screen exactly where it is, so a rider who
-  // has scrolled the panel to read ahead is not dragged back by it.
+  //
+  // `center`, not `nearest`. `nearest` was chosen so a rider scrolling to read ahead was
+  // not dragged back, and centring gives that up: it repositions on every step change
+  // whether or not the row was already in view. Taken deliberately — steps are minutes
+  // apart, so a rider reading ahead has the whole of a block undisturbed, and the thing
+  // the panel is for is showing what is behind and what is coming either side of now,
+  // which a row scrolled just into the bottom edge does not do.
+  //
+  // Smooth where the container allows it, which is the "transition to the next row": the
+  // scroll is the movement, so motion-reduce turns it into a cut on the container below
+  // rather than being decided here.
   useEffect(() => {
-    currentRow.current?.scrollIntoView({ block: 'nearest' });
+    currentRow.current?.scrollIntoView({ block: 'center' });
   }, [current]);
 
   return (
@@ -460,13 +491,21 @@ function Steps({
           </Button>
         }
       />
-      {/* bg-ground/60 rather than solid ground, because the contour field runs behind it. */}
-      <div className="bg-ground/60 min-h-0 grow overflow-y-auto" data-testid="workout-steps">
+      {/* bg-ground/60 rather than solid ground, because the contour field runs behind it.
+          scroll-smooth is what carries the panel to the next row when the step changes;
+          motion-reduce makes that a cut, which is the whole of DESIGN.md's reduced-motion
+          rule. Declarative, so the wheel is untouched: scroll-behavior governs programmatic
+          scrolls only. */}
+      <div
+        className="bg-ground/60 min-h-0 grow overflow-y-auto scroll-smooth motion-reduce:scroll-auto"
+        data-testid="workout-steps"
+      >
         {rows.map((row) => (
           <Step
             key={row.number}
             row={row}
             hovered={row.number === hovered}
+            pulse={pulse}
             onHover={onHoverRow}
             ref={row.number === current ? currentRow : undefined}
           />
@@ -594,19 +633,38 @@ function ruleColour(rule: number): string {
   return `color-mix(in srgb, var(--color-ink) ${String(Math.min(1, rule) * 100)}%, transparent)`;
 }
 
+/**
+ * The row's four cells, given the pulse the list is running.
+ *
+ * Three layers, in the order they win. The current row takes none of it: it is already
+ * solid ink with ground text, so there is nothing to raise and a pulse would be invisible
+ * on it anyway. A hovered row takes the pointer's answer, because a flash is over in 0.6 s
+ * and the pointer is still there after it. Everything else takes the pulse, whose resting
+ * value is the muted these cells would otherwise be written as — so between step changes
+ * this changes nothing at all.
+ */
+function toneFor(row: StepRow, hovered: boolean, pulse: string) {
+  const base = ROW_TONE[row.state];
+  if (row.state === 'current') return base;
+  if (hovered) return { ...base, ...HOVERED };
+  return { ...base, number: pulse, name: pulse, target: pulse, duration: pulse };
+}
+
 function Step({
   row,
   hovered,
+  pulse,
   onHover,
   ref,
 }: {
   row: StepRow;
   hovered: boolean;
+  /** The colour classes the list's step-change flash is currently on. */
+  pulse: string;
   onHover: (rowNumber: number | null) => void;
   ref?: React.Ref<HTMLDivElement>;
 }) {
-  const base = ROW_TONE[row.state];
-  const tone = hovered && row.state !== 'current' ? { ...base, ...HOVERED } : base;
+  const tone = toneFor(row, hovered, pulse);
   return (
     <div
       ref={ref}

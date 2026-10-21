@@ -5,14 +5,32 @@ import { blockForStep, planChartGeometry, type PlanChartSample } from './plan-ch
 export const PLAN_CHART_WIDTH = 912;
 export const PLAN_CHART_HEIGHT = 220;
 
-/** The rider dot and the tick figures under the axis, from design/mockups/workout.html. */
-const DOT_R = 3;
-const DROP_GAP = 4;
+/** The tick figures under the axis, from design/mockups/workout.html. */
 const TICK_LONG = 8;
 const TICK_SHORT = 4;
 const AXIS_LABEL_Y = 22;
 /** The zone figures sit in the gutter the screen keeps clear to the right of the chart. */
 const ZONE_LABEL_X = 10;
+
+/**
+ * The marker: an ink disc with an accent ring, knocked out of whatever it lands on by a
+ * ring of ground around it.
+ *
+ * design/DESIGN.md > Palette reads it straight — ink is the current value, accent is where
+ * you are in the plan — and it was the shape asked for after the second hardware ride,
+ * where an accent dot the size of three pixels was not findable at a glance over an accent
+ * trace it shares a colour with.
+ *
+ * The ground ring is what makes it survive all three backgrounds it has to sit on. Over a
+ * grey plan block or the ink hover veil the gap separates the accent ring from the wash;
+ * over the accent trace it stops the ring from merging into the line it crosses, which is
+ * the one case where an accent ring alone would disappear. A knockout, not a glow: flat
+ * ground, hard edge, no shadow or blur, which is what DESIGN.md > Marks allows.
+ */
+const MARKER_R = 5;
+const MARKER_HALO = 2;
+/** The stem starts clear of the halo, so the knockout stays a clean ring. */
+const DROP_GAP = 4;
 
 export interface PlanChartProps {
   steps: readonly ExpandedStep[];
@@ -261,7 +279,7 @@ export function PlanChart({
         <>
           <line
             x1={marker.x}
-            y1={marker.y + DROP_GAP}
+            y1={marker.y + MARKER_R + MARKER_HALO + DROP_GAP}
             x2={marker.x}
             y2={geometry.baselineY}
             stroke="var(--color-accent)"
@@ -269,11 +287,19 @@ export function PlanChart({
             strokeDasharray="2 4"
           />
           <circle
+            cx={marker.x}
+            cy={marker.y}
+            r={MARKER_R + MARKER_HALO}
+            fill="var(--color-ground)"
+          />
+          <circle
             data-testid="plan-marker"
             cx={marker.x}
             cy={marker.y}
-            r={DOT_R}
-            fill="var(--color-accent)"
+            r={MARKER_R}
+            fill="var(--color-ink)"
+            stroke="var(--color-accent)"
+            strokeWidth="var(--stroke-chart)"
           />
         </>
       )}

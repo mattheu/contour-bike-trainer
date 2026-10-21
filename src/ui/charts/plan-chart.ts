@@ -12,7 +12,7 @@
 import type { ExpandedStep } from '../../workout/expand';
 import { DEFAULT_SCALE_PCT } from '../../workout/runner';
 import { zoneBoundaries, zoneForPower, type PowerZone } from '../../zones/power';
-import { duration } from '../format';
+import { duration, type PowerReading } from '../format';
 import { polylinePath, type Pt } from './path';
 import { ZONE_WASH_OPACITY, planSegments, planTotalSeconds, type PlanSegment } from './plan';
 import { MAX_FRACTION_OF_FTP } from './power';
@@ -34,6 +34,97 @@ export interface PlanChartInput {
   elapsedS: number;
   width: number;
   height: number;
+}
+
+/**
+ * The window the drawn trace is averaged over, and the reason it is longer than the
+ * hero's three seconds rather than the same figure reused.
+ *
+ * Measured on the author's second hardware ride, which was ERG for the first half and
+ * manual for the second: second-to-second power change went from a mean of 3.4 W (p95 12)
+ * under ERG to 17.6 W (p95 68, max 293) under manual, and the raw line read as a hedge
+ * rather than a trace. Five seconds takes the manual half to a mean of 5.4 W and a p95 of
+ * 27 — about what ERG produces with no smoothing at all.
+ *
+ * Longer than POWER_WINDOW_S on purpose, because the two are read differently. The hero
+ * is a number the rider reacts to, so its lag is the cost of every correction they make
+ * and three seconds is as far as it can be pushed. Nobody reads a watt value off the
+ * trace: it answers "how steady was that block", which lag does not change. So the trade
+ * runs the other way here and the legibility is worth the delay.
+ *
+ * For drawing, and for nothing else. See smoothTrace.
+ */
+export const TRACE_WINDOW_S = 5;
+
+/** A sample the trainer actually reported, or null. A sample with no placeable time is
+ *  no reading either: it cannot sit on the x-axis, so it breaks the line like a dropout. */
+function readingOf(sample: PlanChartSample): number | null {
+  if (!Number.isFinite(sample.t)) return null;
+  return sample.powerW === null || !Number.isFinite(sample.powerW) ? null : sample.powerW;
+}
+
+/**
+ * The samples as the trace draws them: every reading replaced by the trailing mean of the
+ * readings inside `windowS` ending at it.
+ *
+ * A fresh array, never the caller's. That is the whole of how the recording stays raw —
+ * the series handed in is the recorder's own, which is what gets stored, exported to TCX
+ * and scored for TSS, and it is read here and never written. The smoothed copy is local to
+ * one geometry call and leaves this module as path strings.
+ *
+ * Absence survives exactly: a sample the trainer did not report comes back null, so the
+ * line breaks where it always broke rather than being bridged by a mean. Readings age out
+ * of the window by time and not by count, so a gap longer than the window empties it and
+ * nothing is averaged across the hole — the same rule trailingMeanPower follows for the
+ * hero, and the reason the first sample of a run is simply its own mean.
+ *
+ * Trailing, not centred. A centred mean would draw the line ahead of where the rider
+ * actually was, and the last half-window would have to be drawn by a different rule from
+ * the rest of the trace.
+ *
+ * One pass with a sliding sum rather than a mean computed per sample: the chart recomputes
+ * every second as the series grows, so an hour of plan has to cost an hour of samples and
+ * not their square. Assumes samples in time order, which the recorder's 1 Hz series is.
+ */
+export function smoothTrace(
+  samples: readonly PlanChartSample[],
+  windowS: number = TRACE_WINDOW_S,
+): PlanChartSample[] {
+  if (!Number.isFinite(windowS) || windowS <= 0)
+    return samples.map((sample) => ({ t: sample.t, powerW: readingOf(sample) }));
+
+  // Values, not the sample objects: the output is built from these and must not be able
+  // to feed a smoothed watt back into the window it was averaged from.
+  const readings: PowerReading[] = [];
+  for (const sample of samples) {
+    const w = readingOf(sample);
+    if (w !== null) readings.push({ t: sample.t, w });
+  }
+
+  let head = 0;
+  let tail = 0;
+  let total = 0;
+  return samples.map((sample) => {
+    const w = readingOf(sample);
+    if (w === null) return { t: sample.t, powerW: null };
+    // Exclusive at the old end, inclusive at the new, as trailingMeanPower is: a reading
+    // landing exactly now counts, and one exactly a window old has had its turn.
+    while (head < readings.length) {
+      const next = readings[head] as PowerReading;
+      if (next.t > sample.t) break;
+      total += next.w;
+      head += 1;
+    }
+    const since = sample.t - windowS;
+    while (tail < head) {
+      const oldest = readings[tail] as PowerReading;
+      if (oldest.t > since) break;
+      total -= oldest.w;
+      tail += 1;
+    }
+    const count = head - tail;
+    return { t: sample.t, powerW: count === 0 ? w : total / count };
+  });
 }
 
 /**
@@ -246,8 +337,10 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
     }
     run = [];
   };
-  for (const sample of samples) {
-    if (sample.powerW === null || !Number.isFinite(sample.powerW)) {
+  // Smoothed here, at the point of drawing, and nowhere upstream of it: `samples` is the
+  // recorder's own series and is only read. See smoothTrace.
+  for (const sample of smoothTrace(samples)) {
+    if (sample.powerW === null) {
       flushRun();
       continue;
     }

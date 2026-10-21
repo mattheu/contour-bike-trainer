@@ -120,9 +120,9 @@ export function stepRows(workout: WorkoutSnapshot, ftpW: number): StepRow[] {
 }
 
 /**
- * The row to hold in view, by its number, or null once the plan has run out. It is what
- * the panel scrolls to — and because it only changes when the plan advances, which is
- * minutes apart, it is also what stops that scroll firing on every tick.
+ * The row to hold in the middle of the panel, by its number, or null once the plan has run
+ * out. It is what the panel scrolls to — and because it only changes when the plan
+ * advances, which is minutes apart, it is also what stops that scroll firing on every tick.
  */
 export function currentRowNumber(rows: readonly StepRow[]): number | null {
   return rows.find((row) => row.state === 'current')?.number ?? null;
@@ -229,6 +229,39 @@ export function intervalClock(workout: WorkoutSnapshot): Clock {
   const step = currentStep(workout);
   if (step === null) return { value: ABSENT, total: ABSENT };
   return { value: duration(workout.stepRemainingS), total: duration(step.durationS) };
+}
+
+/**
+ * Where the interval countdown turns accent.
+ *
+ * The snapshot's remaining seconds are rounded up — a clock showing 0:00 while the step is
+ * still running lies for its last second — so a readout of 0:10 means ten seconds or fewer
+ * are left, and the figure itself is the threshold rather than one less than it.
+ */
+export const FINAL_SECONDS = 10;
+
+/**
+ * The interval countdown's colour: accent through the last ten seconds of a step, ink for
+ * the rest of it.
+ *
+ * design/DESIGN.md reserves the accent on this screen for the chart, and
+ * design/mockups/animation-guide.html is where the exception comes from — its reference
+ * sequence runs an accent cue through the end of every step, counting the last seconds
+ * down beside the marker. This is that cue moved onto the readout that already counts the
+ * step down, rather than a second countdown appearing beside the first, and widened from
+ * the guide's three seconds to the ten the rider asked for after riding it.
+ *
+ * It is also the one part of a step change that is colour rather than motion, which is
+ * why it is the part that survives prefers-reduced-motion untouched.
+ *
+ * Ink once the plan has run out: there is no step left to be in the last seconds of, and
+ * an accent dash would be a warning about nothing.
+ */
+export function intervalTone(workout: WorkoutSnapshot): 'ink' | 'accent' {
+  if (currentStep(workout) === null) return 'ink';
+  const remaining = workout.stepRemainingS;
+  if (!Number.isFinite(remaining) || remaining < 0) return 'ink';
+  return remaining <= FINAL_SECONDS ? 'accent' : 'ink';
 }
 
 /**

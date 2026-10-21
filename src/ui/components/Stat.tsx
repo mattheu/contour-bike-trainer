@@ -1,3 +1,4 @@
+import { COLOUR_SHIFT } from './motion';
 import { LABEL, MONO } from './styles';
 
 interface StatProps {
@@ -28,7 +29,13 @@ export function Stat({ label, value, total, unit, tone = 'ink', testId }: StatPr
     <div data-testid={testId} className="flex flex-col gap-[4px]">
       <div className={`${LABEL} text-caption`}>{label}</div>
       <div className="flex items-baseline gap-[10px]">
-        <div className={`${MONO} text-stat leading-none tracking-[-0.02em] ${TONES[tone]}`}>
+        {/* The tone crosses over rather than cutting: a reading going stale and a workout's
+            interval countdown going accent in its last ten seconds are both changes of
+            state, and design/DESIGN.md gives a change of state a 0.3 s colour change.
+            motion-reduce makes it a cut — the colour itself is what carries the meaning. */}
+        <div
+          className={`${MONO} text-stat leading-none tracking-[-0.02em] ${TONES[tone]} ${COLOUR_SHIFT}`}
+        >
           {value}
           {total !== undefined && (
             <>

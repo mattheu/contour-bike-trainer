@@ -14,6 +14,8 @@ import {
   ergLabel,
   ERG_MODE_OPTIONS,
   intervalClock,
+  intervalTone,
+  FINAL_SECONDS,
   currentRowNumber,
   hoveredRowNumber,
   powerHero,
@@ -354,6 +356,38 @@ describe('intervalClock', () => {
       value: '—',
       total: '—',
     });
+  });
+});
+
+describe('intervalTone', () => {
+  it('is ink through the body of a step, where the accent belongs to the chart', () => {
+    expect(intervalTone(snapshot({ stepRemainingS: 402 }))).toBe('ink');
+  });
+
+  it('turns accent on the figure that says ten seconds, not the one after it', () => {
+    // The snapshot rounds remaining seconds up, so 10 is the readout saying 0:10 and
+    // ten seconds or fewer actually left.
+    expect(FINAL_SECONDS).toBe(10);
+    expect(intervalTone(snapshot({ stepRemainingS: 11 }))).toBe('ink');
+    expect(intervalTone(snapshot({ stepRemainingS: 10 }))).toBe('accent');
+  });
+
+  it('stays accent down to the rollover', () => {
+    expect(intervalTone(snapshot({ stepRemainingS: 1 }))).toBe('accent');
+    expect(intervalTone(snapshot({ stepRemainingS: 0 }))).toBe('accent');
+  });
+
+  it('goes back to ink when the next step starts, which is the rollover itself', () => {
+    expect(intervalTone(snapshot({ stepIndex: 2, stepRemainingS: 300 }))).toBe('ink');
+  });
+
+  it('warns about nothing once the plan has run out', () => {
+    expect(intervalTone(snapshot({ stepIndex: STEPS.length, stepRemainingS: 0 }))).toBe('ink');
+  });
+
+  it('is ink on a figure that is not a count of seconds at all', () => {
+    expect(intervalTone(snapshot({ stepRemainingS: Number.NaN }))).toBe('ink');
+    expect(intervalTone(snapshot({ stepRemainingS: -5 }))).toBe('ink');
   });
 });
 

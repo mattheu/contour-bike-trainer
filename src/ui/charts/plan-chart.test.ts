@@ -3,7 +3,13 @@ import { DEFAULT_SETTINGS } from '../../storage/settings';
 import { expandWorkout, type ExpandedStep } from '../../workout/expand';
 import { parseWorkout } from '../../workout/parse';
 import { workoutFtp } from '../../workout/runner';
-import { blockForStep, planChartGeometry, type PlanChartSample } from './plan-chart';
+import {
+  TRACE_WINDOW_S,
+  blockForStep,
+  planChartGeometry,
+  smoothTrace,
+  type PlanChartSample,
+} from './plan-chart';
 import { ZONE_WASH_OPACITY } from './plan';
 
 const FTP = 250;
@@ -185,6 +191,132 @@ describe('actual power', () => {
     });
     expect(chart.actualAreaPaths[0]?.endsWith('Z')).toBe(true);
     expect(chart.actualAreaPaths[0]).toContain(`,${String(HEIGHT)}`);
+  });
+});
+
+describe('smoothTrace', () => {
+  /** One reading a second, as the recorder writes them. */
+  const series = (watts: readonly (number | null)[]): PlanChartSample[] =>
+    watts.map((powerW, t) => ({ t, powerW }));
+
+  const watts = (samples: readonly PlanChartSample[]) => samples.map((sample) => sample.powerW);
+
+  it('averages over five seconds, which is longer than the hero reads power over', () => {
+    expect(TRACE_WINDOW_S).toBe(5);
+  });
+
+  it('is the trailing mean of the window ending at each reading', () => {
+    // 100, then 200 from t=1 on. At t=5 the window holds t=1..5, all 200.
+    const smoothed = watts(smoothTrace(series([100, 200, 200, 200, 200, 200])));
+    expect(smoothed[0]).toBeCloseTo(100, 6);
+    expect(smoothed[1]).toBeCloseTo(150, 6);
+    expect(smoothed[4]).toBeCloseTo(180, 6);
+    expect(smoothed[5]).toBeCloseTo(200, 6);
+  });
+
+  it('gives the first reading of a session its own value, rather than withholding one', () => {
+    expect(watts(smoothTrace(series([240])))).toEqual([240]);
+  });
+
+  it('cuts a manual half to something like an ERG one, which is why the window exists', () => {
+    // The author's ride: ERG held to a few watts a second, manual swung by tens.
+    const noisy = Array.from({ length: 300 }, (_, i) => 200 + (i % 2 === 0 ? 70 : -70));
+    const step = (values: readonly (number | null)[]) =>
+      values
+        .slice(1)
+        .map((value, i) => Math.abs((value as number) - (values[i] as number)))
+        .reduce((total, delta) => total + delta, 0) /
+      (values.length - 1);
+    expect(step(noisy)).toBeCloseTo(140, 0);
+    expect(step(watts(smoothTrace(series(noisy))))).toBeLessThan(30);
+  });
+
+  it('keeps a dropout absent, so the line breaks exactly where it broke before', () => {
+    const smoothed = watts(smoothTrace(series([200, 200, null, 200, 200])));
+    expect(smoothed[2]).toBeNull();
+    expect(smoothed.filter((value) => value === null)).toHaveLength(1);
+  });
+
+  it('averages over a dropout shorter than the window rather than across a hole', () => {
+    // t=2 is absent, so t=3 means t=0,1,3 — the readings there are, not an interpolation.
+    const smoothed = watts(smoothTrace(series([300, 300, null, 0])));
+    expect(smoothed[3]).toBeCloseTo(200, 6);
+  });
+
+  it('starts clean after a gap longer than the window, with nothing carried across it', () => {
+    const smoothed = watts(
+      smoothTrace([
+        { t: 0, powerW: 300 },
+        { t: 1, powerW: 300 },
+        { t: 60, powerW: 100 },
+      ]),
+    );
+    expect(smoothed[2]).toBeCloseTo(100, 6);
+  });
+
+  it("leaves the caller's samples untouched: the recording is what gets stored", () => {
+    const recorded = series([100, 200, 300, 400, 500, 600]);
+    const before = JSON.stringify(recorded);
+    const smoothed = smoothTrace(recorded);
+    expect(JSON.stringify(recorded)).toBe(before);
+    expect(smoothed[5]?.powerW).not.toBe(recorded[5]?.powerW);
+    expect(smoothed[0]).not.toBe(recorded[0]);
+  });
+
+  it('holds the clock still: a reading is smoothed in place, never moved along the axis', () => {
+    const recorded = series([100, 200, 300]);
+    expect(smoothTrace(recorded).map((sample) => sample.t)).toEqual([0, 1, 2]);
+  });
+
+  it('smooths nothing at a window of nought, which is the raw trace', () => {
+    expect(watts(smoothTrace(series([100, 200, 300]), 0))).toEqual([100, 200, 300]);
+  });
+});
+
+describe('the drawn trace', () => {
+  it('is the smoothed line, not the raw one', () => {
+    /** Where the second point of a two-sample trace is drawn. */
+    const secondY = (samples: PlanChartSample[]) =>
+      points(geometry([step(600, 60)], { samples }).actualPaths[0] as string)[1]?.y as number;
+
+    const spike = secondY([
+      { t: 0, powerW: 100 },
+      { t: 1, powerW: 300 },
+    ]);
+    // A flat series smooths to itself, so these two are the raw heights of 200 and 300 W.
+    const flat200 = secondY([
+      { t: 0, powerW: 200 },
+      { t: 1, powerW: 200 },
+    ]);
+    const flat300 = secondY([
+      { t: 0, powerW: 300 },
+      { t: 1, powerW: 300 },
+    ]);
+    // The spike is drawn at the mean of the pair, not at the 300 W it actually reached.
+    expect(spike).toBeCloseTo(flat200, 6);
+    expect(spike).toBeGreaterThan(flat300);
+  });
+
+  it('still breaks where the trainer reported nothing', () => {
+    const chart = geometry([step(600, 60)], {
+      samples: [
+        { t: 0, powerW: 150 },
+        { t: 1, powerW: 150 },
+        { t: 2, powerW: null },
+        { t: 3, powerW: 150 },
+        { t: 4, powerW: 150 },
+      ],
+    });
+    expect(chart.actualPaths).toHaveLength(2);
+  });
+
+  it('leaves the marker on the plan, which is what keeps the two from disagreeing', () => {
+    // A trace nowhere near the plan: the marker still sits on the block's top edge.
+    const chart = geometry([step(600, 60), step(600, 90)], {
+      elapsedS: 300,
+      samples: Array.from({ length: 300 }, (_, t) => ({ t, powerW: 400 })),
+    });
+    expect(chart.marker?.y).toBe(points(chart.blocks[0]?.d ?? '')[1]?.y);
   });
 });
 
