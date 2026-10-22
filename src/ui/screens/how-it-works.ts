@@ -7,21 +7,28 @@
  *
  * The pictures live in public/how-it-works/ and are named here beside the words they
  * belong to, so this file stays free of React and the copy can be read and checked
- * without one.
+ * without one. They are named for what they show rather than for the column they sit in,
+ * because the columns have moved once already.
+ *
+ * All three are pictograms in the same hand: a drawing of a screen reads as what the
+ * screen is for, where a photograph of one reads as a photograph. There is no pictogram
+ * of the pairing panel, so Set up takes the bike and the laptop — which is the kit list
+ * above it, drawn.
  */
 
 export interface ColumnImage {
-  /** Served from public/, drawn into a 16:10 frame at 360 px wide. */
+  /** Served from public/, drawn at 2:1 across the full width of the column. */
   src: string;
-  /** Short: the sentences beside the frame already carry what the picture is for. */
+  /** Short: the sentences beside the picture already carry what it is for. */
   alt: string;
 }
 
-export interface ColumnEntry {
-  /** 11 px tracked caps, muted. A step number in Connect, a subject elsewhere. */
-  label: string;
-  sentence: string;
-}
+/**
+ * A label and what sits under it: one sentence, or numbered steps where the order is the
+ * point. A union rather than two optional fields, so an entry cannot be written with both
+ * and silently drop one.
+ */
+export type ColumnEntry = { label: string; sentence: string } | { label: string; steps: string[] };
 
 export interface Column {
   number: string;
@@ -30,12 +37,25 @@ export interface Column {
   entries: ColumnEntry[];
 }
 
+/**
+ * Three columns: what to do before the first ride, what there is to ride, and what the
+ * app is.
+ *
+ * Setting up and connecting are one column rather than two. They are one errand — kit you
+ * either own or do not, and the two minutes of pairing that follow — and splitting them
+ * put a numbered 1-2-3 beside a kit list, which reads as six steps when there are three
+ * things to own and one thing to do.
+ *
+ * The third column is not a step, which is why it is last and why its number is only its
+ * position. Where a rider's rides live, and whether anyone else can see them, is the
+ * question this screen gets asked that the other two columns cannot answer.
+ */
 export const COLUMNS: Column[] = [
   {
     number: '1',
-    title: 'What you need',
+    title: 'Set up',
     image: {
-      src: '/how-it-works/what-you-need.webp',
+      src: '/how-it-works/trainer-and-browser.webp',
       alt: 'A bike on a smart trainer, sending its numbers to a laptop.',
     },
     entries: [
@@ -45,39 +65,42 @@ export const COLUMNS: Column[] = [
           'Any trainer that speaks Bluetooth FTMS: Wahoo KICKR, Core, Snap and most others.',
       },
       {
+        /*
+         * Named rather than implied. Web Bluetooth is Chromium-only: neither Gecko nor
+         * WebKit implements it and both have taken a position against it, so Firefox and
+         * Safari are not "not yet" — and every browser on iOS is WebKit underneath,
+         * which is why Chrome on an iPhone does not help either. SPEC.md makes the same
+         * point a hard constraint rather than a preference.
+         */
         label: 'Browser',
         sentence:
-          'Chrome or Edge on a Mac, Windows or Android device. Web Bluetooth does the pairing; nothing to install.',
+          'Chrome or Edge on a Mac, Windows or Android. Not Firefox, not Safari, and nothing on iOS.',
       },
       {
         label: 'Heart rate · optional',
-        sentence: 'A Bluetooth strap, or an Apple Watch through HeartCast.',
+        sentence: 'A Bluetooth strap, or an Apple Watch via HeartCast.',
+      },
+      {
+        /*
+         * The real order, which matters and is not obvious: there is no connect screen,
+         * so a route or workout has to be open before the panel that pairs even exists.
+         * e2e/connect.spec.ts drives exactly this sequence.
+         */
+        label: 'Connect',
+        steps: [
+          'Power the trainer on and turn the pedals to wake it.',
+          'Choose a route or workout to open the ride.',
+          'Press Settings, then Connect beside each device.',
+        ],
       },
     ],
   },
   {
     number: '2',
-    title: 'Connect',
-    image: {
-      src: '/how-it-works/connect.webp',
-      alt: 'The ride settings panel, with Connect beside Trainer and Heart rate.',
-    },
-    entries: [
-      { label: '1', sentence: 'Power the trainer on and wake it with a pedal stroke.' },
-      { label: '2', sentence: 'Open Profile, then Devices, and press Connect beside Trainer.' },
-      {
-        label: '3',
-        sentence:
-          'Pick the trainer from the browser list, then repeat for heart rate. Contour remembers both and reconnects when they are in range.',
-      },
-    ],
-  },
-  {
-    number: '3',
     title: 'Ride',
     image: {
-      src: '/how-it-works/ride.webp',
-      alt: 'The ride screen, with its readings above the route profile.',
+      src: '/how-it-works/route-ride.webp',
+      alt: 'A ride in progress: power, cadence and heart rate above the route profile and map.',
     },
     entries: [
       {
@@ -90,29 +113,59 @@ export const COLUMNS: Column[] = [
         sentence:
           "Choose a workout and press Start. ERG holds each step's target; pedal and the trainer does the rest.",
       },
-      { label: 'Pause · End', sentence: 'Stop pedalling to pause. End saves the ride to Rides.' },
+    ],
+  },
+  {
+    number: '3',
+    title: 'About',
+    image: {
+      src: '/how-it-works/workout-ride.webp',
+      alt: 'A workout in progress: the interval plan above the list of steps.',
+    },
+    entries: [
+      {
+        /*
+         * "Indoor cycling app" rather than a competitor's name, and rather than "bike
+         * trainer app", which is neither. It is what SPEC.md, the README and DESIGN.md
+         * all call this, and the four nos below say which kind of one without naming
+         * anybody: a screen that defines itself against a rival ages the day the rival
+         * changes.
+         */
+        label: 'Why it exists',
+        sentence:
+          'A simple indoor cycling app: no virtual world, no chat, no group rides, no events. Real routes and structured workouts, and nothing in the way of them.',
+      },
+      {
+        /*
+         * "Today" is doing real work in these two labels. Accounts and a mirror to a
+         * second screen are both on the table — SPEC.md already has the phone mirror in
+         * phase 5 — so the copy says what is true now rather than what will always be
+         * true. It stops short of announcing either: a signed-out screen that sells an
+         * unbuilt feature is how onboarding starts lying.
+         */
+        label: 'Today · in the browser',
+        sentence:
+          'Contour is a browser app and nothing more. There is no account to make, and no ride leaves this machine.',
+      },
+      {
+        /*
+         * Chrome's default storage tier is best-effort: no time limit on it, and in
+         * practice the data goes when the rider clears site data. It can also be evicted
+         * when the disk is nearly full — true, rare, and more words than a column can
+         * carry, so docs/getting-started.md is where that belongs.
+         */
+        label: 'Today · your data',
+        sentence:
+          'Everything is stored in this browser, and Chrome keeps it until you clear the site data. Each library exports to a file and imports back.',
+      },
     ],
   },
 ];
 
-/**
- * The two things worth knowing before signing in that are not a step in the three columns.
- * They sit in the foot together: each is a caveat about the ground the app runs on rather
- * than something the rider does.
- *
- * Storage first, because it is the one a rider would otherwise have to guess at. Every
- * record is in this browser — IndexedDB for the libraries, localStorage for the session —
- * and nothing is sent anywhere, so "how long does it last" is a real question with an
- * answer worth printing. Chrome's default tier is best-effort: there is no time limit on
- * it, and in practice it goes when the rider clears site data. (It can also be evicted
- * when the disk is nearly full, which is true, rare, and more words than this band can
- * carry; docs/getting-started.md is where that belongs.)
- *
- * Then the platform: WebKit does not implement Web Bluetooth, so neither Safari nor any
- * iPhone browser can reach a trainer. SPEC.md makes Chrome the platform for the same
- * reason.
+/*
+ * The foot carried "Safari and iPhone cannot pair a trainer; use them as a second
+ * screen." Both halves have gone: the first is now named in the Browser entry, where
+ * someone checking whether they can use this will actually look for it, and the second
+ * promised the phone mirror, which SPEC.md puts in phase 5. A screen that sells a
+ * feature before it is built is how an onboarding page starts lying.
  */
-export const FOOT_NOTES = [
-  'Everything stays in this browser: no account, no server. Chrome keeps it until you clear the site data, and Rides, Routes and Workouts each export to a file you can import back.',
-  'Safari and iPhone cannot pair a trainer; use them as a second screen.',
-];
