@@ -74,24 +74,31 @@ describe('sortRoutes', () => {
 });
 
 describe('labelRow', () => {
-  it('reads kind then region, which is the order the row draws them in', () => {
-    expect(labelRow('loop', 'Surrey, UK')).toEqual(['Loop', 'Surrey, UK']);
-    expect(labelRow('point_to_point', 'Oisans, France')).toEqual([
-      'Point to point',
-      'Oisans, France',
+  it('reads region then kind, which is the order the row draws them in', () => {
+    // Where a route is is what a rider scans for; the kind qualifies it.
+    expect(labelRow('loop', 'Surrey, UK')).toEqual([
+      { text: 'Surrey, UK', kind: false },
+      { text: 'Loop', kind: true },
     ]);
+  });
+
+  it('marks the kind so its glyph can travel with it rather than lead the line', () => {
+    // The one part the component draws a mark in front of. Which part that is belongs
+    // here with the order, not in the markup.
+    const parts = labelRow('point_to_point', 'Oisans, France');
+    expect(parts.filter((part) => part.kind)).toEqual([{ text: 'Point to point', kind: true }]);
   });
 
   it('names a point-to-point route as plainly as a loop', () => {
     // Both kinds get a word and a mark. Marking loops alone made the other kind read as
     // a route about which nothing was known.
-    expect(labelRow('point_to_point', undefined)).toEqual(['Point to point']);
+    expect(labelRow('point_to_point', undefined)).toEqual([{ text: 'Point to point', kind: true }]);
   });
 
   it('leaves the kind out until the row knows it', () => {
     // Geometry loads per row and the sparkline comes with it; until then the row says
     // where the route is and nothing about its shape.
-    expect(labelRow(null, 'Mallorca, Spain')).toEqual(['Mallorca, Spain']);
+    expect(labelRow(null, 'Mallorca, Spain')).toEqual([{ text: 'Mallorca, Spain', kind: false }]);
   });
 
   it('gives no label row at all to a route with neither', () => {

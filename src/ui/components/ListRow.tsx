@@ -115,7 +115,7 @@ interface ListRowProps {
    */
   metaVariant?: 'label' | 'plain';
   /**
-   * Prose under the meta, in ink body text, wrapped to as many lines as it takes. It is
+   * Prose under the meta, in muted body text, wrapped to as many lines as it takes. It is
    * deliberately not clipped: a description cut off at a third of itself is a worse answer
    * than a taller row, and the column is only about fifty characters wide. The routes list
    * puts a route's own description here.
@@ -188,7 +188,7 @@ export function ListRow({
           </div>
         )}
         {description !== undefined && (
-          <div className="text-label mt-[3px] font-sans">{description}</div>
+          <div className="text-label text-muted mt-[3px] font-sans">{description}</div>
         )}
       </div>
       {cellsOverlay === undefined ? (

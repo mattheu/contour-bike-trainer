@@ -32,13 +32,24 @@ export function sortRoutes(routes: readonly StoredRoute[]): StoredRoute[] {
  * an imported GPX that named no place — and a route with neither gets no label row at all
  * rather than an empty line holding space open.
  *
- * Words only. The kind's glyph belongs to the kind and is drawn from it, not from this.
+ * Region first, then the kind: where a route is is what a rider is scanning for, and the
+ * kind is the qualifier on it.
+ *
+ * Parts rather than words, because the kind's glyph has to travel with the kind's word
+ * rather than lead the line — so the order and which part is marked are decided here, in
+ * one tested place, and the component only draws what it is handed.
  */
-export function labelRow(kind: RouteKind | null, region: string | undefined): string[] {
-  const words: string[] = [];
-  if (kind !== null) words.push(KIND_LABEL[kind]);
-  if (region !== undefined && region.trim() !== '') words.push(region);
-  return words;
+export interface LabelPart {
+  text: string;
+  /** True for the kind, which is drawn with its glyph in front of it. */
+  kind: boolean;
+}
+
+export function labelRow(kind: RouteKind | null, region: string | undefined): LabelPart[] {
+  const parts: LabelPart[] = [];
+  if (region !== undefined && region.trim() !== '') parts.push({ text: region, kind: false });
+  if (kind !== null) parts.push({ text: KIND_LABEL[kind], kind: true });
+  return parts;
 }
 
 /**
