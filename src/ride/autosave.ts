@@ -63,10 +63,12 @@ export async function setLiveRide(
   const current = await sessions.get();
   if (current === null) return null;
 
-  const next: Session =
-    rideId === null
-      ? { mode: current.mode, startedAt: current.startedAt }
-      : { ...current, liveRideId: rideId };
+  // Copied and amended rather than rebuilt from the two fields it knows about: a session
+  // that grows a third would otherwise be quietly stripped of it every time a ride ends.
+  const next: Session = { ...current };
+  if (rideId === null) delete next.liveRideId;
+  else next.liveRideId = rideId;
+
   await sessions.put(next);
   return next;
 }
