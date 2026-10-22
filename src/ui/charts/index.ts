@@ -1,5 +1,17 @@
 export { ElevationProfile } from './ElevationProfile';
 export type { ElevationProfileHandle, ElevationProfileProps } from './ElevationProfile';
+export {
+  DONE_OPACITY,
+  LABEL_GAP_X,
+  LABEL_GAP_Y,
+  LABEL_PLATE_H,
+  LABEL_PLATE_W,
+  RIDER_CLEAR_PX,
+  SUMMIT_CLEAR_PX,
+  ghostLayer,
+  ghostMarks,
+} from './ghosts';
+export type { GhostLabel, GhostLayer, GhostMark, GhostPlacement, GhostProjection } from './ghosts';
 export { PlanChart } from './PlanChart';
 export type { PlanChartProps } from './PlanChart';
 export { planChartGeometry } from './plan-chart';

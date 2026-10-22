@@ -13,6 +13,8 @@ import {
 import { buildRouteGpx } from '../export/route-gpx';
 import { buildTcx, tcxFileName } from '../export/tcx';
 import { bundleWorkoutSources, splitWorkoutDocuments } from '../export/workout-bundle';
+import { GhostTracker, type GhostSelection } from '../ghost/live';
+import type { HistorySlot } from '../ghost/resolve';
 import { Recorder } from '../instrument/recorder';
 import { TimerProbe, visibilityState, watchVisibility } from '../instrument/probe';
 import { summarise } from '../instrument/stats';
@@ -73,7 +75,13 @@ import {
   duplicateSource,
   type SaveResult,
 } from './screens/workout-editor';
-import { experimentStore, rideStore, type RideSnapshot, type WorkoutSnapshot } from './store';
+import {
+  INITIAL_SNAPSHOT,
+  experimentStore,
+  rideStore,
+  type RideSnapshot,
+  type WorkoutSnapshot,
+} from './store';
 import { createWakeLock } from './wake-lock';
 
 /**
@@ -642,6 +650,13 @@ let engine: RideEngine | null = null;
 let recorder: RideRecorder | null = null;
 /** Rebuilt per ride by armRide, so no two rides share a cadence or an in-flight write. */
 let checkpointer: RideCheckpointer | null = null;
+/** The race, for the length of one ride. Null on a workout: nothing to race round. */
+let ghostTracker: GhostTracker | null = null;
+/**
+ * The ride in the picked slot. Session-scoped where the other three slots are settings:
+ * the rides list names one ride to race, and that choice belongs to the ride it starts.
+ */
+let chosenGhostRideId: string | null = null;
 
 /** Riding means not touching the machine for an hour, so the display would otherwise
  * sleep mid-climb. Held only while actually running — a paused ride should be allowed
@@ -786,6 +801,13 @@ function bridge(snapshot: EngineSnapshot): void {
     heartRateBpm: snapshot.heartRateBpm,
     avgPowerW: recorder?.avgPowerW ?? null,
     workout: workoutSnapshot(snapshot.workout),
+    // Recomputed per tick like the other live readings, and derived from the engine's own
+    // elapsed and distance rather than recorded again: the race is a reading of the ride,
+    // not a second record of it.
+    ghosts: ghostTracker?.update({
+      elapsedS: snapshot.elapsedS,
+      distanceM: snapshot.distanceM,
+    }),
   });
 
   if (snapshot.state === 'finished') void saveRide();
@@ -796,6 +818,10 @@ function teardown(): void {
   engineOff = [];
   engine?.dispose();
   engine = null;
+  ghostTracker = null;
+  // The picked slot goes with the ride it was picked for; the three toggles persist.
+  chosenGhostRideId = null;
+  rideStore.update({ ghosts: INITIAL_SNAPSHOT.ghosts });
 }
 
 /**
@@ -879,7 +905,16 @@ function armRide(next: RideEngine, active: RideRecorder): void {
   engine = next;
 }
 
-export async function startRide(routeId: string): Promise<void> {
+/**
+ * How a ride is started with a ghost already in the picked slot: the rides list's Race
+ * button names the ride to race, and the route it was ridden on is the route being
+ * started. Absent means the three resolved slots and nothing else.
+ */
+export interface StartRideOptions {
+  ghostRideId?: string | null;
+}
+
+export async function startRide(routeId: string, options: StartRideOptions = {}): Promise<void> {
   await ready;
   teardown();
   // A ride with no workout is ridden at full scale, which is the only honest default —
@@ -910,17 +945,39 @@ export async function startRide(routeId: string): Promise<void> {
     settings: engineSettings(),
   });
 
-  recorder = new RideRecorder({
+  const startedAt = new Date().toISOString();
+  const active = new RideRecorder({
     routeId,
     routeName: stored?.name ?? null,
     // The geometry the engine is riding, not the figure on the record: the lap counter
     // and the lap splits have to be measuring the same route.
     routeLengthM: geometry.totalDistanceM,
-    startedAt: new Date().toISOString(),
+    startedAt,
     settings: frozenSettings(),
   });
+  recorder = active;
 
-  armRide(next, recorder);
+  armRide(next, active);
+
+  chosenGhostRideId = options.ghostRideId ?? null;
+  const tracker = new GhostTracker({
+    storage,
+    routeId,
+    rideId: active.id,
+    startedAt,
+    routeLengthM: geometry.totalDistanceM,
+    loops: isLoop(geometry),
+    // The recorder's own array, read when a lap of this ride is raced: slicing it beats
+    // waiting for the checkpoint that would otherwise be the only copy.
+    samples: () => active.samples,
+    now: () => Date.now(),
+    selection: ghostSelection(),
+    onFailure: (error) => console.warn(`Could not load that ghost: ${errorMessage(error)}`),
+  });
+  ghostTracker = tracker;
+  // Not awaited: a ride starts whether or not its history has been read yet, and the
+  // first ghosts arrive a moment later the same way a chart's geometry does.
+  void tracker.start();
 
   rideStore.update({
     routeId,
@@ -1150,6 +1207,52 @@ export async function setTrainerDifficulty(percent: number): Promise<void> {
   rideStore.update({ trainerDifficulty: value });
   engine?.setTrainerDifficulty(value);
   await storage.settings.put({ trainerDifficulty: value });
+}
+
+/** Which Settings key holds each resolved slot, so the two can never drift apart. */
+const GHOST_SETTING: Record<HistorySlot, 'ghostBest' | 'ghostYear' | 'ghostLast'> = {
+  best: 'ghostBest',
+  year: 'ghostYear',
+  last: 'ghostLast',
+};
+
+/**
+ * What the ride settings panel reads: the three persisted toggles, and the ride the
+ * picked slot is racing. One shape, so a panel never assembles the selection itself.
+ */
+export function ghostSelection(): GhostSelection {
+  return {
+    best: settings[GHOST_SETTING.best],
+    year: settings[GHOST_SETTING.year],
+    last: settings[GHOST_SETTING.last],
+    chosenRideId: chosenGhostRideId,
+  };
+}
+
+/**
+ * Switches one of the three resolved slots on or off. Persists, so it is a preference
+ * rather than something the rider sets again every ride, and takes effect on the ride in
+ * progress at once — a toggle that waited for the start line would read as broken.
+ */
+export async function setGhostSlot(slot: HistorySlot, on: boolean): Promise<void> {
+  const key = GHOST_SETTING[slot];
+  if (settings[key] === on) return;
+  settings = { ...settings, [key]: on };
+  ghostTracker?.setSelection(ghostSelection());
+  await storage.settings.put({ [key]: on });
+}
+
+/**
+ * Puts a ride in the picked slot, or empties it. Not persisted and not awaited: it names
+ * one ride for one session, and the ride it names is already in storage.
+ *
+ * The rides list starts a ride and picks in one move through startRide; this is the same
+ * choice made from inside a ride that is already running.
+ */
+export function setChosenGhostRide(rideId: string | null): void {
+  if (chosenGhostRideId === rideId) return;
+  chosenGhostRideId = rideId;
+  ghostTracker?.setSelection(ghostSelection());
 }
 
 /**

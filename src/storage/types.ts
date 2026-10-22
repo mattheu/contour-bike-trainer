@@ -222,6 +222,15 @@ export interface Settings {
   crr: number;
   gradeLookaheadM: number;
   units: Units;
+  /**
+   * Which of the three ghosts resolved from your own history ride with you: Best, Best
+   * this year, Most recent. A preference rather than session state, so a rider who races
+   * their best lap does so on every route until they say otherwise. The picked slot is
+   * deliberately absent — it names one ride, which is a decision about one ride.
+   */
+  ghostBest: boolean;
+  ghostYear: boolean;
+  ghostLast: boolean;
 }
 
 /**

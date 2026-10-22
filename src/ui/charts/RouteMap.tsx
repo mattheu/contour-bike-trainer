@@ -8,8 +8,17 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import {
+  SLOT_ORDER,
+  SLOT_SYMBOL,
+  SYMBOL_BOX,
+  SYMBOL_STROKE_WIDTH,
+  type GhostSlot,
+} from '../../ghost/slots';
+import type { ActiveGhost } from '../../ghost/state';
 import type { Route } from '../../route/types';
 import type { PlanePoint } from '../projection';
+import { ghostMarks } from './ghosts';
 import { HOVER_SNAP_PX, routeMapGeometry, type MapZoom } from './map';
 
 export const MAP_WIDTH = 320;
@@ -23,8 +32,12 @@ const START_R = 4;
 const HOVER_ARM = 5;
 
 export interface RouteMapHandle {
-  /** Called at 1 Hz. Pans the trace, extends the ridden prefix and moves the dot. */
-  update(distanceM: number): void;
+  /**
+   * Called at 1 Hz. Pans the trace, extends the ridden prefix, moves the dot and places
+   * the ghosts. Ghosts come through the handle rather than as a prop for the reason the
+   * rider's distance does: they move every tick, and this SVG is not rebuilt for a tick.
+   */
+  update(distanceM: number, ghosts?: readonly ActiveGhost[]): void;
   /**
    * Puts the hover marker at a distance along the route, or clears it. Driven by the
    * elevation profile, which is where the pointer actually is; the map only draws it.
@@ -86,6 +99,14 @@ export function RouteMap({
    * the pixel is then the only part of the hover that has not changed.
    */
   const pointerPx = useRef<PlanePoint | null>(null);
+  const ghostNodes = useRef<Record<GhostSlot, SVGGElement | null>>(
+    Object.fromEntries(SLOT_ORDER.map((slot) => [slot, null])) as Record<
+      GhostSlot,
+      SVGGElement | null
+    >,
+  );
+  /** The last set drawn, so a repaint after a resize or a zoom change redraws them too. */
+  const ghosts = useRef<readonly ActiveGhost[]>([]);
 
   const paintHover = useMemo(() => {
     return (): void => {
@@ -126,8 +147,30 @@ export function RouteMap({
     };
   }, [geometry, paintHover, onHover]);
 
+  const paintGhosts = useMemo(() => {
+    return (): void => {
+      // Placed in the frame the rider is holding, exactly as the hover marker is: on the
+      // 5 km view the pan is the rider, so a ghost positioned any other way would be drawn
+      // in the middle of the map.
+      const marks = ghostMarks(ghosts.current, (distanceM) =>
+        geometry.screenFor(distanceM, pannedM.current),
+      );
+      const drawn = new Set<GhostSlot>();
+      for (const mark of marks) {
+        drawn.add(mark.slot);
+        const node = ghostNodes.current[mark.slot];
+        node?.setAttribute('transform', `translate(${String(mark.x)},${String(mark.y)})`);
+        node?.setAttribute('visibility', 'visible');
+      }
+      for (const slot of SLOT_ORDER) {
+        if (!drawn.has(slot)) ghostNodes.current[slot]?.setAttribute('visibility', 'hidden');
+      }
+    };
+  }, [geometry]);
+
   const paint = useMemo(() => {
-    return (distance: number): void => {
+    return (distance: number, next?: readonly ActiveGhost[]): void => {
+      if (next !== undefined) ghosts.current = next;
       pannedM.current = distance;
       traceGroup.current?.setAttribute('transform', geometry.transform(distance));
       ridden.current?.setAttribute('d', geometry.riddenPath(distance));
@@ -142,8 +185,9 @@ export function RouteMap({
       // the question is asked again rather than the old answer moved.
       trackPointer();
       paintHover();
+      paintGhosts();
     };
-  }, [geometry, paintHover, trackPointer]);
+  }, [geometry, paintGhosts, paintHover, trackPointer]);
 
   const hover = useMemo(() => {
     return (distance: number | null): void => {
@@ -223,6 +267,28 @@ export function RouteMap({
         <line x1={-HOVER_ARM} y1={0} x2={HOVER_ARM} y2={0} />
         <line x1={0} y1={-HOVER_ARM} x2={0} y2={HOVER_ARM} />
       </g>
+      {/* Under the rider's dot and halo, for the reason the hover cross is: the rider's
+          position is the one that matters. Symbols only and no gaps — the map answers
+          where, and the profile answers by how much. DESIGN.md > Ghosts. */}
+      {SLOT_ORDER.map((slot) => (
+        <g
+          key={slot}
+          ref={(node) => {
+            ghostNodes.current[slot] = node;
+          }}
+          data-testid={`map-ghost-${slot}`}
+          visibility="hidden"
+        >
+          <path
+            d={SLOT_SYMBOL[slot].d}
+            transform={`translate(${String(-SYMBOL_BOX / 2)},${String(-SYMBOL_BOX / 2)})`}
+            fill="var(--color-ground)"
+            stroke="var(--color-muted)"
+            strokeWidth={SYMBOL_STROKE_WIDTH}
+            strokeLinejoin="round"
+          />
+        </g>
+      ))}
       <circle
         ref={rider}
         data-testid="map-rider"

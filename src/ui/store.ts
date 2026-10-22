@@ -1,4 +1,5 @@
 import type { ConnectionState } from '../ble/types';
+import type { ActiveGhost } from '../ghost/state';
 import type { VisibilityState } from '../instrument/probe';
 import type { Summary } from '../instrument/stats';
 import type { AlertState, RideState } from '../ride/types';
@@ -122,6 +123,13 @@ export interface RideSnapshot {
   /** The recorder's own 1 Hz series, republished as it grows. The power strip reads it
    * rather than rebuilding a series from these snapshots. */
   samples: readonly RideSample[];
+  /**
+   * Every ghost in the race, resolved for this instant: position, gap and whether it has
+   * finished. A live reading like the gradient, recomputed per tick rather than left for
+   * three renderers to work out separately — the profile, the map and the key band have
+   * to agree about where a ghost is and whether the race is still on.
+   */
+  ghosts: readonly ActiveGhost[];
   /** The id the ride was stored under, whether the rider ended it or the route ran out.
    * Null until the save lands, so the summary never has to guess which ride it wants. */
   savedRideId: string | null;
@@ -164,6 +172,7 @@ const INITIAL: RideSnapshot = {
   workout: null,
 
   samples: [],
+  ghosts: [],
   savedRideId: null,
 };
 

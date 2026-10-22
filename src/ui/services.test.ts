@@ -134,3 +134,125 @@ describe('booting after a crash mid-ride', () => {
     expect(services.currentSession()).toEqual(SESSION);
   });
 });
+
+describe('ghosts during a ride', () => {
+  /** A previous ride of the same route, with its series, as storage would hold it. */
+  async function seedGhostRide(
+    services: Awaited<ReturnType<typeof boot>>['services'],
+    rideId: string,
+  ) {
+    const [route] = await services.storage.routes.list();
+    const lengthM = route!.totalDistanceM;
+    const durationS = 3600;
+    const samples = [];
+    for (let t = 0; t <= durationS; t += 60) {
+      samples.push({
+        t,
+        distanceM: (lengthM * t) / durationS,
+        speedKmh: 20,
+        powerW: 180,
+        cadenceRpm: 85,
+        heartRateBpm: 140,
+        lat: null,
+        lon: null,
+        eleM: null,
+      });
+    }
+
+    await services.storage.rides.put({
+      id: rideId,
+      updatedAt: '2026-10-01T09:00:00.000Z',
+      routeId: route!.id,
+      routeName: route!.name,
+      workoutId: null,
+      workoutName: null,
+      startedAt: '2026-10-01T09:00:00.000Z',
+      elapsedS: durationS,
+      pausedS: 0,
+      distanceM: lengthM,
+      ascentM: 100,
+      avgPowerW: 180,
+      avgHeartRateBpm: 140,
+      tss: 60,
+      lapSplits: [durationS],
+      settings: {
+        trainerDifficulty: 50,
+        workoutScalePct: 100,
+        ergMode: 'erg' as const,
+        ftp: 200,
+        hrMax: 190,
+        riderMassKg: 75,
+        bikeMassKg: 9,
+      },
+    });
+    await services.storage.rideSamples.put({
+      id: rideId,
+      updatedAt: '2026-10-01T09:00:00.000Z',
+      samples,
+    });
+    return route!;
+  }
+
+  it('puts a stored lap of the route on the snapshot and keeps it moving', async () => {
+    const { services, rideStore } = await boot();
+    const route = await seedGhostRide(services, 'last-month');
+
+    vi.useFakeTimers();
+    await services.connectTrainer();
+    await services.startRide(route.id);
+    services.beginRide();
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    const [ghost] = rideStore.getSnapshot().ghosts;
+    expect(ghost?.slot).toBe('best');
+    expect(ghost?.name).toBe('Best');
+    expect(ghost?.done).toBe(false);
+    expect(ghost?.gapLabel).toMatch(/^[+−]\d+:\d{2}$/);
+
+    const wasAt = ghost?.distanceM ?? 0;
+    await vi.advanceTimersByTimeAsync(20_000);
+    expect(rideStore.getSnapshot().ghosts[0]?.distanceM).toBeGreaterThan(wasAt);
+  });
+
+  it('takes a slot off the road the moment the rider switches it off', async () => {
+    const { services, rideStore } = await boot();
+    const route = await seedGhostRide(services, 'last-month');
+
+    vi.useFakeTimers();
+    await services.connectTrainer();
+    await services.startRide(route.id);
+    services.beginRide();
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(rideStore.getSnapshot().ghosts).toHaveLength(1);
+
+    await services.setGhostSlot('best', false);
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(rideStore.getSnapshot().ghosts).toEqual([]);
+    expect(services.ghostSelection().best).toBe(false);
+    // And it is a preference, so it is on the blob rather than only in memory.
+    expect((await services.storage.settings.get()).ghostBest).toBe(false);
+  });
+
+  it('races the ride the rides list named, in the picked slot', async () => {
+    const { services, rideStore } = await boot();
+    const route = await seedGhostRide(services, 'the-one-to-beat');
+
+    vi.useFakeTimers();
+    await services.connectTrainer();
+    await services.startRide(route.id, { ghostRideId: 'the-one-to-beat' });
+    services.beginRide();
+    await vi.advanceTimersByTimeAsync(10_000);
+
+    // One ride, so Best and the picked slot are the same lap seen twice: the band reads
+    // slot order, and the diamond is named after the day it was ridden.
+    const { ghosts } = rideStore.getSnapshot();
+    expect(ghosts.map((ghost) => ghost.slot)).toEqual(['best', 'chosen']);
+    expect(ghosts[1]?.name).toBe('1 Oct');
+
+    // The picked slot belongs to the ride, so the next one starts with it empty.
+    await services.endRide();
+    await services.startRide(route.id);
+    expect(services.ghostSelection().chosenRideId).toBeNull();
+  });
+});

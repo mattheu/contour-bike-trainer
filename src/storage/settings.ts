@@ -18,6 +18,11 @@ export const DEFAULT_SETTINGS: Settings = {
   crr: 0.004,
   gradeLookaheadM: 30,
   units: 'metric',
+  // All three on: a rider who has ridden a route before has something to race, and a
+  // feature that has to be found in a panel before it does anything is one nobody meets.
+  ghostBest: true,
+  ghostYear: true,
+  ghostLast: true,
 };
 
 const CONTROL_MODES: ControlMode[] = ['erg', 'simulation'];
@@ -38,6 +43,10 @@ function num(value: unknown): unknown {
 function nullableNum(value: unknown): unknown {
   if (value === null) return null;
   return num(value);
+}
+
+function bool(value: unknown): unknown {
+  return typeof value === 'boolean' ? value : undefined;
 }
 
 function oneOf<T extends string>(allowed: T[]): Reader {
@@ -64,6 +73,9 @@ const READERS: { [K in keyof Settings]: Reader } = {
   crr: num,
   gradeLookaheadM: num,
   units: oneOf(UNITS),
+  ghostBest: bool,
+  ghostYear: bool,
+  ghostLast: bool,
 };
 
 const KEYS = Object.keys(READERS) as (keyof Settings)[];
