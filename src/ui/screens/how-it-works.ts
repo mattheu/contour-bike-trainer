@@ -63,14 +63,14 @@ export const COLUMNS: Column[] = [
         /*
          * "Indoor cycling app" rather than a competitor's name, and rather than "bike
          * trainer app", which is neither. It is what SPEC.md, the README and DESIGN.md
-         * all call this. What it does leads and the four nos follow, so the first thing
-         * a reader gets is the thing they would come for rather than a list of what is
+         * all call this. What it does leads and the nos follow, so the first thing a
+         * reader gets is the thing they would come for rather than a list of what is
          * missing — and the nos name no one: a screen that defines itself against a
          * rival ages the day the rival changes.
          */
         label: 'Why it exists',
         sentence:
-          'A simple indoor cycling app: real routes and structured workouts, but nothing in the way of them. No virtual world, no chat, no group rides, no events.',
+          'A simple indoor cycling app: real routes and structured workouts, but nothing in the way of them. No subscription, no virtual world, no chat.',
       },
       {
         /*
