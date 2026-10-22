@@ -220,6 +220,16 @@ export type SessionMode = 'guest';
 export interface Session {
   mode: SessionMode;
   startedAt: string; // ISO 8601
+  /**
+   * The ride autosave is part-way through writing, absent when none is. Set when a ride's
+   * first checkpoint lands and cleared when it is saved or discarded, so a launch that
+   * finds it set is one the previous launch did not survive — the ride is already in the
+   * history, truncated at its last checkpoint.
+   *
+   * Here rather than in Settings for the same reason mode and startedAt are: this is
+   * state belonging to the install, not a preference belonging to the rider.
+   */
+  liveRideId?: string;
 }
 
 /**

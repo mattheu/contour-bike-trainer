@@ -21,7 +21,13 @@ export function parseSession(raw: unknown): Session | null {
   const stored = raw as Record<string, unknown>;
   if (stored.mode !== 'guest') return null;
   if (typeof stored.startedAt !== 'string' || stored.startedAt === '') return null;
-  return { mode: stored.mode, startedAt: stored.startedAt };
+  const session: Session = { mode: stored.mode, startedAt: stored.startedAt };
+  // Unreadable means no ride was left part-written, which is the safe answer either way:
+  // boot only ever clears the marker, and a ride it fails to clear is still a ride.
+  if (typeof stored.liveRideId === 'string' && stored.liveRideId !== '') {
+    session.liveRideId = stored.liveRideId;
+  }
+  return session;
 }
 
 /** The question every caller actually asks, named once so nothing re-states it. */

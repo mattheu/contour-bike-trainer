@@ -17,6 +17,7 @@ import { Recorder } from '../instrument/recorder';
 import { TimerProbe, visibilityState, watchVisibility } from '../instrument/probe';
 import { summarise } from '../instrument/stats';
 import { VisibilityTracker } from '../instrument/verdict';
+import { RideCheckpointer, setLiveRide, writeRide } from '../ride/autosave';
 import { systemClock } from '../ride/clock';
 import { RideEngine, type EngineSnapshot } from '../ride/engine';
 import { RideRecorder } from '../ride/recorder';
@@ -39,7 +40,6 @@ import { guestSession, parseSession } from '../storage/session';
 import { DEFAULT_SETTINGS } from '../storage/settings';
 import {
   DEFAULT_ERG_MODE,
-  DEFAULT_WORKOUT_SCALE_PCT,
   createId,
   type ErgMode,
   type Ride,
@@ -442,6 +442,12 @@ export const ready: Promise<void> = (async () => {
     if (seededSession !== null) await storage.session.put(seededSession);
     session = await storage.session.get();
 
+    // A marker still set is a ride the last launch was writing when it died. There is
+    // nothing to recover: autosave has already put the ride in the history, truncated at
+    // its last checkpoint, so clearing the marker is the whole of it. Picking the ride
+    // back up where it stopped is a different feature and a much larger one.
+    if (session?.liveRideId !== undefined) session = await setLiveRide(storage.session, null);
+
     await seedRoutes(storage.routes);
     const seeded = await seedWorkouts(storage.workouts);
 
@@ -627,6 +633,8 @@ export async function disconnectHrm(): Promise<void> {
 
 let engine: RideEngine | null = null;
 let recorder: RideRecorder | null = null;
+/** Rebuilt per ride by armRide, so no two rides share a cadence or an in-flight write. */
+let checkpointer: RideCheckpointer | null = null;
 
 /** Riding means not touching the machine for an hour, so the display would otherwise
  * sleep mid-climb. Held only while actually running — a paused ride should be allowed
@@ -831,19 +839,33 @@ function frozenSettings(ftp: number = settings.ftp) {
 }
 
 /** Everything a new ride resets, whether it has a route under it or a workout in it. */
-function armRide(next: RideEngine): void {
+function armRide(next: RideEngine, active: RideRecorder): void {
   saved = null;
   powerReadings = [];
   displayGradePercent = null;
   lastBridgeAtMs = 0;
   publishedWorkout = null;
 
+  const checkpoint = new RideCheckpointer({
+    storage,
+    recorder: active,
+    progress: () => next.getSnapshot(),
+    // Reported rather than shown, like a BLE packet that would not parse: the rider is on
+    // the bike, an alert strip mid-climb helps nobody, and the next checkpoint is thirty
+    // seconds away anyway.
+    onFailure: (error) => console.warn(`Could not checkpoint this ride: ${errorMessage(error)}`),
+  });
+  checkpointer = checkpoint;
+
   // The recorder owns the 1 Hz series; publishing a copy of it per second is what lets
   // the power strip read the real samples rather than rebuild them from snapshots.
   engineOff.push(
     next.onSample((sample) => {
-      recorder?.add(sample);
-      if (recorder !== null) rideStore.update({ samples: [...recorder.samples] });
+      active.add(sample);
+      rideStore.update({ samples: [...active.samples] });
+      // Ride time, not wall clock: the checkpoint cadence is driven by the samples that
+      // reach it, so a paused ride writes nothing.
+      checkpoint.onSample(sample.t);
     }),
   );
   engineOff.push(next.subscribe(bridge));
@@ -888,7 +910,7 @@ export async function startRide(routeId: string): Promise<void> {
     settings: frozenSettings(),
   });
 
-  armRide(next);
+  armRide(next, recorder);
 
   rideStore.update({
     routeId,
@@ -963,7 +985,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
     settings: frozenSettings(ftp),
   });
 
-  armRide(next);
+  armRide(next, recorder);
 
   rideStore.update({
     routeId: null,
@@ -1025,6 +1047,7 @@ export type EndRideOutcome =
 export async function endRide(): Promise<EndRideOutcome> {
   if (nothingRecorded()) {
     engine?.end();
+    await discardCheckpoints();
     return { status: 'discarded' };
   }
   engine?.end();
@@ -1041,6 +1064,38 @@ function nothingRecorded(): boolean {
   const snapshot = engine?.getSnapshot();
   if (snapshot === undefined) return true;
   return snapshot.elapsedS <= 0;
+}
+
+/**
+ * Takes a discarded ride back out of the history, where autosave had already put it. The
+ * two clocks disagreeing is what makes this reachable at all — the engine's says nothing
+ * was ridden, the samples say thirty seconds were — and without it the rider is left with
+ * a ride they were told had been thrown away.
+ *
+ * Deleting the Ride takes its samples with it; see CascadingRideRepository.
+ */
+async function discardCheckpoints(): Promise<void> {
+  if (checkpointer?.written !== true || recorder === null) return;
+  try {
+    await storage.rides.delete(recorder.id);
+  } catch (error) {
+    console.warn(`Could not discard that ride: ${errorMessage(error)}`);
+  }
+  await clearLiveRide();
+}
+
+/**
+ * Stops the next launch reading the last ride as a crash. Non-fatal on its own: by the
+ * time this runs the ride is either saved or gone, and all a marker left behind costs is
+ * one pointless clear at boot.
+ */
+async function clearLiveRide(): Promise<void> {
+  try {
+    const next = await setLiveRide(storage.session, null);
+    if (next !== null) session = next;
+  } catch (error) {
+    console.warn(`Could not clear the live-ride marker: ${errorMessage(error)}`);
+  }
 }
 
 /**
@@ -1061,25 +1116,20 @@ async function persistRide(): Promise<string | null> {
   const activeRecorder = recorder;
   if (active === null || activeRecorder === null) return null;
 
-  const snapshot = active.getSnapshot();
-  const { ride, samples } = activeRecorder.build({
-    pausedS: snapshot.pausedS,
-    // Taken from the engine as the ride ended rather than from what it started with: the
-    // rider settled somewhere, and that is what the session was.
-    workoutScalePct: snapshot.workout?.scalePct ?? DEFAULT_WORKOUT_SCALE_PCT,
-    // Likewise, and from the engine for the same reason: the mode is switchable mid-ride,
-    // so what the session was is what it was when it ended.
-    ergMode: snapshot.workout?.ergMode ?? DEFAULT_ERG_MODE,
-  });
-
+  // The same write the checkpoints have been making all ride, so the ride the rider ends
+  // up with and the one a crash would have left cannot differ in shape.
+  let rideId: string;
   try {
-    await storage.rides.put(ride);
-    await storage.rideSamples.put(samples);
+    rideId = await writeRide(storage, activeRecorder, active.getSnapshot());
   } catch (error) {
     fault(`Could not save that ride: ${errorMessage(error)}`);
     return null;
   }
-  return ride.id;
+
+  // After the ride is safely down, and deliberately not inside the try: a ride that is
+  // written is saved, whatever the marker then does.
+  await clearLiveRide();
+  return rideId;
 }
 
 // --- settings actions ---------------------------------------------------------
