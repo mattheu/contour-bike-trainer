@@ -638,15 +638,33 @@ Position comes from interpolating a sample's `distanceM` at your `elapsedS`. Bot
 
 **The gap is read in seconds, not metres.** "12 s up" means something; "180 m up" means nothing without knowing the gradient. It is the same samples read the other way: when did the ghost reach the distance you are at now.
 
+### On a loop the clock is the lap
+
+**A ghost on a loop is always lap-relative.** Your `elapsedS` is cumulative across laps, so on lap three at 42 minutes "where the ghost was at 42 minutes" asks about a lap that lasted nine. Both of you therefore run on lap time: the ghost restarts at the line each time you cross it, and the gap resets with it. "12 s up" means up on *this* lap.
+
+That falls out of best being a lap rather than a ride, and it is also the better ride. A single race decided by minute ten becomes a fresh race every lap, which is what laps are for.
+
+**The lap you are chasing can come from the ride you are on.** Put in a blinder on lap two and lap three races lap two. The current ride's samples are already in memory and its lap boundaries already fire, so this costs a comparison rather than a query — and it is the honest reading of "fastest lap", which has no reason to exclude the last nine minutes.
+
+**The ghost is chosen at the line and never changes mid-lap.** A swap part-way through would move the gap by a step the rider did not ride. So each crossing re-asks which lap is fastest, and that lap is raced for the next one.
+
 ### Choosing one
 
-In the ride settings panel, which already opens over a running ride. Three slots, filled top down, and **no ride appears twice** — a picker showing one ride under two labels looks broken:
+In the settings panel — the one that already holds the trainer connection, reachable before a ride and over a running one. One place rather than two, so there is nothing to learn twice.
 
-1. **Best** — the fastest you have covered this route. The target.
-2. **Best, 12 months** — the fastest of the last 365 days. If that is the same ride as Best, the next fastest within the window instead.
-3. **Most recent.** If that is already shown, the next most recent.
+Three fixed slots, each toggled on or off independently, and **no ride appears twice** — a picker showing one ride under two labels looks broken:
 
-A slot with no candidate of its own falls through to the next unused ride, newest first, so three slots fill whenever three rides exist.
+| Slot | Shape | What it is |
+| --- | --- | --- |
+| **Best** | Triangle | The fastest you have covered this route. The target. |
+| **Best, 12 months** | Square | The fastest of the last 365 days. Where that is the same ride as Best, the next fastest inside the window. |
+| **Most recent** | Star | Your last ride here. Where that is already shown, the next most recent. |
+
+**The shape belongs to the slot, not to the ride.** A triangle is always your best, on every route, in every session. That is what lets three ghosts share a screen without a legend, and it is why a shape has to mean one thing forever.
+
+**An unfillable slot stays empty.** No falling through to the next unused ride — a square that is not actually your best of the year would spend the shape's meaning to avoid an empty row, and the shape is worth more. A first ride on a route offers no slots at all.
+
+**Add, change or remove a ghost at any point, including mid-ride.** Loading one costs a read and a slice, and a ghost loaded on lap three simply appears at its lap-relative position, which is where it would have been all along. There was a case for locking the choice at the start; it buys nothing, because nothing downstream depends on the selection having been stable.
 
 **Rolling 365 days, not the calendar year.** The slot exists to say where your form is now when your all-time best is old, and form is a rolling thing — a calendar year implies that your best on 31 December and your best on 1 January are different questions, when the only thing that changed was the date. It is labelled "12 months" rather than "this year" for the same reason: the shorter phrase promises a calendar this does not use.
 
@@ -662,15 +680,21 @@ One definition rather than two, and it is forced rather than tidy: on a loop, "f
 
 **A ride that never completed a route length cannot be best**, because there is no comparable time. It can still be raced individually.
 
+**The ride in progress is a candidate like any other**, from the moment it completes its first lap. Nothing distinguishes a lap ridden ten minutes ago from one ridden last March except that the recent one is not in storage yet.
+
 ### Partial rides race fine
 
 A ride that stopped early is a legitimate ghost: your climb-then-quit is still something to beat up the climb. The ghost ends where that ride ended — **marked where it stopped, then faded out**, rather than a dot that blinks away unexplained.
+
+**A ghost that finishes ahead of you sits at the line and stays there.** No fade: it did not give up, it won, and that is the one moment the rider most wants to see where it is. Fading is reserved for the ride that stopped — the two endings have to look different or the mark says nothing.
 
 ### Drawing it
 
 Muted, on **both the profile and the map**. The profile is where a gap reads as time; the map is where position reads on a loop, and it already draws a rider dot. Accent stays the rider's.
 
-**One ghost, modelled as a collection of one.** Racing your best self, your best of this year and a friend at once is a real want and the data supports it — three positions on one clock. What it needs is a readout that does not become three numbers, which is a design problem for the day it arrives. Build the list now so that day is additive, and differentiate by **shape** when it comes, because tone is already spoken for.
+**Each ghost carries its own gap, set just above its marker on the profile.** This is what makes three ghosts legible rather than three numbers competing for one slot: the figure sits where the thing it describes is, moves with it, and needs no legend to say which is which. It also means the readout costs no fixed space on a screen with none going spare — no ghosts, no numbers, and nothing shifts when one is loaded mid-ride. Design is mocking this up.
+
+**Up to three at once**, which the two decisions above together make ordinary rather than ambitious: a gap that travels with its marker removes the readout problem, and a shape bound permanently to its slot removes the identification one. Tone stays spoken for by the rider's accent, so shape does the work.
 
 ### Where lap times live
 
