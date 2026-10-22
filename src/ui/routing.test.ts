@@ -115,14 +115,18 @@ describe('round trip', () => {
 });
 
 describe('resolve', () => {
-  it('sends an unknown hash and the two signed-out screens to the routes list', () => {
+  it('sends an unknown hash and the login screen to the routes list', () => {
     expect(resolve(null, NOTHING_RIDDEN)).toEqual({ name: 'routes' });
     expect(resolve({ name: 'login' }, NOTHING_RIDDEN)).toEqual({ name: 'routes' });
-    expect(resolve({ name: 'how-it-works' }, NOTHING_RIDDEN)).toEqual({ name: 'routes' });
+  });
+
+  it('leaves How it works alone, which a signed-in rider can reach from the profile', () => {
+    expect(resolve({ name: 'how-it-works' }, NOTHING_RIDDEN)).toEqual({ name: 'how-it-works' });
   });
 
   it('leaves every screen that stands on its own alone', () => {
     const standalone: Location[] = [
+      { name: 'how-it-works' },
       { name: 'routes' },
       { name: 'workouts' },
       { name: 'rides' },

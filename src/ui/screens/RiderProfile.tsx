@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '../components/Button';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { LABEL, MONO } from '../components/styles';
 import {
@@ -17,6 +18,13 @@ interface RiderProfileProps {
   profile: Profile;
   /** One field at a time, merged into the stored blob by the settings repository. */
   onChange: (patch: Partial<Profile>) => void;
+  /**
+   * Opens How it works. It lives here because this panel is the only thing reachable
+   * from every list screen, and because the screen is reference once you are signed in —
+   * what a trainer has to speak, what the browser has to be, how pairing goes — which is
+   * the kind of thing a rider goes looking for in settings rather than on a tab.
+   */
+  onHowItWorks: () => void;
   onClose: () => void;
 }
 
@@ -44,7 +52,7 @@ function draftsFrom(profile: Profile): Drafts {
  * a time has nothing to batch, and a Save button would only invent a state where what is
  * on the glass and what is stored disagree.
  */
-export function RiderProfile({ profile, onChange, onClose }: RiderProfileProps) {
+export function RiderProfile({ profile, onChange, onHowItWorks, onClose }: RiderProfileProps) {
   // Seeded once. The panel owns the draft text from here, so a re-render upstream cannot
   // take half-typed characters out of the field. Clamped on the way in because a blob
   // written by an older build can still hold an FTP the zones would divide by.
@@ -121,6 +129,11 @@ export function RiderProfile({ profile, onChange, onClose }: RiderProfileProps) 
       <div className="text-caption text-muted font-sans">
         Rides already recorded keep the FTP, maximum heart rate and weights they were ridden with,
         so changing these does not re-zone your history.
+      </div>
+      {/* Grey: this leaves the panel rather than committing anything in it, and DESIGN.md
+          keeps the ink tone for the one action that does. */}
+      <div className="self-start">
+        <Button onClick={onHowItWorks}>How it works</Button>
       </div>
     </SettingsPanel>
   );

@@ -110,7 +110,11 @@ function SessionGate() {
 
   if (session === null) return <Loading />;
   if (session === 'none') {
-    return signedOut.name === 'how-it-works' ? <HowItWorks /> : <Login onStart={start} />;
+    return signedOut.name === 'how-it-works' ? (
+      <HowItWorks backTo={{ name: 'login' }} start={{ name: 'login' }} />
+    ) : (
+      <Login onStart={start} />
+    );
   }
   return <RideApp />;
 }
@@ -522,9 +526,24 @@ function RideApp() {
       <RiderProfile
         profile={settings}
         onChange={(patch) => void services.updateRiderProfile(patch)}
+        onHowItWorks={() => {
+          // Closed first: the panel is this component's state, not the screen's, so it
+          // would otherwise stay open over the page the rider just asked to read.
+          closeProfile();
+          // go rather than navigate: navigate takes the three list tabs, and this is not
+          // one of them.
+          go({ name: 'how-it-works' });
+        }}
         onClose={closeProfile}
       />
     ) : null;
+
+  /**
+   * Reference, not a step: reached from the profile panel, and Back returns to the list
+   * the rider came from by way of the routes screen. No Start — they have already pressed
+   * it, which is how they got here.
+   */
+  if (screen.name === 'how-it-works') return <HowItWorks backTo={{ name: 'routes' }} />;
 
   if (screen.name === 'workouts' || screen.name === 'workout') {
     if (workouts === null || settings === null) return <Loading />;

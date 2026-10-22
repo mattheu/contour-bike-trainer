@@ -127,8 +127,8 @@ export interface RideContext {
  *   one screen that needs nothing to exist before it can be drawn.
  * - The login screen goes the same way. Reaching here means the install has a session,
  *   which is what "straight past it" means — and it is why `/login` is not a screen a
- *   signed-in rider can sit on. How it works goes with it: both its exits are the login
- *   screen, so a signed-in rider would land on the routes list from either one anyway.
+ *   signed-in rider can sit on. How it works is not in that company: it is reachable
+ *   from the profile panel after signing in, so it stands on its own like any list.
  * - `/ride` describes and never causes. With nothing behind it — a bookmark, a reload
  *   after the ride ended — it redirects rather than rendering a ride that is not there;
  *   with a ride that has finished and saved, it becomes that ride's summary. The label
@@ -136,7 +136,7 @@ export interface RideContext {
  */
 export function resolve(location: Location | null, ride: RideContext): Location {
   if (location === null) return { name: 'routes' };
-  if (location.name === 'login' || location.name === 'how-it-works') return { name: 'routes' };
+  if (location.name === 'login') return { name: 'routes' };
   if (location.name !== 'ride') return location;
   if (ride.finishedRideId !== null) return { name: 'summary', rideId: ride.finishedRideId };
   if (ride.label === null) return { name: 'routes' };

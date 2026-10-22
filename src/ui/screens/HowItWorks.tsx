@@ -1,7 +1,7 @@
 import { AppHeader } from '../components/AppHeader';
 import { CONTROL_SIZE, LINK_TONE } from '../components/control';
 import { LABEL, MONO, SERIF } from '../components/styles';
-import { formatHash } from '../routing';
+import { formatHash, type Location } from '../routing';
 import { COLUMNS, type Column } from './how-it-works';
 
 /**
@@ -21,20 +21,29 @@ import { COLUMNS, type Column } from './how-it-works';
  * On a phone the columns stack and the whole page scrolls, which is the exception
  * DESIGN.md > Screen rules already names.
  *
- * Both of its exits are the login screen, so neither is a navigation this screen has to
- * own: they are anchors to `#/login`, which the signed-out gate in App.tsx reads back.
+ * Where it goes next is the caller's to say, because it has two audiences. Signed out
+ * it is the first thing a stranger reads and every road out leads to Start, so Back and
+ * the accent control both point at the login screen. Signed in it is reference, reached
+ * from the profile panel: Back returns to the app and there is nothing left to start, so
+ * the foot has no control and does not draw. Both are anchors either way — a hash is a
+ * real address, and the browser's own Back then agrees with the one on the screen.
  */
 
-export function HowItWorks() {
-  const login = formatHash({ name: 'login' });
+interface HowItWorksProps {
+  /** Where Back returns to. */
+  backTo: Location;
+  /** The accent control in the foot, for a reader who has not signed in yet. */
+  start?: Location;
+}
 
+export function HowItWorks({ backTo, start }: HowItWorksProps) {
   return (
     <div className="text-ink flex min-h-screen flex-col gap-[24px] px-[24px] py-[20px] sm:h-screen sm:gap-[28px] sm:overflow-hidden sm:px-[64px] sm:py-[36px]">
       <AppHeader
         // The screen's name, so it is a heading rather than a caption on the logo. 11 px
         // on a phone, where the logo beside it leaves the label a third of the row.
         nav={<h1 className={`${LABEL} text-micro sm:text-label`}>How it works</h1>}
-        action={<ControlLink href={login}>Back</ControlLink>}
+        action={<ControlLink href={formatHash(backTo)}>Back</ControlLink>}
       />
 
       {/* Three equal columns on desktop; on a phone they stack, each carrying the
@@ -49,12 +58,16 @@ export function HowItWorks() {
         ))}
       </div>
 
-      {/* The one accent element on the screen: the action it exists to lead to. */}
-      <div className="border-hairline flex items-center justify-end border-t pt-[20px] sm:pt-[24px]">
-        <ControlLink href={login} tone="accent">
-          Start
-        </ControlLink>
-      </div>
+      {/* The one accent element on the screen: the action it exists to lead to. Absent
+          for a rider who has already taken it — a foot rule with nothing under it is a
+          band that says the page ended, which it does not need saying twice. */}
+      {start !== undefined && (
+        <div className="border-hairline flex items-center justify-end border-t pt-[20px] sm:pt-[24px]">
+          <ControlLink href={formatHash(start)} tone="accent">
+            Start
+          </ControlLink>
+        </div>
+      )}
     </div>
   );
 }
