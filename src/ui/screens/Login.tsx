@@ -1,5 +1,5 @@
 import { Button } from '../components/Button';
-import { CONTROL_SIZE } from '../components/control';
+import { CONTROL_GAP, CONTROL_SIZE } from '../components/control';
 import { COLOUR_SHIFT } from '../components/motion';
 import { LABEL, MONO } from '../components/styles';
 import { Lockup } from '../components/Wordmark';
@@ -18,8 +18,7 @@ import { formatHash } from '../routing';
  * that begins something. The link under it is a borderless button — a control's height
  * and padding, so it is as easy to hit as Start, but no box: a box is the signal that
  * something is pressable, and this is a way out of the screen rather than a way through
- * it. The two sit flush for that reason as well; a gap would read as two boxes with a
- * border missing.
+ * it.
  */
 export function Login({ onStart }: { onStart: () => void }) {
   return (
@@ -30,8 +29,11 @@ export function Login({ onStart }: { onStart: () => void }) {
       <div className="flex w-full max-w-[360px] flex-col items-stretch sm:w-auto sm:max-w-none">
         <Lockup />
 
-        {/* Stretched by the column, so the control is as wide as the fields will be. */}
-        <div className="mt-[40px] flex flex-col sm:mt-[56px]">
+        {/* Stretched by the column, so the control is as wide as the fields will be.
+            CONTROL_GAP between the two: DESIGN.md allows no distance but none or a clear
+            one, and these are not a group — a group shares a border, and the link has no
+            box to share. */}
+        <div className={`mt-[40px] flex flex-col ${CONTROL_GAP} sm:mt-[56px]`}>
           <Button tone="accent" onClick={onStart}>
             Start
           </Button>

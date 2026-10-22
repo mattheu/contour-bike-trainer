@@ -44,8 +44,8 @@ export function HowItWorks() {
           a flex child will not shrink below its content without it, so the row would
           measure the columns it holds instead of the space they have. */}
       <div className="flex grow flex-col sm:grid sm:min-h-0 sm:grid-cols-3 sm:gap-[56px] sm:overflow-y-auto">
-        {COLUMNS.map((column) => (
-          <ColumnBlock key={column.number} column={column} />
+        {COLUMNS.map((column, i) => (
+          <ColumnBlock key={column.title} column={column} position={i + 1} />
         ))}
       </div>
 
@@ -59,11 +59,12 @@ export function HowItWorks() {
   );
 }
 
-function ColumnBlock({ column }: { column: Column }) {
+/** The number is the column's place in the row, not a step: see COLUMNS. */
+function ColumnBlock({ column, position }: { column: Column; position: number }) {
   return (
     <div className="border-hairline flex flex-col gap-[18px] border-t py-[24px] sm:gap-[20px] sm:border-t-0 sm:py-0">
       <div className="flex items-baseline gap-[14px]">
-        <div className={`${MONO} text-muted text-stat sm:text-figure`}>{column.number}</div>
+        <div className={`${MONO} text-muted text-stat sm:text-figure`}>{position}</div>
         <h2 className={`${SERIF} text-title sm:text-stat`}>{column.title}</h2>
       </div>
 

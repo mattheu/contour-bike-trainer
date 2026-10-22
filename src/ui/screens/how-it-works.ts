@@ -31,105 +31,28 @@ export interface ColumnImage {
 export type ColumnEntry = { label: string; sentence: string } | { label: string; steps: string[] };
 
 export interface Column {
-  number: string;
   title: string;
   image: ColumnImage;
   entries: ColumnEntry[];
 }
 
 /**
- * Three columns: what to do before the first ride, what there is to ride, and what the
- * app is.
+ * Three columns, in the order a stranger meets them: what the app is, what there is to
+ * ride, and what it takes to set up.
  *
- * Setting up and connecting are one column rather than two. They are one errand — kit you
- * either own or do not, and the two minutes of pairing that follow — and splitting them
- * put a numbered 1-2-3 beside a kit list, which reads as six steps when there are three
- * things to own and one thing to do.
+ * About leads because nobody checks whether their trainer is compatible with something
+ * they have not been told about yet. Read down, the three are a decision rather than a
+ * procedure — is this for me, what would I do with it, what do I need — which is also
+ * why the numbers beside them are derived from position in the row and not written here.
+ * They mark order on the page, not steps to take.
  *
- * The third column is not a step, which is why it is last and why its number is only its
- * position. Where a rider's rides live, and whether anyone else can see them, is the
- * question this screen gets asked that the other two columns cannot answer.
+ * Set up is kit and pairing together rather than two columns. They are one errand — kit
+ * you either own or do not, and the two minutes of pairing that follow — and splitting
+ * them put a numbered 1-2-3 beside a kit list, which reads as six steps when there are
+ * three things to own and one thing to do.
  */
 export const COLUMNS: Column[] = [
   {
-    number: '1',
-    title: 'Set up',
-    image: {
-      src: '/how-it-works/trainer-and-browser.webp',
-      alt: 'A bike on a smart trainer, sending its numbers to a laptop.',
-    },
-    entries: [
-      {
-        label: 'Smart trainer',
-        sentence:
-          'Any trainer that speaks Bluetooth FTMS: Wahoo KICKR, Core, Snap and most others.',
-      },
-      {
-        /*
-         * Named, and in the words a reader expects to find. Web Bluetooth is
-         * Chromium-only: neither Gecko nor WebKit implements it and both have taken a
-         * position against it, so Firefox and Safari are not "not yet". iOS is listed as
-         * the platform rather than by browser because every browser on it is WebKit
-         * underneath — naming Safari alone would leave someone to try Chrome on an
-         * iPhone. SPEC.md makes the same point a hard constraint rather than a
-         * preference.
-         */
-        label: 'Browser',
-        sentence:
-          'Chrome or Edge on a Mac, Windows or Android. Firefox, Safari and iOS are not supported.',
-      },
-      {
-        label: 'Heart rate · optional',
-        sentence: 'A Bluetooth strap, or an Apple Watch via HeartCast.',
-      },
-      {
-        /*
-         * The real order, which matters and is not obvious: there is no connect screen,
-         * so a route or workout has to be open before the panel that pairs even exists.
-         * e2e/connect.spec.ts drives exactly this sequence.
-         */
-        label: 'Connect',
-        steps: [
-          'Power the trainer on and turn the pedals to wake it.',
-          'Choose a route or workout to open the ride.',
-          'Press Settings, then Connect beside each device.',
-        ],
-      },
-    ],
-  },
-  {
-    number: '2',
-    title: 'Ride',
-    image: {
-      src: '/how-it-works/route-ride.webp',
-      alt: 'A ride in progress: power, cadence and heart rate above the route profile and map.',
-    },
-    entries: [
-      {
-        label: 'Routes',
-        sentence:
-          'Choose a route and press Start. The trainer follows the gradient; difficulty in settings scales it.',
-      },
-      {
-        label: 'Workouts',
-        sentence:
-          "Choose a workout and press Start. ERG holds each step's target; pedal and the trainer does the rest.",
-      },
-      {
-        /*
-         * A ride saves itself when it ends, whether the rider pressed End or the route
-         * ran out — see savedRideId in ui/store.ts. TCX rather than "export to Strava",
-         * because Contour does not talk to Strava: you get a file and upload it, which
-         * is what docs/exporting-to-strava.md walks through.
-         */
-        label: 'Rides',
-        sentence:
-          'Every ride is saved when it ends. Open one to see its summary, or download it as a TCX file for Strava.',
-      },
-    ],
-  },
-  {
-    number: '3',
     title: 'About',
     image: {
       src: '/how-it-works/workout-ride.webp',
@@ -171,6 +94,81 @@ export const COLUMNS: Column[] = [
         label: 'Your data',
         sentence:
           'Everything is stored in this browser, and Chrome keeps it until you clear the site data. You can export your rides, routes and workouts, and import them back.',
+      },
+    ],
+  },
+  {
+    title: 'Ride',
+    image: {
+      src: '/how-it-works/route-ride.webp',
+      alt: 'A ride in progress: power, cadence and heart rate above the route profile and map.',
+    },
+    entries: [
+      {
+        label: 'Routes',
+        sentence:
+          'Choose a route and press Start. The trainer follows the gradient; difficulty in settings scales it.',
+      },
+      {
+        label: 'Workouts',
+        sentence:
+          "Choose a workout and press Start. ERG holds each step's target; pedal and the trainer does the rest.",
+      },
+      {
+        /*
+         * A ride saves itself when it ends, whether the rider pressed End or the route
+         * ran out — see savedRideId in ui/store.ts. TCX rather than "export to Strava",
+         * because Contour does not talk to Strava: you get a file and upload it, which
+         * is what docs/exporting-to-strava.md walks through.
+         */
+        label: 'Rides',
+        sentence:
+          'Every ride is saved when it ends. Open one to see its summary, or download it as a TCX file for Strava.',
+      },
+    ],
+  },
+  {
+    title: 'Set up',
+    image: {
+      src: '/how-it-works/trainer-and-browser.webp',
+      alt: 'A bike on a smart trainer, sending its numbers to a laptop.',
+    },
+    entries: [
+      {
+        label: 'Smart trainer',
+        sentence:
+          'Any trainer that speaks Bluetooth FTMS: Wahoo KICKR, Core, Snap and most others.',
+      },
+      {
+        /*
+         * Named, and in the words a reader expects to find. Web Bluetooth is
+         * Chromium-only: neither Gecko nor WebKit implements it and both have taken a
+         * position against it, so Firefox and Safari are not "not yet". iOS is listed as
+         * the platform rather than by browser because every browser on it is WebKit
+         * underneath — naming Safari alone would leave someone to try Chrome on an
+         * iPhone. SPEC.md makes the same point a hard constraint rather than a
+         * preference.
+         */
+        label: 'Browser',
+        sentence:
+          'Chrome or Edge on a Mac, Windows or Android. Firefox, Safari and iOS are not supported.',
+      },
+      {
+        label: 'Heart rate · optional',
+        sentence: 'A Bluetooth strap, or an Apple Watch via HeartCast.',
+      },
+      {
+        /*
+         * The real order, which matters and is not obvious: there is no connect screen,
+         * so a route or workout has to be open before the panel that pairs even exists.
+         * e2e/connect.spec.ts drives exactly this sequence.
+         */
+        label: 'Connect',
+        steps: [
+          'Power the trainer on and turn the pedals to wake it.',
+          'Choose a route or workout to open the ride.',
+          'Press Settings, then Connect beside each device.',
+        ],
       },
     ],
   },
