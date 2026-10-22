@@ -106,9 +106,15 @@ export const COLUMNS: Column[] = [
     },
     entries: [
       {
+        /*
+         * Import rather than upload: the file never leaves the machine, and "Import
+         * routes" is what the button a rider will go looking for actually says. One GPX
+         * can carry several routes — see routes-import.ts — but a rider arrives with one
+         * ride in mind, so the singular is what the sentence promises.
+         */
         label: 'Routes',
         sentence:
-          'Choose a route and press Start. The trainer follows the gradient; difficulty in settings scales it.',
+          'Choose a route and press Start. Your trainer simulates the gradient. Import a GPX file to ride roads you know.',
       },
       {
         label: 'Workouts',
