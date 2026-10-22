@@ -53,6 +53,15 @@
       "description": "A chalk hill on the North Downs, climbed by the Zig Zag Road. Used for the 2012 London Olympic road race, which lapped it 9 times.",
       "totalDistanceM": 15647,
       "totalAscentM": 236
+    },
+    {
+      "id": "koppenberg",
+      "name": "Koppenberg",
+      "region": "Flemish Ardennes, Belgium",
+      "file": "koppenberg.gpx",
+      "description": "A cobbled lane out of Melden, and a national monument. 600 m averaging 10 % and pitching to 22 %, which has put plenty of riders off their bikes in the Tour of Flanders.",
+      "totalDistanceM": 6417,
+      "totalAscentM": 81
     }
   ]
 }
