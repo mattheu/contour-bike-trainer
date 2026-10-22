@@ -37,11 +37,12 @@ order of preference:
   its lap splits and its TSS has no standard that will hold it, so it goes out as JSON: open,
   self-describing, readable in any text editor. Ours is not the same as opaque.
 
-**Inside, store whatever is most efficient.** The shape in IndexedDB is an implementation detail
-and carries no obligation from this ADR — a binary sample encoding, a packed typed array, a
-structured-clone blob are all fair game, and choosing one is an ordinary engineering decision
-rather than an amendment to this. The only requirement is that the exporter can still produce
-the formats above from it.
+**Inside, store whatever works best.** The shape in IndexedDB is an implementation detail and
+carries no obligation from this ADR. Today it is plain objects, which is a sensible default and
+should stay until something makes it worth changing — but that is convenience, not a value. A
+binary sample encoding, a packed typed array or an opaque blob are all fair game, and picking
+one is an ordinary engineering decision rather than an amendment to this ADR. The only
+requirement is that the exporter can still produce the formats above from it.
 
 ## Consequences
 
