@@ -20,7 +20,7 @@ describe('bundledWorkouts', () => {
     const { workouts, skipped } = bundledWorkouts();
 
     expect(skipped).toEqual([]);
-    expect(workouts.length).toBe(6);
+    expect(workouts.length).toBe(5);
     for (const entry of workouts) {
       expect(entry.file).toMatch(/\.yaml$/);
       expect(entry.workout.name.length).toBeGreaterThan(0);
@@ -59,7 +59,7 @@ describe('builtInWorkoutIds', () => {
   it('is exactly what workouts/manifest.json declares', () => {
     const ids = builtInWorkoutIds();
     expect(ids.has('sweet-spot-50')).toBe(true);
-    expect(ids.size).toBe(6);
+    expect(ids.size).toBe(5);
   });
 
   it('claims a starter whose YAML will not parse', () => {

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import formatTest from '../../../manual-tests/format-test.yaml?raw';
 import { DEFAULT_SETTINGS } from '../../storage/settings';
 import { expandWorkout, type ExpandedStep } from '../../workout/expand';
 import { parseWorkout } from '../../workout/parse';
@@ -549,8 +550,8 @@ describe('an empty plan', () => {
 });
 
 /**
- * The bug this pins: riding `Format test`, which declares `ftp: 250`, on its `power: 100%`
- * step while holding exactly the commanded watts drew the accent actual line clear of the
+ * The bug this pins: riding a workout that declares `ftp: 250` on a `power: 100%` step
+ * while holding exactly the commanded watts drew the accent actual line clear of the
  * grey plan block. The chart was handed the profile's FTP, so it resolved 100 % to 200 W
  * and drew the block there while the rider held the 250 W the trainer had asked for.
  *
@@ -558,16 +559,6 @@ describe('an empty plan', () => {
  * ridden against it have to be one number — see docs/writing-a-workout.md.
  */
 describe('the plan is drawn at the FTP the session is ridden at', () => {
-  const sourceByPath = import.meta.glob('../../../workouts/*.yaml', {
-    query: '?raw',
-    import: 'default',
-    eager: true,
-  }) as Record<string, string>;
-
-  const formatTest = Object.entries(sourceByPath).find(([path]) =>
-    path.endsWith('format-test-15.yaml'),
-  )?.[1] as string;
-
   /**
    * The y the plan block sits at, and the y a sample of the watts that step commands
    * lands at. The step is whichever percentage one comes first and the watts are derived

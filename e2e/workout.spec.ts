@@ -68,7 +68,7 @@ async function openWorkouts(page: Page): Promise<void> {
   await openApp(page, { fake: 'constant', memoryStorage: true });
   await page.getByRole('button', { name: 'Workouts' }).click();
   // The bundled starters are seeded on boot, so the list is never the empty state here.
-  await expect(page.getByRole('link', { name: 'Format test' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Thirty by thirty' })).toBeVisible();
 }
 
 /** The textarea, which the editor labels as the workout itself. */
@@ -263,13 +263,13 @@ test.describe('riding a workout', () => {
 });
 
 /**
- * A starter, and the file the build bundles it from. The starters are the documentation —
- * src/workout/starters.test.ts asserts they cover the whole format between them — so what
- * the editor shows has to be this text, comments and all, rather than a tidied tree.
+ * A starter, and the file the build bundles it from. A starter is read by riders who are
+ * learning the format, so what the editor shows has to be this text, comments and all,
+ * rather than a tidied tree re-emitted from the parse (ADR-0014).
  */
-const STARTER_NAME = 'Format test';
+const STARTER_NAME = 'Thirty by thirty';
 const STARTER_SOURCE = readFileSync(
-  fileURLToPath(new URL('../workouts/format-test-15.yaml', import.meta.url)),
+  fileURLToPath(new URL('../workouts/30-30s.yaml', import.meta.url)),
   'utf8',
 );
 
@@ -316,7 +316,7 @@ test.describe('a workout that came with the app', () => {
     // The editor opens on the copy, which is a workout like any other the rider wrote:
     // the same YAML under a name of its own, and a box that takes typing.
     await expect(source(page)).toHaveValue(
-      STARTER_SOURCE.replace('name: Format test', 'name: Format test copy'),
+      STARTER_SOURCE.replace('name: Thirty by thirty', 'name: Thirty by thirty copy'),
     );
     await expect(source(page)).toBeEditable();
 
