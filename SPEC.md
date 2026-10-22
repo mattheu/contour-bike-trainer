@@ -658,7 +658,13 @@ Three fixed slots, each toggled on or off independently, and **no ride appears t
 | --- | --- | --- |
 | **Best** | Triangle | The fastest you have covered this route. The target. |
 | **Best, 12 months** | Square | The fastest of the last 365 days. Where that is the same ride as Best, the next fastest inside the window. |
-| **Most recent** | Star | Your last ride here. Where that is already shown, the next most recent. |
+| **Most recent** | Star | The last route length you completed here. Where that is already shown, the one before it. |
+
+**On a loop the star is your previous lap.** "The last route length you completed here" is one sentence covering both shapes of route: on a point-to-point it is your last ride, on a loop it is the lap before this one — and on a first lap, the closing lap of whenever you were last here. It is the slot that benefits most from being lap-relative, because it turns into a fresh rabbit every lap, always just up or just down the road and always achievable, where the triangle may be a target you have no business chasing today.
+
+A fourth slot for the fastest lap of the current ride was considered and left out. Where today's fastest lap is your best it is already the triangle, and where it is not, the triangle is the better target and the previous lap the more motivating one — so it would spend a slot on the gap between two things already raceable. The reachable-target argument for it is the one **Best, 12 months** already answers.
+
+**"Most recent" is the wrong label on a loop**, and it is the only slot whose label has to move: it reads as a ride when the thing is a lap. "Last lap" is correct there and wrong on a climb. Design is picking this up with the rest of the labelling.
 
 **The shape belongs to the slot, not to the ride.** A triangle is always your best, on every route, in every session. That is what lets three ghosts share a screen without a legend, and it is why a shape has to mean one thing forever.
 
