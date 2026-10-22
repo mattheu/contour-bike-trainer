@@ -581,12 +581,29 @@ Also note that mockup's zones legend reads `Z1 <55 · Z2 56–75 · Z3 76–90 �
 
 **Not in phase 3:** importing `.zwo`. `design/mockups/Workouts.dc.html` has an accent *Import .zwo* button; it is dropped from the build for now, as the routes screen's *Import GPX* was. An importer is a one-way converter into this format and is a phase 4 candidate — it costs nothing to defer and buys a large public library when it lands.
 
+## Phases were renumbered on 2026-10-22
+
+Phases 1 to 3 shipped as the MVP. What follows was re-cut afterwards, once riding the thing had shown what mattered:
+
+| Now | Was |
+| --- | --- |
+| 4 — the ghost | 4, which was a list |
+| 5 — the phone mirror | the mirror half of 5 |
+| 6 — FTP tests | unscheduled |
+| 7 — accounts and storage | the backend half of 5 |
+| 8 — Strava sync | 6 |
+
+**ADRs written before this date use the old numbers** — "a backend in phase 5" means phase 7, "phase 6's Strava upload" means phase 8. They are left as written: an ADR records what was believed when it was decided, and editing one to match a later plan is the one thing `docs/adr/README.md` forbids. This table is the key.
+
 ## Phase 4 — Regroup and polish
 
 **Not a workout laid over a route.** Decided against on 2026-10-14 and recorded as [ADR-0016](docs/adr/0016-no-workouts-on-routes.md): in ERG the trainer holds the target whatever the gradient, so the route has no effect on the ride and the terrain is wallpaper. Either the hills are real or they are not. A plan held by the rider against real simulated terrain — the version where the hills stay real — is a different feature and is deferred to a later phase rather than smuggled in as a variant of this one.
 
-1. **The ghost.** The headline item, standing on its own rather than as polish: your previous ride on this route, drawn against the current one, so a route you have ridden before has something to ride against. The last ride on a route and the best one are the two candidates, and the choice between them is part of the work.
-2. Candidates still open: GPX upload, workout import, richer history and summary statistics, a real basemap.
+**The ghost, and nothing else.** Your previous ride on this route, drawn against the current one, so a route you have ridden before has something to ride against. The last ride on a route and the best one are the two candidates, and the choice between them is part of the work.
+
+The phase was a list; it is now one item, because the rest did not belong here. GPX upload shipped early. **Richer history and summary statistics moved to phase 5** — they rely on data being reliably persistent, which is what a backend is for, and a trend computed over a store a browser can clear is a trend about nothing. Workout import and a real basemap stay unscheduled.
+
+Nothing in that list is a loss, because **this app is not trying to replace the ones that already do analysis.** Strava and TrainingPeaks read a ride back better than a side project will, and the export exists so they can. What Contour owes a rider is the ride itself.
 
 ## A loop can be ridden round again
 
@@ -628,27 +645,49 @@ A workout can be ridden with the trainer holding the target, or with the rider h
 
    One thing improves. With ERG on, a ride's actual TSS is close to the planned figure by construction, because the trainer made it so. With ERG off the recorded figure measures the rider, and the plan chart's accent-over-grey stops being a formality.
 
-## Unscheduled — FTP
+## Phase 5 — The phone mirror
 
-Not yet placed in a phase. Three features, in the order they should be built, each useful on its own:
+**Browser-only is a feature, not a stage to grow out of.** Open a URL and ride: no install, no update, nothing to trust. That is worth keeping, and this phase exists for one reason only — a phone propped next to the bike showing live data in large type.
 
-1. **A best-efforts record** — best 5 s, 1 min, 5 min and 20 min power, maintained across all rides. A sliding window over data already recorded at 1 Hz. It is the enabling primitive for the other two, and it is also the progress view phase 2 wanted and did not get.
-2. **An FTP test.** A ramp test is already expressible in the workout format; what is missing is a step that runs until failure rather than for a duration, a rule for when that is (power below target by a margin for a few seconds, or cadence collapsing), and something that reads the result and offers a number. Ramp gives FTP ≈ 75 % of the best one-minute power; a 20-minute test gives 95 % of the average.
-3. **FTP detection.** Watch recorded power and offer a higher FTP when the best 20-minute effort implies one. It must **offer**, never apply, and say what the number came from: a 20-minute effort inside an unstructured ride is not the maximal evenly-paced effort the 0.95 coefficient assumes, so this method over-reads for some riders.
+So the phase is **not** a backend. An earlier draft of it was: a server owning rides, routes and workouts, with the browser syncing to it. That was never wanted for itself, and it carried two costs for nothing — hosting, and a store the app would stop being able to work without.
+
+1. **Live ride state reaches a second screen.** The riding machine publishes, the phone subscribes, and nothing is stored. Two shapes are worth comparing: a thin hosted relay that forwards messages and keeps none, or a direct peer connection with a small signalling step. Both keep the app a page you open. Neither needs a database.
+2. **The phone view is read-only**, in large type, and is never a controller. The phone shows what is happening; the bars and the bike are where the ride is.
+
+Two things that are easier here than the old framing assumed. The mirror page is **visible and in the foreground** on the phone, so Screen Wake Lock applies to it — the wake lock problem belongs to the riding machine running behind a video, which is ADR-0000's question and unrelated. And no ride data crosses the wire except what is already on screen, so there is nothing to secure beyond pairing the two.
+
+**This weakens the case for Electron, which [ADR-0000](docs/adr/0000-shell-and-tick-source.md) placed at exactly this phase.** The strongest argument there was an in-process WebSocket server on the local network needing no hosting — a reason to leave the browser that largely evaporates if the mirror is a relay or a peer connection. What remains is background throttling, which the phase 1 measurement found Chrome did not apply but could not prove it would not. That ADR is Accepted and stands until a new one supersedes it; this is the fact that would prompt one.
+
+Richer history and summary statistics are **not** here. They belong with the storage that makes them trustworthy, in phase 7: a trend computed over a store the browser can clear is a trend about nothing.
+
+## Phase 6 — FTP tests
+
+The strongest candidate once the ghost is done, and the last phase that needs no server.
+
+**Why this and not the rest of the analytics.** FTP is not a statistic the app reports, it is a parameter the app runs on: zones are fractions of it, a workout's targets are percentages of it, TSS is anchored to an hour at it. A wrong FTP makes every number on every screen wrong. That is what separates it from best-efforts tables and fitness trends, which are a record of what happened and belong to the apps that already do them well.
+
+Two features, in order:
+
+1. **An FTP test.** A ramp test is already expressible in the workout format; what is missing is a step that runs until failure rather than for a duration, a rule for when that is (power below target by a margin for a few seconds, or cadence collapsing), and something that reads the result and offers a number. Ramp gives FTP ≈ 75 % of the best one-minute power; a 20-minute test gives 95 % of the average.
+2. **FTP detection.** Offer a higher FTP when a ride's best 20-minute effort implies one. It must **offer**, never apply, and say what the number came from: a 20-minute effort inside an unstructured ride is not the maximal evenly-paced effort the 0.95 coefficient assumes, so this method over-reads for some riders.
+
+   This needs the best 20 minutes **within one ride**, computed when it is saved — not a power curve maintained across every ride. An earlier draft of this section put a cross-ride best-efforts record first and called it the enabling primitive. It is not: it is the analytics feature wearing the parameter's clothes, and detection works without it.
 
 **Adaptive training is explicitly out of scope** — adjusting what is prescribed based on how the rider coped needs a plan model, compliance tracking and progression rules, which is a product in itself and a coaching layer close to what this app is not.
 
-All three are bound by [ADR-0017](docs/adr/0017-changing-ftp-never-rewrites-history.md): a new FTP changes only what is ahead. That was your FTP at that time.
+Both are bound by [ADR-0017](docs/adr/0017-changing-ftp-never-rewrites-history.md): a new FTP changes only what is ahead. That was your FTP at that time.
 
-## Phase 5 — Backend and phone mirror
+## Phase 7 — Accounts and storage
 
-1. Server with the API the `storage/http/` implementation expects. Rides, routes and workouts persist server-side; the browser syncs.
-2. WebSocket channel publishing live ride state.
-3. Phone view: a URL that renders live data read-only, in large type, for a phone propped next to the bike.
+The point at which a ride stops living only in one browser. Deferred this long deliberately: browser-only is a feature, and every phase before this works without a server.
 
-This is where the async storage interface and the phase 1 shell decision pay off. How the mirror is built depends on that decision: in Electron the WebSocket server runs in-process on the local network, needing no hosting, no deployment and no auth beyond a session code, and `powerSaveBlocker` keeps the display awake. In the browser it needs a real server somewhere, and display sleep has no reliable answer, since Screen Wake Lock is released the moment the document is hidden.
+1. **Accounts.** The login screen and the session record are already shaped for it — a session carries a mode, and `guest` is one of two rather than a placeholder. Guest stays a permanent, first-class choice: someone who never wants an account must be able to ride forever.
+2. **Rides, routes and workouts persist server-side**, with the browser syncing. [ADR-0002](docs/adr/0002-async-repository-with-client-generated-ids.md) paid for this in advance: the repository interface is already async and ids are minted on the client, so two devices offline cannot collide and nothing waits on a round trip to name a record.
+3. **Richer history and summary statistics**, which arrive here because this is where the data becomes reliable enough to draw a trend from.
 
-## Phase 6 — Strava sync
+**What this does not become.** A server owning the ride does not make the app need one. The local store stays the thing the ride is recorded into, and sync is what happens afterwards — a ride must never fail because a network did.
+
+## Phase 8 — Strava sync
 
 A manual "upload to Strava" button on a completed ride. OAuth with a small serverless token exchange so the client secret never ships to the browser; upload the TCX; set the activity type to `VirtualRide`.
 

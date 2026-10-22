@@ -115,8 +115,10 @@ interface ListRowProps {
    */
   metaVariant?: 'label' | 'plain';
   /**
-   * A third line under the meta: one line of ink body text, clipped to the column with an
-   * ellipsis and never wrapped. The routes list puts a route's own description here.
+   * Prose under the meta, in muted body text, wrapped to as many lines as it takes. It is
+   * deliberately not clipped: a description cut off at a third of itself is a worse answer
+   * than a taller row, and the column is only about fifty characters wide. The routes list
+   * puts a route's own description here.
    *
    * Its own slot rather than more meta, because the two lines are different kinds of
    * thing — the meta is a row of labels, this is prose — and because either can be absent
@@ -186,7 +188,7 @@ export function ListRow({
           </div>
         )}
         {description !== undefined && (
-          <div className="text-label mt-[3px] truncate font-sans">{description}</div>
+          <div className="text-label text-muted mt-[3px] font-sans">{description}</div>
         )}
       </div>
       {cellsOverlay === undefined ? (

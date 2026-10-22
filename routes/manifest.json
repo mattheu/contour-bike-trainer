@@ -5,7 +5,7 @@
       "name": "Greenhow Hill",
       "region": "Yorkshire Dales, UK",
       "file": "greenhow-hill.gpx",
-      "description": "Greenhow Hill is a climb in Nidderdale, North Yorkshire, rising steeply out of Pateley Bridge to one of the highest villages in England. This loop takes it in alongside four more Dales climbs, the longest 4.2 km at 7 %.",
+      "description": "A climb out of Pateley Bridge in Nidderdale, to one of the highest villages in England. This route takes in four more Dales climbs.",
       "totalDistanceM": 66622,
       "totalAscentM": 1104
     },
@@ -14,7 +14,7 @@
       "name": "Sa Calobra",
       "region": "Mallorca, Spain",
       "file": "sa-calobra.gpx",
-      "description": "Sa Calobra (Coll dels Reis) is a famous climb in the Serra de Tramuntana mountains of Mallorca, Spain. Built in the 1930s purely to reach the coast, it is 10 km of hairpins at an average of 7 %, including a 270-degree spiral that passes under itself.",
+      "description": "A famous climb in the Serra de Tramuntana. 10 km of hairpins averaging 7 %, including a 270-degree spiral that passes under itself.",
       "totalDistanceM": 13063,
       "totalAscentM": 702
     },
@@ -23,7 +23,7 @@
       "name": "Alpe d'Huez",
       "region": "Oisans, France",
       "file": "alpe-dhuez.gpx",
-      "description": "Alpe d'Huez is a ski resort in the Oisans, in the French Alps, and the most famous climb in the Tour de France. From Bourg d’Oisans it is 13.8 km at over 8 %, numbered backwards from hairpin 21 to the summit.",
+      "description": "A ski resort in the French Alps, and the most famous climb in the Tour de France. 13.8 km at over 8 % from Bourg d’Oisans, with 21 hairpins numbered down to the summit.",
       "totalDistanceM": 15713,
       "totalAscentM": 1259
     },
@@ -32,7 +32,7 @@
       "name": "Rosedale Chimney",
       "region": "North York Moors, UK",
       "file": "rosedale-chimney.gpx",
-      "description": "Rosedale Chimney Bank is one of the steepest surfaced roads in England, climbing out of Rosedale onto the North York Moors. It is named after the ironstone kiln chimney that stood at the top until 1972, and this loop crosses the moor and comes back down.",
+      "description": "One of the steepest surfaced roads in England, climbing out of Rosedale onto the moor. Named after the ironstone kiln chimney that stood at the top until 1972.",
       "totalDistanceM": 18907,
       "totalAscentM": 346
     },
@@ -41,7 +41,7 @@
       "name": "Settle to Grassington",
       "region": "Yorkshire Dales, UK",
       "file": "settle-grassington.gpx",
-      "description": "A crossing of the limestone country between Ribblesdale and Wharfedale in the Yorkshire Dales, over Malham Moor. It climbs out of Settle, runs high and open across the top, and drops fast into Grassington.",
+      "description": "A route between Ribblesdale and Wharfedale over Malham Moor. It climbs out of Settle and drops fast into Grassington.",
       "totalDistanceM": 31710,
       "totalAscentM": 552
     },
@@ -50,7 +50,7 @@
       "name": "Box Hill",
       "region": "Surrey, UK",
       "file": "box-hill.gpx",
-      "description": "Box Hill is a chalk hill on the North Downs in Surrey, England, climbed by the Zig Zag Road. It carried the 2012 Olympic road race, which lapped it nine times, and this circuit returns to where it started.",
+      "description": "A chalk hill on the North Downs, climbed by the Zig Zag Road. Used for the 2012 London Olympic road race, which lapped it 9 times.",
       "totalDistanceM": 15647,
       "totalAscentM": 236
     }

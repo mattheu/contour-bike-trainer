@@ -36,6 +36,7 @@ import {
   canRemoveRoute,
   descriptionLine,
   labelRow,
+  type LabelPart,
   rideCounts,
   riddenLabel,
   sortRoutes,
@@ -370,16 +371,16 @@ function RouteRow({
  * an imported GPX need not name a region; a route with neither gets no label row at all,
  * because an empty line under the name is a worse answer than no line.
  */
-function meta(kind: RouteKind | null, words: readonly string[]): ReactNode {
-  if (words.length === 0) return undefined;
+function meta(kind: RouteKind | null, parts: readonly LabelPart[]): ReactNode {
+  if (parts.length === 0) return undefined;
 
   return (
     <span className="flex items-center gap-[6px]">
-      {kind !== null && <RouteKindMark kind={kind} />}
-      {words.map((word, index) => (
-        <Fragment key={word}>
+      {parts.map((part, index) => (
+        <Fragment key={part.text}>
           {index > 0 && <span className="text-hairline">·</span>}
-          <span>{word}</span>
+          {part.kind && kind !== null && <RouteKindMark kind={kind} />}
+          <span>{part.text}</span>
         </Fragment>
       ))}
     </span>
