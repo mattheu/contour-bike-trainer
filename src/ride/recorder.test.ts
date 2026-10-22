@@ -248,3 +248,36 @@ describe('the FTP a ride freezes', () => {
     );
   });
 });
+
+/**
+ * The two figures that need the samples, derived on the one path a ride reaches storage
+ * by, so a checkpoint and the final save carry the same fields.
+ */
+describe('the derived figures on a built ride', () => {
+  function ridden(lengthM: number | null, seconds: number, metresPerSecond: number) {
+    const r = new RideRecorder({
+      routeId: lengthM === null ? null : 'test-flat',
+      routeName: lengthM === null ? null : 'Flat 1 km',
+      routeLengthM: lengthM,
+      startedAt: '2026-09-30T07:05:00.000Z',
+      settings: { ...SETTINGS, ftp: 200 },
+    });
+    for (let t = 0; t <= seconds; t += 1) {
+      r.add(sample({ t, distanceM: t * metresPerSecond, powerW: 200 }));
+    }
+    return r.build({ pausedS: 0 }).ride;
+  }
+
+  it('splits a lapped ride at the route length it was ridden against', () => {
+    expect(ridden(1000, 250, 12).lapSplits).toHaveLength(3);
+  });
+
+  it('leaves the splits empty for a ride with no route under it', () => {
+    expect(ridden(null, 250, 12).lapSplits).toEqual([]);
+  });
+
+  it('scores the ride against the FTP it froze', () => {
+    // An hour at an FTP of 200 held exactly, which is the anchor TSS is defined by.
+    expect(ridden(null, 3600, 10).tss).toBe(100);
+  });
+});

@@ -28,6 +28,7 @@ import {
   storedRouteGeometry,
   type BundledRoute,
 } from '../ride/routes';
+import { backfillRides } from '../ride/metrics';
 import { builtInWorkoutIds, seedWorkouts } from '../ride/workouts';
 import { planRouteImport, routeGeometryKey } from '../route/import';
 import { isLoop } from '../route/loop';
@@ -426,13 +427,15 @@ export async function startGuestSession(): Promise<void> {
 /**
  * Start-up work the screens await before reading storage.
  *
- * Both passes run on every boot and neither keeps a marker, because neither needs one: a
+ * Every pass runs on every boot and none keeps a marker, because none needs one: a
  * built-in route or workout cannot be deleted, so an absent record can only be one this
- * install has never written. The markers that used to live in Settings existed solely to
- * tell a deleted record from a new one, and that question no longer arises.
+ * install has never written, and a ride either carries the derived fields or predates
+ * them. The markers that used to live in Settings existed solely to tell a deleted record
+ * from a new one, and that question no longer arises.
  *
- * The two passes write by different rules, each stated where it is implemented: routes
- * also rewrite what the manifest has changed, workouts never rewrite anything.
+ * The passes write by different rules, each stated where it is implemented: routes also
+ * rewrite what the manifest has changed, workouts never rewrite anything, and rides are
+ * only ever written once, to fill in fields a later build added.
  */
 export const ready: Promise<void> = (async () => {
   try {
@@ -450,6 +453,10 @@ export const ready: Promise<void> = (async () => {
 
     await seedRoutes(storage.routes);
     const seeded = await seedWorkouts(storage.workouts);
+    // Rides written before the record carried a TSS, scored now from the samples and the
+    // FTP they were frozen at. Idempotent like the two passes above, and like them it
+    // keeps no marker: a ride already carrying the fields is left alone.
+    await backfillRides(storage.rides, storage.rideSamples);
 
     // A starter that will not parse is a bug in a file we shipped, not in anything the
     // rider did — but it is theirs that is missing, so it says so rather than going quiet.
@@ -906,6 +913,9 @@ export async function startRide(routeId: string): Promise<void> {
   recorder = new RideRecorder({
     routeId,
     routeName: stored?.name ?? null,
+    // The geometry the engine is riding, not the figure on the record: the lap counter
+    // and the lap splits have to be measuring the same route.
+    routeLengthM: geometry.totalDistanceM,
     startedAt: new Date().toISOString(),
     settings: frozenSettings(),
   });

@@ -8,12 +8,20 @@ import {
   type RideSamples,
   type RideSettings,
 } from '../storage/types';
+import { lapSplits, rideTss } from './metrics';
 
 export interface RideRecorderOptions {
   /** Supplied only so a caller can pre-allocate the id it will export under. */
   id?: string;
   routeId: string | null;
   routeName: string | null;
+  /**
+   * How long the route is, taken from the same geometry the engine is riding, so a lap
+   * split and the lap counter on the screen cannot disagree about where a lap ended.
+   * Null where there is no route under the ride, which is also what an unknown length
+   * gets: a split measured against a guess is worse than no split.
+   */
+  routeLengthM?: number | null;
   workoutId?: string | null;
   workoutName?: string | null;
   /** ISO 8601. The wall-clock instant the ride began; sample t is relative to it. */
@@ -143,6 +151,12 @@ export class RideRecorder {
       ascentM: this.ascentM,
       avgPowerW: this.avgPowerW,
       avgHeartRateBpm: this.avgHeartRateBpm,
+      // Derived here rather than by the caller, because this is the one place a Ride
+      // record is built: a checkpoint and the final save are the same write, and both
+      // have to carry the same fields or a crash would leave a ride shaped unlike the
+      // one the rider would have ended up with.
+      tss: rideTss(this.collected, this.elapsedS, this.options.settings.ftp),
+      lapSplits: lapSplits(this.collected, this.options.routeLengthM ?? null),
       settings: {
         ...this.options.settings,
         workoutScalePct:
