@@ -17,6 +17,7 @@ import {
 } from '../../ghost/slots';
 import type { ActiveGhost } from '../../ghost/state';
 import type { Route } from '../../route/types';
+import { FADE } from '../components/motion';
 import type { PlanePoint } from '../projection';
 import { ghostMarks } from './ghosts';
 import { HOVER_SNAP_PX, routeMapGeometry, type MapZoom } from './map';
@@ -160,6 +161,7 @@ export function RouteMap({
         drawn.add(mark.slot);
         const node = ghostNodes.current[mark.slot];
         node?.setAttribute('transform', `translate(${String(mark.x)},${String(mark.y)})`);
+        node?.setAttribute('opacity', String(mark.opacity));
         node?.setAttribute('visibility', 'visible');
       }
       for (const slot of SLOT_ORDER) {
@@ -269,7 +271,10 @@ export function RouteMap({
       </g>
       {/* Under the rider's dot and halo, for the reason the hover cross is: the rider's
           position is the one that matters. Symbols only and no gaps — the map answers
-          where, and the profile answers by how much. DESIGN.md > Ghosts. */}
+          where, and the profile answers by how much. DESIGN.md > Ghosts.
+
+          Opacity is written per tick rather than fixed here: a ghost whose ride stopped
+          short stays on the map, faded, marking how far that ride got. */}
       {SLOT_ORDER.map((slot) => (
         <g
           key={slot}
@@ -277,6 +282,7 @@ export function RouteMap({
             ghostNodes.current[slot] = node;
           }}
           data-testid={`map-ghost-${slot}`}
+          className={FADE}
           visibility="hidden"
         >
           <path

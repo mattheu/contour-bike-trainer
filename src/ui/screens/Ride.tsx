@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import type { HistorySlot } from '../../ghost/resolve';
 import type { Climb } from '../../route/climbs';
 import { detectClimbs } from '../../route/climbs';
 import { lapLabel, lapStartM } from '../../route/loop';
@@ -69,6 +70,8 @@ export interface RideProps {
   onPauseToggle: () => void;
   onEnd: () => void;
   onDifficultyChange: (percent: number) => void;
+  onGhostSlot: (slot: HistorySlot, on: boolean) => void;
+  onClearGhostRide: () => void;
   onDismissAlert: () => void;
   onRetryTrainer: () => void;
   onConnectTrainer: () => void;
@@ -89,6 +92,8 @@ export function Ride({
   onPauseToggle,
   onEnd,
   onDifficultyChange,
+  onGhostSlot,
+  onClearGhostRide,
   onDismissAlert,
   onRetryTrainer,
   onConnectTrainer,
@@ -434,6 +439,11 @@ export function Ride({
           devices={devices}
           difficulty={snapshot.trainerDifficulty}
           targets={targets}
+          ghosts={{
+            slots: snapshot.ghostSlots,
+            onSlot: onGhostSlot,
+            onClearPicked: onClearGhostRide,
+          }}
           onDifficultyChange={onDifficultyChange}
           onTargetsChange={onTargetsChange}
           onEnd={onEnd}

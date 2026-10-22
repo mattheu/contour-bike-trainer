@@ -206,7 +206,7 @@ describe('ghosts during a ride', () => {
     const [ghost] = rideStore.getSnapshot().ghosts;
     expect(ghost?.slot).toBe('best');
     expect(ghost?.name).toBe('Best');
-    expect(ghost?.done).toBe(false);
+    expect(ghost?.end).toBe('racing');
     expect(ghost?.gapLabel).toMatch(/^[+−]\d+:\d{2}$/);
 
     const wasAt = ghost?.distanceM ?? 0;

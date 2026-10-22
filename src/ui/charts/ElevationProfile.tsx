@@ -30,6 +30,7 @@ import {
   LABEL_STEM_PX,
   ghostLayer,
 } from './ghosts';
+import { FADE } from '../components/motion';
 import type { Pt } from './path';
 
 export const PROFILE_WIDTH = 944;
@@ -428,7 +429,11 @@ export function ElevationProfile({
 
           Symbols are muted and hollow whatever the gap says, here as everywhere: the
           rider's marker is the screen's one accent, and a ghost that coloured itself when
-          it went ahead would take that away. DESIGN.md > Ghosts. */}
+          it went ahead would take that away. DESIGN.md > Ghosts.
+
+          The weight is written per tick and eased, so a ghost reaching its end fades
+          rather than cutting: SPEC.md asks a ride that stopped short to be marked where
+          it stopped and then faded out, not to blink away unexplained. */}
       {SLOT_ORDER.map((slot) => (
         <g
           key={slot}
@@ -436,6 +441,7 @@ export function ElevationProfile({
             ghostNodes.current[slot].group = node;
           }}
           data-testid={`profile-ghost-${slot}`}
+          className={FADE}
           visibility="hidden"
         >
           <path

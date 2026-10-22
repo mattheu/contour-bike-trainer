@@ -191,6 +191,20 @@ export function periodSummary(
 }
 
 /**
+ * The route a ride can be raced over, or null where it cannot be raced at all.
+ *
+ * Two ways to fail and one answer. A workout ride has no routeId, so there is no road to
+ * lay a ghost over; a route that has since been removed leaves its rides naming an id
+ * nothing can load, which is the same case the list already handles by keeping the ride's
+ * own frozen routeName on the row. Both hide the control rather than disabling it — a
+ * greyed Race on a workout would suggest the rider had done something wrong.
+ */
+export function raceableRouteId(ride: Ride, routeIds: ReadonlySet<string>): string | null {
+  if (ride.routeId === null) return null;
+  return routeIds.has(ride.routeId) ? ride.routeId : null;
+}
+
+/**
  * What a ride is called, and the line under it where the name alone does not say enough.
  *
  * A route names the ride. A workout ridden without one is named by the plan rather than

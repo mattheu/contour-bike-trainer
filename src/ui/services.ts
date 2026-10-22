@@ -808,6 +808,9 @@ function bridge(snapshot: EngineSnapshot): void {
       elapsedS: snapshot.elapsedS,
       distanceM: snapshot.distanceM,
     }),
+    // Held by identity between resolutions, so a tick that changed no slot republishes
+    // nothing on this key.
+    ghostSlots: ghostTracker?.slots(),
   });
 
   if (snapshot.state === 'finished') void saveRide();
@@ -821,7 +824,10 @@ function teardown(): void {
   ghostTracker = null;
   // The picked slot goes with the ride it was picked for; the three toggles persist.
   chosenGhostRideId = null;
-  rideStore.update({ ghosts: INITIAL_SNAPSHOT.ghosts });
+  rideStore.update({
+    ghosts: INITIAL_SNAPSHOT.ghosts,
+    ghostSlots: INITIAL_SNAPSHOT.ghostSlots,
+  });
 }
 
 /**
@@ -1239,6 +1245,9 @@ export async function setGhostSlot(slot: HistorySlot, on: boolean): Promise<void
   if (settings[key] === on) return;
   settings = { ...settings, [key]: on };
   ghostTracker?.setSelection(ghostSelection());
+  // Published here rather than waited for on the next tick, as the difficulty slider is:
+  // a checkbox that takes a second to move reads as one that did not take.
+  publishGhostSlots();
   await storage.settings.put({ [key]: on });
 }
 
@@ -1253,6 +1262,12 @@ export function setChosenGhostRide(rideId: string | null): void {
   if (chosenGhostRideId === rideId) return;
   chosenGhostRideId = rideId;
   ghostTracker?.setSelection(ghostSelection());
+  publishGhostSlots();
+}
+
+/** The panel's own view of the four slots, republished the moment one of them moves. */
+function publishGhostSlots(): void {
+  rideStore.update({ ghostSlots: ghostTracker?.slots() ?? INITIAL_SNAPSHOT.ghostSlots });
 }
 
 /**

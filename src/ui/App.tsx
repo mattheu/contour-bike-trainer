@@ -324,8 +324,8 @@ function RideApp() {
   }, [guardBack, hash]);
 
   const startRide = useCallback(
-    async (routeId: string) => {
-      await services.startRide(routeId);
+    async (routeId: string, options?: services.StartRideOptions) => {
+      await services.startRide(routeId, options);
       setSummaryOrigin('finished');
       // No label: the engine has just been handed the route, and the correction above
       // writes what it is actually riding.
@@ -502,6 +502,8 @@ function RideApp() {
         onPauseToggle={togglePause}
         onEnd={() => void endRide()}
         onDifficultyChange={(percent) => void services.setTrainerDifficulty(percent)}
+        onGhostSlot={(slot, on) => void services.setGhostSlot(slot, on)}
+        onClearGhostRide={() => services.setChosenGhostRide(null)}
         onDismissAlert={services.dismissAlert}
         onRetryTrainer={() => void services.connectTrainer()}
         onConnectTrainer={() => void services.connectTrainer()}
@@ -612,10 +614,12 @@ function RideApp() {
       <>
         <Rides
           rides={history?.rides ?? []}
+          routes={history?.routes ?? []}
           onOpen={(rideId) => {
             setSummaryOrigin('history');
             go({ name: 'summary', rideId });
           }}
+          onRace={(routeId, rideId) => void startRide(routeId, { ghostRideId: rideId })}
           onExport={(id) => void services.exportRideTcx(id)}
           onExportAll={() => services.exportAllRides()}
           onImport={importRides}

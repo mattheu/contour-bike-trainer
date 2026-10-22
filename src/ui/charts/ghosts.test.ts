@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SLOT_SYMBOL, type GhostSlot } from '../../ghost/slots';
-import type { ActiveGhost } from '../../ghost/state';
+import type { ActiveGhost, GhostEnd } from '../../ghost/state';
 import { buildProfile } from '../../route/profile';
 import type { Route, RoutePoint } from '../../route/types';
 import { elevationGeometry } from './elevation';
@@ -11,7 +11,9 @@ import {
   LABEL_PLATE_W,
   LABEL_RISE_PX,
   LABEL_STEM_PX,
+  PHONE_METRICS,
   RIDER_CLEAR_PX,
+  STOPPED_OPACITY,
   SUMMIT_CLEAR_PX,
   ghostLayer,
   ghostMarks,
@@ -19,18 +21,24 @@ import {
 } from './ghosts';
 
 /**
- * A ghost at a distance, with the gap it is showing. `done` carries no gap, which is the
- * state.ts contract rather than a convenience here.
+ * A ghost at a distance, with the gap it is showing. An ended ghost carries no gap, which
+ * is the state.ts contract rather than a convenience here.
  */
-function ghost(slot: GhostSlot, distanceM: number, gapS: number | null, done = false): ActiveGhost {
+function ghost(
+  slot: GhostSlot,
+  distanceM: number,
+  gapS: number | null,
+  end: GhostEnd = 'racing',
+): ActiveGhost {
+  const racing = end === 'racing';
   return {
     slot,
     symbol: SLOT_SYMBOL[slot],
     name: slot,
-    done,
+    end,
     distanceM,
-    gapS: done ? null : gapS,
-    gapLabel: done || gapS === null ? null : `+${String(gapS)}`,
+    gapS: racing ? gapS : null,
+    gapLabel: !racing || gapS === null ? null : `${gapS < 0 ? '−' : '+'}${String(Math.abs(gapS))}`,
   };
 }
 
@@ -163,7 +171,7 @@ describe('ghostLayer', () => {
   it('parks a finished ghost at the route end, faded, with no label', () => {
     const lengthM = 20_000;
     const { placements } = ghostLayer({
-      ghosts: [ghost('best', lengthM, null, true)],
+      ghosts: [ghost('best', lengthM, null, 'finished')],
       project: flat(90),
     });
 
@@ -171,6 +179,19 @@ describe('ghostLayer', () => {
     expect(done.x).toBe(lengthM);
     expect(done.opacity).toBe(DONE_OPACITY);
     expect(done.label).toBeNull();
+  });
+
+  it('marks a stopped ghost where it stopped, fainter than a finished one', () => {
+    const { placements } = ghostLayer({
+      ghosts: [ghost('chosen', 6200, null, 'stopped')],
+      project: flat(90),
+    });
+
+    const stopped = bySlot(placements, 'chosen');
+    expect(stopped.x).toBe(6200);
+    expect(stopped.opacity).toBe(STOPPED_OPACITY);
+    expect(STOPPED_OPACITY).toBeLessThan(DONE_OPACITY);
+    expect(stopped.label).toBeNull();
   });
 
   it('draws nothing for a ghost the window has scrolled past', () => {
@@ -185,10 +206,83 @@ describe('ghostLayer', () => {
 
 describe('ghostMarks', () => {
   it('leaves a finished ghost off the map entirely', () => {
-    const marks = ghostMarks([ghost('best', 500, 18), ghost('year', 20_000, null, true)], flat(60));
+    const marks = ghostMarks(
+      [ghost('best', 500, 18), ghost('year', 20_000, null, 'finished')],
+      flat(60),
+    );
 
     expect(marks.map((mark) => mark.slot)).toEqual(['best']);
-    expect(marks[0]).toMatchObject({ x: 500, y: 60 });
+    expect(marks[0]).toMatchObject({ x: 500, y: 60, opacity: 1 });
+  });
+
+  it('keeps a stopped ghost on the map, faded, where its ride ended', () => {
+    const marks = ghostMarks([ghost('chosen', 6200, null, 'stopped')], flat(60));
+
+    expect(marks[0]).toMatchObject({ slot: 'chosen', x: 6200, opacity: STOPPED_OPACITY });
+  });
+});
+
+describe('ghostLayer on a phone', () => {
+  it('puts the gap to the right of the symbol while the ghost is up the road', () => {
+    const { placements } = ghostLayer({
+      ghosts: [ghost('chosen', 400, 41)],
+      project: flat(120),
+      metrics: PHONE_METRICS,
+    });
+
+    const label = bySlot(placements, 'chosen').label;
+    expect(label?.anchor).toBe('start');
+    expect(label?.plateX).toBe(400 + PHONE_METRICS.clearPx);
+    // On the symbol's own line rather than above it: there is no stem to hang from.
+    expect(label?.plateY).toBe(120 - PHONE_METRICS.plateH / 2);
+    expect(label?.stemY).toBe(label?.stemTopY);
+  });
+
+  it('puts the gap to the left once the rider has overtaken it', () => {
+    const { placements } = ghostLayer({
+      ghosts: [ghost('year', 400, -5)],
+      project: flat(120),
+      metrics: PHONE_METRICS,
+    });
+
+    const label = bySlot(placements, 'year').label;
+    expect(label?.anchor).toBe('end');
+    expect(label?.plateX).toBe(400 - PHONE_METRICS.clearPx - PHONE_METRICS.plateW);
+  });
+
+  it('leaves the side alone for the rider, which the sign has already decided', () => {
+    const { placements } = ghostLayer({
+      ghosts: [ghost('best', 480, 18)],
+      project: flat(100),
+      rider: { x: 500, y: 100 },
+      metrics: PHONE_METRICS,
+    });
+
+    // The desktop rule would swing this one to 'end' to clear the gradient bubble.
+    expect(bySlot(placements, 'best').label?.anchor).toBe('start');
+  });
+
+  it('gives the nearest ghost in time the label inside the 60 x 16 box', () => {
+    const { placements } = ghostLayer({
+      // 50 px apart and 8 high: inside the phone box, outside the desktop one.
+      ghosts: [ghost('best', 500, 41), ghost('year', 550, 5)],
+      project: (distanceM) => ({ x: distanceM, y: distanceM === 500 ? 100 : 108 }),
+      metrics: PHONE_METRICS,
+    });
+
+    expect(bySlot(placements, 'year').label?.text).toBe('+5');
+    expect(bySlot(placements, 'best').label).toBeNull();
+  });
+
+  it('leaves both labels alone once the symbols clear the box', () => {
+    const { placements } = ghostLayer({
+      ghosts: [ghost('best', 500, 41), ghost('year', 500 + PHONE_METRICS.gapX, 5)],
+      project: flat(),
+      metrics: PHONE_METRICS,
+    });
+
+    expect(bySlot(placements, 'best').label).not.toBeNull();
+    expect(bySlot(placements, 'year').label).not.toBeNull();
   });
 });
 

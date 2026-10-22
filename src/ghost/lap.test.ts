@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { lapSplits } from '../ride/metrics';
 import type { Ride, RideSample, RideSettings } from '../storage/types';
-import { candidateLaps, distanceAtLapTime, lapSeries, lapTimeAtDistance } from './lap';
+import { candidateLaps, distanceAtLapTime, lapSeries, lapTimeAtDistance, rideSeries } from './lap';
 
 const SETTINGS: RideSettings = {
   trainerDifficulty: 60,
@@ -193,5 +193,60 @@ describe('lapTimeAtDistance', () => {
   it('clamps to the lap at both ends', () => {
     expect(lapTimeAtDistance(series, -1)).toBe(0);
     expect(lapTimeAtDistance(series, LAP_M + 500)).toBe(series.durationS);
+  });
+});
+
+describe('rideSeries', () => {
+  /** 600 m in 60 s and then nothing: a ride that stopped part way round. */
+  function quit(): RideSample[] {
+    const samples: RideSample[] = [];
+    for (let t = 0; t <= 60; t += 1) samples.push(sample({ t, distanceM: t * 10 }));
+    return samples;
+  }
+
+  it('ends where the ride ended, and says it did not finish', () => {
+    const series = rideSeries(quit(), LAP_M)!;
+
+    expect(series.finished).toBe(false);
+    expect(series.durationS).toBe(60);
+    expect(series.lengthM).toBe(600);
+    expect(distanceAtLapTime(series, 30)).toBeCloseTo(300, 6);
+    // Clamped at the stop rather than carried on to the line it never reached.
+    expect(distanceAtLapTime(series, 300)).toBe(600);
+    expect(lapTimeAtDistance(series, 900)).toBe(60);
+  });
+
+  it('is nothing at all where the ride recorded nothing to race', () => {
+    expect(rideSeries([], LAP_M)).toBeNull();
+    expect(rideSeries([sample({ t: 0, distanceM: 0 })], LAP_M)).toBeNull();
+  });
+
+  it('drops a sample that went backwards in either axis', () => {
+    const series = rideSeries(
+      [
+        sample({ t: 0, distanceM: 0 }),
+        sample({ t: 10, distanceM: 100 }),
+        sample({ t: 9, distanceM: 150 }),
+        sample({ t: 20, distanceM: 90 }),
+        sample({ t: 30, distanceM: 300 }),
+      ],
+      LAP_M,
+    )!;
+
+    expect(series.points.map((point) => point.t)).toEqual([0, 10, 30]);
+  });
+
+  it('stops at the route length, which a ride that got there would have a lap for', () => {
+    const series = rideSeries(
+      [
+        sample({ t: 0, distanceM: 0 }),
+        sample({ t: 50, distanceM: 500 }),
+        sample({ t: 100, distanceM: LAP_M }),
+      ],
+      LAP_M,
+    )!;
+
+    expect(series.lengthM).toBe(500);
+    expect(series.finished).toBe(false);
   });
 });

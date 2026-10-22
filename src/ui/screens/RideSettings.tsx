@@ -1,7 +1,17 @@
+import type { GhostSlotView } from '../../ghost/live';
+import type { HistorySlot } from '../../ghost/resolve';
+import {
+  SLOT_DESCRIPTION,
+  SLOT_SYMBOL,
+  SYMBOL_BOX,
+  SYMBOL_STROKE_WIDTH,
+  longDate,
+} from '../../ghost/slots';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { Button } from '../components/Button';
 import { Devices, type DevicesView } from '../components/Devices';
 import { LABEL, MONO } from '../components/styles';
+import { duration } from '../format';
 
 export interface Targets {
   powerW: number | null;
@@ -19,10 +29,24 @@ interface RideSettingsProps {
    */
   difficultyInertReason?: string | null;
   targets: Targets;
+  /**
+   * The ghost section, absent on a session with no route to race over — a workout ride
+   * has no history of the same road and so has no slots to offer.
+   */
+  ghosts?: GhostSettingsView;
   onDifficultyChange: (percent: number) => void;
   onTargetsChange: (targets: Targets) => void;
   onEnd: () => void;
   onClose: () => void;
+}
+
+export interface GhostSettingsView {
+  /** Every slot, including the ones switched off and the ones nothing can fill. */
+  slots: readonly GhostSlotView[];
+  /** The three resolved slots. The picked one is not a preference and is not here. */
+  onSlot: (slot: HistorySlot, on: boolean) => void;
+  /** Empties the picked slot. Filling it is the rides list's Race button. */
+  onClearPicked: () => void;
 }
 
 /** A blank field clears the target rather than pinning it to zero. */
@@ -35,8 +59,8 @@ function readNumber(value: string): number | null {
 const SECTION = 'flex flex-col gap-[16px]';
 
 /**
- * design/mockups/ride-settings.html, minus the ghost block, which is phase 4, and minus
- * FTP, which is not edited mid-ride. Everything here takes effect on the ride in progress.
+ * design/mockups/ride-settings.html, minus FTP, which is not edited mid-ride. Everything
+ * here takes effect on the ride in progress.
  *
  * Devices lead, because pairing is the precondition for everything under it: this panel
  * pairs what you are riding with now, and the same rows live in the rider profile panel
@@ -48,6 +72,7 @@ export function RideSettings({
   difficulty,
   difficultyInertReason = null,
   targets,
+  ghosts,
   onDifficultyChange,
   onTargetsChange,
   onEnd,
@@ -100,6 +125,30 @@ export function RideSettings({
         )}
       </div>
 
+      {/* "up to 5" is the mockup's and the design's count of the slots that will exist,
+          not of the rows below: the two friend slots share nothing yet, and a dimmed
+          placeholder for a feature with no code behind it is a promise, not a control.
+          The fifth is absent entirely; the fourth is here because the rides list can
+          fill it today. */}
+      {ghosts !== undefined && (
+        <div className={SECTION}>
+          <div className="flex items-baseline justify-between">
+            <div className={LABEL}>Ghosts</div>
+            <div className={`${MONO} text-micro text-muted`}>up to 5</div>
+          </div>
+          {ghosts.slots.map((view) => (
+            <GhostRow
+              key={view.slot}
+              view={view}
+              onChange={(on) => {
+                if (view.slot === 'chosen') ghosts.onClearPicked();
+                else ghosts.onSlot(view.slot, on);
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <div className={SECTION}>
         <div className={LABEL}>Targets</div>
         <div className="grid grid-cols-3 gap-[16px]">
@@ -134,6 +183,59 @@ export function RideSettings({
         </Button>
       </div>
     </SettingsPanel>
+  );
+}
+
+/**
+ * One slot: its symbol, what it is, the ride filling it, and a toggle.
+ *
+ * A slot with no candidate is dimmed and cannot be switched on, rather than falling
+ * through to the next best ride — DESIGN.md gives each symbol one meaning, and a triangle
+ * on a lap that is not the best of the year spends that meaning to avoid an empty row.
+ *
+ * The picked slot's checkbox only ever empties it. There is no ride to put back from
+ * here, which is why an empty one says where it is filled from instead of sitting dead.
+ */
+function GhostRow({ view, onChange }: { view: GhostSlotView; onChange: (on: boolean) => void }) {
+  const id = `ghost-${view.slot}`;
+  const ride = view.ride;
+  const note =
+    ride !== null
+      ? `${longDate(ride.startedAt)} · ${duration(ride.durationS)}`
+      : view.slot === 'chosen'
+        ? 'race a ride from the history'
+        : 'no ride yet';
+
+  return (
+    <div className={`flex items-center gap-[12px] ${ride === null ? 'opacity-40' : ''}`}>
+      <svg
+        width={16}
+        height={16}
+        viewBox={`0 0 ${String(SYMBOL_BOX)} ${String(SYMBOL_BOX)}`}
+        className="shrink-0"
+        aria-hidden="true"
+      >
+        <path
+          d={SLOT_SYMBOL[view.slot].d}
+          fill="var(--color-ground)"
+          stroke="var(--color-muted)"
+          strokeWidth={SYMBOL_STROKE_WIDTH}
+          strokeLinejoin="round"
+        />
+      </svg>
+      <label htmlFor={id} className="text-body grow font-sans">
+        {SLOT_DESCRIPTION[view.slot]}
+        <span className={`${MONO} text-micro text-muted ml-[6px]`}>{note}</span>
+      </label>
+      <input
+        id={id}
+        type="checkbox"
+        checked={view.on}
+        disabled={ride === null}
+        onChange={(event) => onChange(event.target.checked)}
+        className="accent-accent size-[20px] shrink-0"
+      />
+    </div>
   );
 }
 

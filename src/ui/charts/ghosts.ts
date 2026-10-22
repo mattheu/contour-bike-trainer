@@ -12,7 +12,7 @@
  */
 
 import { SYMBOL_BOX, type GhostSlot, type GhostSymbol } from '../../ghost/slots';
-import type { ActiveGhost } from '../../ghost/state';
+import type { ActiveGhost, GhostEnd } from '../../ghost/state';
 import type { Pt } from './path';
 
 /**
@@ -35,8 +35,8 @@ export const LABEL_BASELINE_PX = 4;
 
 /** How far the plate stands off the stem when it swings to one side, and the text's
  * inset from the plate's near edge. Both taken off the flipped label in the mockup. */
-const LABEL_CLEAR_PX = 4;
-const LABEL_PAD_PX = 2;
+export const LABEL_CLEAR_PX = 4;
+export const LABEL_PAD_PX = 2;
 
 /**
  * When two labels are treated as one collision: the plate's own width plus a hair, and
@@ -60,6 +60,101 @@ export const RIDER_CLEAR_PX = 44;
 
 /** A ghost that has finished waits at the route end at this weight. DESIGN.md > Ghosts. */
 export const DONE_OPACITY = 0.6;
+
+/**
+ * And a ghost whose ride stopped short fades out where it stopped, which is lighter than
+ * a finished one on purpose: a ghost that won the race is still a figure on the chart,
+ * and one that gave up is a mark saying how far that ride got. SPEC.md > Ghosts asks for
+ * the mark rather than a dot that blinks away unexplained, so it is faded, not removed.
+ */
+export const STOPPED_OPACITY = 0.3;
+
+/**
+ * The sizes one chart draws a ghost layer at. Two sets, one shape: the rules below —
+ * which label survives a collision, which side it swings to, what a summit loses — are
+ * the same on a 944 px profile and a 390 px phone, and only the numbers differ.
+ *
+ * Read off design/mockups/ride.html and the three phone mockups respectively. Passed in
+ * rather than switched on inside, so a third screen size is a constant and not a branch.
+ */
+export interface GhostMetrics {
+  /** The box the symbol paths are drawn on, which every offset below is measured from. */
+  symbolBox: number;
+  /**
+   * Where the gap sits. `above` hangs it on a stem over the symbol, the desktop charts'
+   * arrangement; `beside` puts it alongside, which is the only way 11 px of figure fits
+   * on a phone's profile without covering the line it is measuring.
+   */
+  side: 'above' | 'beside';
+  plateW: number;
+  plateH: number;
+  fontPx: number;
+  baselinePx: number;
+  /** The rise to the plate's centre. Zero where the label sits beside the symbol. */
+  risePx: number;
+  /** The dashed stem's length. Zero beside, where there is nothing to hang from. */
+  stemPx: number;
+  clearPx: number;
+  padPx: number;
+  /** The collision box, measured between symbols. */
+  gapX: number;
+  gapY: number;
+}
+
+export const DESKTOP_METRICS: GhostMetrics = {
+  symbolBox: SYMBOL_BOX,
+  side: 'above',
+  plateW: LABEL_PLATE_W,
+  plateH: LABEL_PLATE_H,
+  fontPx: LABEL_FONT_PX,
+  baselinePx: LABEL_BASELINE_PX,
+  risePx: LABEL_RISE_PX,
+  stemPx: LABEL_STEM_PX,
+  clearPx: LABEL_CLEAR_PX,
+  padPx: LABEL_PAD_PX,
+  gapX: LABEL_GAP_X,
+  gapY: LABEL_GAP_Y,
+};
+
+/**
+ * The phone symbol, at 0.8 of the paths' own scale — a 4 px radius on the profile line,
+ * which is the square's half-width in design/mockups/phone-landscape.html. Expressed as a
+ * scale rather than a second set of paths so a slot keeps one shape at every size.
+ */
+export const PHONE_SYMBOL_SCALE = 0.8;
+export const PHONE_SYMBOL_BOX = SYMBOL_BOX * PHONE_SYMBOL_SCALE;
+
+/**
+ * The phone layer: the same figure beside the symbol instead of over it, with no stem.
+ *
+ * The collision box is wider and shorter than the desktop's — 60 x 16 against 46 x 18 —
+ * because a label that has swung to one side reaches further sideways than one centred
+ * over its symbol, and because the phone profile is half the height, so two ghosts a few
+ * pixels apart vertically really are on top of each other.
+ */
+export const PHONE_METRICS: GhostMetrics = {
+  symbolBox: PHONE_SYMBOL_BOX,
+  side: 'beside',
+  plateW: 38,
+  plateH: 14,
+  fontPx: 11,
+  baselinePx: 4,
+  risePx: 0,
+  stemPx: 0,
+  // From the symbol's centre to the plate's near edge, and from that edge to the figure.
+  clearPx: 8,
+  padPx: 1,
+  gapX: 60,
+  gapY: 16,
+};
+
+/** The weight a ghost is drawn at, per end state. Shared by the profile and the map so
+ * the two cannot disagree about how far gone a ghost is. */
+export const END_OPACITY: Record<GhostEnd, number> = {
+  racing: 1,
+  finished: DONE_OPACITY,
+  stopped: STOPPED_OPACITY,
+};
 
 export type LabelAnchor = 'middle' | 'start' | 'end';
 
@@ -85,7 +180,7 @@ export interface GhostPlacement {
   x: number;
   y: number;
   opacity: number;
-  /** Null where the ghost has finished, or where a nearer ghost took the space. */
+  /** Null where the ghost has ended, or where a nearer ghost took the space. */
   label: GhostLabel | null;
 }
 
@@ -106,33 +201,54 @@ export interface GhostLayerInput {
   rider?: Pt | null;
   /** Summit gain labels by their x, in the order the caller draws them. */
   summits?: readonly number[];
+  /** Desktop unless a phone chart says otherwise. */
+  metrics?: GhostMetrics;
 }
 
-const HALF_BOX = SYMBOL_BOX / 2;
-
-function label(x: number, y: number, text: string, anchor: LabelAnchor): GhostLabel {
-  const centreY = y - LABEL_RISE_PX;
-  const plateY = centreY - LABEL_PLATE_H / 2;
+function label(
+  m: GhostMetrics,
+  x: number,
+  y: number,
+  text: string,
+  anchor: LabelAnchor,
+): GhostLabel {
+  const halfBox = m.symbolBox / 2;
+  const centreY = y - m.risePx;
   return {
     text,
     anchor,
     plateX:
       anchor === 'middle'
-        ? x - LABEL_PLATE_W / 2
+        ? x - m.plateW / 2
         : anchor === 'end'
-          ? x - LABEL_CLEAR_PX - LABEL_PLATE_W
-          : x + LABEL_CLEAR_PX,
-    plateY,
+          ? x - m.clearPx - m.plateW
+          : x + m.clearPx,
+    plateY: centreY - m.plateH / 2,
     textX:
       anchor === 'middle'
         ? x
         : anchor === 'end'
-          ? x - LABEL_CLEAR_PX - LABEL_PAD_PX
-          : x + LABEL_CLEAR_PX + LABEL_PAD_PX,
-    textY: centreY + LABEL_BASELINE_PX,
-    stemY: y - HALF_BOX,
-    stemTopY: y - HALF_BOX - LABEL_STEM_PX,
+          ? x - m.clearPx - m.padPx
+          : x + m.clearPx + m.padPx,
+    textY: centreY + m.baselinePx,
+    // Equal where there is no stem, so a renderer that draws one draws nothing rather
+    // than needing to know which arrangement it is in.
+    stemY: y - halfBox,
+    stemTopY: y - halfBox - m.stemPx,
   };
+}
+
+/**
+ * Which side of the symbol a phone's gap sits: left once you have overtaken the ghost,
+ * right while it is still up the road.
+ *
+ * The sign already says which it is, so the figure repeats it in position — the gap you
+ * have pulled out trails behind you and the one you are chasing is ahead. Level pegging
+ * goes right with the ghosts still to be caught, because the one thing +0:00 is not is
+ * a ghost you have beaten.
+ */
+function besideAnchor(gapS: number | null): LabelAnchor {
+  return gapS !== null && gapS < 0 ? 'end' : 'start';
 }
 
 /**
@@ -143,7 +259,8 @@ function label(x: number, y: number, text: string, anchor: LabelAnchor): GhostLa
  * and whatever is left takes a summit's figure out of its way.
  */
 export function ghostLayer(input: GhostLayerInput): GhostLayer {
-  const { ghosts, project, rider = null, summits = [] } = input;
+  const { ghosts, project, rider = null, summits = [], metrics = DESKTOP_METRICS } = input;
+  const beside = metrics.side === 'beside';
 
   const placed: { placement: GhostPlacement; gapS: number }[] = [];
   for (const ghost of ghosts) {
@@ -155,13 +272,19 @@ export function ghostLayer(input: GhostLayerInput): GhostLayer {
         symbol: ghost.symbol,
         x: at.x,
         y: at.y,
-        opacity: ghost.done ? DONE_OPACITY : 1,
+        opacity: END_OPACITY[ghost.end],
         label:
-          ghost.done || ghost.gapLabel === null
+          ghost.gapLabel === null
             ? null
-            : label(at.x, at.y, ghost.gapLabel, 'middle'),
+            : label(
+                metrics,
+                at.x,
+                at.y,
+                ghost.gapLabel,
+                beside ? besideAnchor(ghost.gapS) : 'middle',
+              ),
       },
-      // A done ghost carries no gap, and holds no label to lose, so it never enters the
+      // An ended ghost carries no gap, and holds no label to lose, so it never enters the
       // comparison below; the value here only has to sort it out of the way.
       gapS: ghost.gapS === null ? Infinity : Math.abs(ghost.gapS),
     });
@@ -180,13 +303,16 @@ export function ghostLayer(input: GhostLayerInput): GhostLayer {
       (b) =>
         b !== a &&
         b.gapS < a.gapS &&
-        Math.abs(a.placement.x - b.placement.x) < LABEL_GAP_X &&
-        Math.abs(a.placement.y - b.placement.y) < LABEL_GAP_Y,
+        Math.abs(a.placement.x - b.placement.x) < metrics.gapX &&
+        Math.abs(a.placement.y - b.placement.y) < metrics.gapY,
     );
     if (beaten) a.placement.label = null;
   }
 
-  if (rider !== null) {
+  // Skipped where the label already sits beside its symbol: there the side carries the
+  // sign of the gap, and swinging it for the rider's sake would make a ghost you had
+  // overtaken read as one still up the road.
+  if (rider !== null && !beside) {
     for (const { placement } of placed) {
       if (placement.label === null) continue;
       const dx = placement.x - rider.x;
@@ -195,6 +321,7 @@ export function ghostLayer(input: GhostLayerInput): GhostLayer {
       // Away from the rider, so the plate leaves the gradient bubble alone. A ghost
       // exactly on the rider's x goes left, which is the mockup's case.
       placement.label = label(
+        metrics,
         placement.x,
         placement.y,
         placement.label.text,
@@ -215,26 +342,37 @@ export function ghostLayer(input: GhostLayerInput): GhostLayer {
   return { placements: placed.map((entry) => entry.placement), hiddenSummits };
 }
 
-/** A symbol on the map: no gap, no fade, and nothing for a finished ghost. */
+/** A symbol on the map: no gap, and nothing for a finished ghost. */
 export interface GhostMark {
   slot: GhostSlot;
   symbol: GhostSymbol;
   x: number;
   y: number;
+  opacity: number;
 }
 
 /**
  * The map's ghosts. DESIGN.md > Ghosts: the map carries symbols only, and a ghost that
  * has finished leaves it — a symbol parked on the start line of a map would read as a
  * rider sitting there rather than as a race that is over.
+ *
+ * A stopped ghost stays, faded. Its mark is in the middle of the route rather than on the
+ * line, so it reads as what it is — how far that ride got — and taking it away would
+ * leave the rider with a symbol that vanished somewhere up a climb for no stated reason.
  */
 export function ghostMarks(ghosts: readonly ActiveGhost[], project: GhostProjection): GhostMark[] {
   const marks: GhostMark[] = [];
   for (const ghost of ghosts) {
-    if (ghost.done) continue;
+    if (ghost.end === 'finished') continue;
     const at = project(ghost.distanceM);
     if (at === null) continue;
-    marks.push({ slot: ghost.slot, symbol: ghost.symbol, x: at.x, y: at.y });
+    marks.push({
+      slot: ghost.slot,
+      symbol: ghost.symbol,
+      x: at.x,
+      y: at.y,
+      opacity: END_OPACITY[ghost.end],
+    });
   }
   return marks;
 }

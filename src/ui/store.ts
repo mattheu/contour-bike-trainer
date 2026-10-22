@@ -1,4 +1,5 @@
 import type { ConnectionState } from '../ble/types';
+import type { GhostSlotView } from '../ghost/live';
 import type { ActiveGhost } from '../ghost/state';
 import type { VisibilityState } from '../instrument/probe';
 import type { Summary } from '../instrument/stats';
@@ -130,6 +131,12 @@ export interface RideSnapshot {
    * to agree about where a ghost is and whether the race is still on.
    */
   ghosts: readonly ActiveGhost[];
+  /**
+   * The four slots as the ride settings panel shows them, including the ones switched
+   * off and the ones nothing can fill. Separate from `ghosts` above, which carries only
+   * what is actually on the road: the panel's question is what the rider *could* race.
+   */
+  ghostSlots: readonly GhostSlotView[];
   /** The id the ride was stored under, whether the rider ended it or the route ran out.
    * Null until the save lands, so the summary never has to guess which ride it wants. */
   savedRideId: string | null;
@@ -173,6 +180,7 @@ const INITIAL: RideSnapshot = {
 
   samples: [],
   ghosts: [],
+  ghostSlots: [],
   savedRideId: null,
 };
 

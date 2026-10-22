@@ -303,5 +303,67 @@ describe('GhostTracker', () => {
       // 29 Sep, the day the stored ride was ridden: the picked slot is named after it.
       expect(racing[0]?.name).toBe('29 Sep');
     });
+
+    // The 120 s lap and not the 140 s one: a ride with laps still races its fastest, so
+    // it is over by 121 s where the slower lap would still be out on the road.
+    const over = tracker.update({ elapsedS: 121, distanceM: 900 });
+    expect(over[0]?.end).toBe('finished');
+    expect(over[0]?.distanceM).toBe(LAP_M);
+  });
+
+  it('races a chosen ride that never completed a lap, ending where it stopped', async () => {
+    // 600 m up the road in 60 s, and no splits: nothing here can fill a resolved slot.
+    const quit = ride({ id: 'quit', lapSplits: [], distanceM: 600, elapsedS: 60 });
+    const tracker = new GhostTracker({
+      storage: storageOf([quit], { quit: ridden(60) }),
+      routeId: ROUTE_ID,
+      rideId: LIVE_ID,
+      startedAt: STARTED_AT,
+      routeLengthM: LAP_M,
+      loops: true,
+      samples: () => [],
+      now: () => Date.parse('2026-10-20T10:00:00.000Z'),
+      selection: { best: true, year: true, last: true, chosenRideId: 'quit' },
+      onFailure: () => {},
+    });
+
+    await tracker.start();
+    await vi.waitFor(() => {
+      const racing = tracker.update({ elapsedS: 30, distanceM: 200 });
+      // The diamond alone: the ride has no completed lap for Best, Year or Last to take.
+      expect(racing.map((ghost) => ghost.slot)).toEqual(['chosen']);
+      expect(racing[0]?.end).toBe('racing');
+      expect(racing[0]?.distanceM).toBeCloseTo(300, 0);
+    });
+
+    const over = tracker.update({ elapsedS: 90, distanceM: 800 });
+    expect(over[0]?.end).toBe('stopped');
+    expect(over[0]?.distanceM).toBe(600);
+    expect(over[0]?.gapLabel).toBeNull();
+  });
+
+  it('offers the panel a row per slot, saying which have nothing to fill them', async () => {
+    const quit = ride({ id: 'quit', lapSplits: [], elapsedS: 60 });
+    const tracker = new GhostTracker({
+      storage: storageOf([quit], { quit: ridden(60) }),
+      routeId: ROUTE_ID,
+      rideId: LIVE_ID,
+      startedAt: STARTED_AT,
+      routeLengthM: LAP_M,
+      loops: true,
+      samples: () => [],
+      now: () => Date.parse('2026-10-20T10:00:00.000Z'),
+      selection: { best: true, year: false, last: true, chosenRideId: 'quit' },
+      onFailure: () => {},
+    });
+
+    await tracker.start();
+    const slots = tracker.slots();
+
+    expect(slots.map((view) => view.slot)).toEqual(['best', 'year', 'last', 'chosen']);
+    // Nothing falls through: a ride with no completed lap fills none of the three.
+    expect(slots.slice(0, 3).map((view) => view.ride)).toEqual([null, null, null]);
+    expect(slots.map((view) => view.on)).toEqual([true, false, true, true]);
+    expect(slots[3]?.ride).toEqual({ startedAt: quit.startedAt, durationS: 60 });
   });
 });

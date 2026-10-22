@@ -59,6 +59,18 @@ const FIXED_NAME: Record<Exclude<GhostSlot, 'chosen'>, string> = {
   last: 'Last',
 };
 
+/**
+ * And what the ride settings panel calls them, which is longer because it has the room
+ * and is naming a rule rather than labelling a figure: "Year" beside a gap is read off a
+ * symbol the rider already knows, but a checkbox has to say what it switches on.
+ */
+export const SLOT_DESCRIPTION: Record<GhostSlot, string> = {
+  best: 'Best',
+  year: 'Best this year',
+  last: 'Most recent',
+  chosen: 'Picked ride',
+};
+
 // Spelled out rather than taken from Intl for the reason the rides list gives: en-GB
 // abbreviates September to "Sept" and the mockup uses "Sep". Duplicated rather than
 // imported, because that list lives in a screen module and a domain module must not
@@ -83,6 +95,14 @@ export function shortDate(iso: string): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
   return `${String(at.getDate())} ${MONTHS_SHORT[at.getMonth()] ?? ''}`.trim();
+}
+
+/** "21 Sep 2025", for the settings panel, which names a ride rather than a day's riding
+ * and so has to say which year's September it means. */
+export function longDate(iso: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return '';
+  return `${String(at.getDate())} ${MONTHS_SHORT[at.getMonth()] ?? ''} ${String(at.getFullYear())}`;
 }
 
 /**

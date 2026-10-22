@@ -9,7 +9,7 @@
 import { lapSplits } from '../ride/metrics';
 import { lapNumber, lapPositionM } from '../route/loop';
 import type { Ride, RideSample, Storage } from '../storage/types';
-import { candidateLaps, lapSeries, type GhostLap, type GhostSeries } from './lap';
+import { candidateLaps, lapSeries, rideSeries, type GhostLap, type GhostSeries } from './lap';
 import { resolveGhosts, sameLap, type HistorySlot } from './resolve';
 import { SLOT_ORDER, slotName, type GhostSlot } from './slots';
 import { activeGhosts, type ActiveGhost, type Ghost, type RiderLap } from './state';
@@ -118,6 +118,55 @@ const NO_GHOSTS: readonly ActiveGhost[] = Object.freeze([]);
 const HISTORY_SLOTS: readonly HistorySlot[] = ['best', 'year', 'last'];
 
 /**
+ * What a slot is racing: one completed lap of a ride, or a whole ride that never
+ * completed one.
+ *
+ * The second is the picked slot's alone. SPEC.md > Ghosts: a ride that stopped early
+ * cannot be best, because there is no comparable time, but it can still be raced
+ * individually — so the three resolved slots take laps and only the diamond takes a ride.
+ */
+export type GhostSource = { kind: 'lap'; lap: GhostLap } | { kind: 'ride'; rideId: string };
+
+/** The join two resolutions are compared on, so a slot racing the same thing is left
+ * alone rather than torn down and reloaded at every line. */
+function sameSource(a: GhostSource | null, b: GhostSource | null): boolean {
+  if (a === null || b === null) return false;
+  if (a.kind === 'lap' && b.kind === 'lap') return sameLap(a.lap, b.lap);
+  if (a.kind === 'ride' && b.kind === 'ride') return a.rideId === b.rideId;
+  return false;
+}
+
+/** Which ride a source belongs to, for the name and the panel's date line. */
+function sourceRideId(source: GhostSource): string {
+  return source.kind === 'lap' ? source.lap.rideId : source.rideId;
+}
+
+/**
+ * One row of the ride settings panel's ghost section: whether the slot can be filled at
+ * all, whether it is on, and the ride behind it.
+ *
+ * Resolved here rather than in the panel because the panel must not fall through — a
+ * slot with no candidate says so, and offering the next best ride under the wrong symbol
+ * would spend the symbol's meaning to avoid an empty row.
+ */
+export interface GhostSlotView {
+  slot: GhostSlot;
+  /** Switched on by the rider. The picked slot is on whenever it is filled. */
+  on: boolean;
+  /** The ride filling it, or null where nothing can. */
+  ride: { startedAt: string; durationS: number } | null;
+}
+
+/** Every slot, unfilled: what the panel shows before the history has been read. */
+function unfilledSlots(selection: GhostSelection): GhostSlotView[] {
+  return SLOT_ORDER.map((slot) => ({
+    slot,
+    on: slot === 'chosen' ? selection.chosenRideId !== null : selection[slot],
+    ride: null,
+  }));
+}
+
+/**
  * Holds the race together for the length of a ride: which lap fills each slot, the series
  * behind them, and where the rider is in their own lap.
  *
@@ -134,8 +183,11 @@ export class GhostTracker {
   private stored: readonly Ride[] = [];
   /** The lap each slot is racing, and the series once it has loaded. Separate, because a
    * slot is assigned the moment it resolves and filled whenever the read lands. */
-  private assigned = new Map<GhostSlot, GhostLap>();
+  private assigned = new Map<GhostSlot, GhostSource>();
   private loaded = new Map<GhostSlot, Ghost>();
+  /** What the settings panel reads. Rebuilt on every resolution and held by identity, so
+   * a tick that changed nothing republishes nothing. */
+  private slotViews: readonly GhostSlotView[];
 
   /** The lap the rider is on, and the ride second it began at. */
   private lap = 1;
@@ -146,6 +198,12 @@ export class GhostTracker {
   constructor(options: GhostTrackerOptions) {
     this.options = options;
     this.selection = options.selection;
+    this.slotViews = unfilledSlots(options.selection);
+  }
+
+  /** The four slots as the ride settings panel shows them, switched on or not. */
+  slots(): readonly GhostSlotView[] {
+    return this.slotViews;
   }
 
   /**
@@ -243,18 +301,33 @@ export class GhostTracker {
     });
 
     const history = resolveGhosts(pool, this.options.now());
-    const wanted = new Map<GhostSlot, GhostLap>();
+    const wanted = new Map<GhostSlot, GhostSource>();
+    const views: GhostSlotView[] = [];
     for (const slot of HISTORY_SLOTS) {
       const lap = history[slot];
-      if (this.selection[slot] && lap !== null) wanted.set(slot, lap);
+      const on = this.selection[slot];
+      views.push({
+        slot,
+        on,
+        ride: lap === null ? null : this.rideLine(lap.rideId, lap.durationS),
+      });
+      if (on && lap !== null) wanted.set(slot, { kind: 'lap', lap });
     }
-    const chosen = this.chosenLap();
+    const chosen = this.chosenSource();
+    views.push({
+      slot: 'chosen',
+      // No separate toggle: the slot is on because a ride is in it, and emptying it is
+      // how it is switched off. There is nothing to leave switched on against.
+      on: chosen !== null,
+      ride: chosen === null ? null : this.chosenLine(chosen),
+    });
     if (chosen !== null) wanted.set('chosen', chosen);
+    this.slotViews = views;
 
     for (const slot of SLOT_ORDER) {
       const next = wanted.get(slot) ?? null;
       const held = this.assigned.get(slot) ?? null;
-      if (sameLap(next, held)) continue;
+      if (sameSource(next, held)) continue;
       this.assigned.delete(slot);
       // A slot whose lap has changed stops being that ghost at once rather than racing on
       // under a new name until its series arrives.
@@ -266,13 +339,14 @@ export class GhostTracker {
   }
 
   /**
-   * The picked slot's lap: the fastest the chosen ride got round in.
+   * What the picked slot races: the fastest lap the chosen ride got round in, or — where
+   * it never completed one — the ride itself, ending where it stopped.
    *
-   * A ride that never completed a length has no lap to race and fills nothing — the gap
-   * is a comparison of times to the same metre, and a ghost that stopped half way round
-   * would freeze its figure there and call it a race.
+   * The fallback is deliberate and is SPEC.md's. A ride that stopped early is a
+   * legitimate ghost: your climb-then-quit is still something to beat up the climb, and
+   * refusing to race it leaves the rider with a Race button that silently does nothing.
    */
-  private chosenLap(): GhostLap | null {
+  private chosenSource(): GhostSource | null {
     const rideId = this.selection.chosenRideId;
     if (rideId === null) return null;
     const ride = this.stored.find((stored) => stored.id === rideId);
@@ -281,45 +355,61 @@ export class GhostTracker {
     for (const lap of candidateLaps([ride], this.options.routeId)) {
       if (best === null || lap.durationS < best.durationS) best = lap;
     }
-    return best;
+    return best === null ? { kind: 'ride', rideId } : { kind: 'lap', lap: best };
   }
 
-  private async load(slot: GhostSlot, lap: GhostLap): Promise<void> {
+  /** The panel's date-and-time line for a lap of a stored ride. */
+  private rideLine(rideId: string, durationS: number): { startedAt: string; durationS: number } {
+    const ride = this.stored.find((stored) => stored.id === rideId);
+    return { startedAt: ride?.startedAt ?? this.options.startedAt, durationS };
+  }
+
+  /** The same line for the picked slot, whose time is the ride's where it has no lap. */
+  private chosenLine(source: GhostSource): { startedAt: string; durationS: number } | null {
+    if (source.kind === 'lap') return this.rideLine(source.lap.rideId, source.lap.durationS);
+    const ride = this.stored.find((stored) => stored.id === source.rideId);
+    if (ride === undefined) return null;
+    return { startedAt: ride.startedAt, durationS: ride.elapsedS };
+  }
+
+  private async load(slot: GhostSlot, source: GhostSource): Promise<void> {
     try {
-      const series = await this.series(lap);
+      const series = await this.series(source);
       // The slot may have resolved again while the read was out; the answer to a question
       // nobody is asking any more is dropped rather than installed.
-      if (series === null || !sameLap(this.assigned.get(slot) ?? null, lap)) return;
-      this.loaded.set(slot, { slot, name: this.name(slot, lap), series });
+      if (series === null || !sameSource(this.assigned.get(slot) ?? null, source)) return;
+      this.loaded.set(slot, { slot, name: this.name(slot, source), series });
     } catch (error) {
       this.options.onFailure(error);
     }
   }
 
-  private name(slot: GhostSlot, lap: GhostLap): string {
-    const ride = this.stored.find((stored) => stored.id === lap.rideId);
+  private name(slot: GhostSlot, source: GhostSource): string {
+    const ride = this.stored.find((stored) => stored.id === sourceRideId(source));
     return slotName(slot, ride?.startedAt ?? this.options.startedAt);
   }
 
   /**
-   * A lap's series. The route's length is the one being ridden rather than the one the
+   * A source's series. The route's length is the one being ridden rather than the one the
    * ghost's own ride recorded, because the ghost has to be laid over the road under the
    * rider's wheels or the two are not racing the same thing.
    */
-  private async series(lap: GhostLap): Promise<GhostSeries | null> {
+  private async series(source: GhostSource): Promise<GhostSeries | null> {
     const lengthM = this.options.routeLengthM;
     if (lengthM === null) return null;
 
-    if (lap.rideId === this.options.rideId) {
+    if (source.kind === 'lap' && source.lap.rideId === this.options.rideId) {
       const samples = this.options.samples();
-      return lapSeries(samples, lapSplits(samples, lengthM), lap.lapIndex, lengthM);
+      return lapSeries(samples, lapSplits(samples, lengthM), source.lap.lapIndex, lengthM);
     }
 
+    const rideId = sourceRideId(source);
     const [ride, record] = await Promise.all([
-      this.options.storage.rides.get(lap.rideId),
-      this.options.storage.rideSamples.get(lap.rideId),
+      this.options.storage.rides.get(rideId),
+      this.options.storage.rideSamples.get(rideId),
     ]);
     if (ride === undefined || record === undefined) return null;
-    return lapSeries(record.samples, ride.lapSplits, lap.lapIndex, lengthM);
+    if (source.kind === 'ride') return rideSeries(record.samples, lengthM);
+    return lapSeries(record.samples, ride.lapSplits, source.lap.lapIndex, lengthM);
   }
 }

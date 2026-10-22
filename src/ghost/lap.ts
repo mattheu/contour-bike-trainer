@@ -71,13 +71,21 @@ export interface GhostPoint {
   distanceM: number;
 }
 
-/** A lap's series, bounded by the line at both ends. */
+/** A ghost's series, from the line to wherever it got to. */
 export interface GhostSeries {
   points: readonly GhostPoint[];
-  /** The split this lap was ridden in; the last point's `t`. */
+  /** How long the ghost rode for; the last point's `t`. */
   durationS: number;
-  /** The route's length; the last point's `distanceM`. */
+  /** How far the ghost got; the last point's `distanceM`. */
   lengthM: number;
+  /**
+   * Whether it reached the end of the route length. The one thing that separates the two
+   * end states downstream: a ghost that finished parks at the line having won, and one
+   * that stopped marks where it gave up. Carried on the series rather than inferred from
+   * `lengthM` against the route, because by the time a renderer has the ghost it no
+   * longer has the route to compare it with.
+   */
+  finished: boolean;
 }
 
 /**
@@ -122,7 +130,44 @@ export function lapSeries(
   }
   points.push({ t: durationS, distanceM: routeLengthM });
 
-  return { points, durationS, lengthM: routeLengthM };
+  return { points, durationS, lengthM: routeLengthM, finished: true };
+}
+
+/**
+ * The series for a ride that never completed a length: everything it recorded, ending
+ * where it stopped.
+ *
+ * SPEC.md > Ghosts: such a ride cannot be best, because there is no comparable time, but
+ * it can still be raced individually — your climb-then-quit is still something to beat up
+ * the climb. So this is the picked slot's fallback and nothing else's; the three resolved
+ * slots go on taking completed laps only.
+ *
+ * Only the first lap's worth is taken. A ride with no splits never crossed the line, so
+ * on a loop as on a point-to-point everything it recorded is lap one, and the clamp below
+ * is a guard against a record whose samples and splits disagree rather than a case.
+ */
+export function rideSeries(
+  samples: readonly RideSample[],
+  routeLengthM: number,
+): GhostSeries | null {
+  if (!(routeLengthM > 0)) return null;
+
+  const points: GhostPoint[] = [{ t: 0, distanceM: 0 }];
+  let last = points[0] as GhostPoint;
+  for (const sample of samples) {
+    // Monotonic in both axes, for the reason lapSeries drops an out-of-clock sample: the
+    // two readings below binary-search this series, and a step backwards in either makes
+    // them answer questions about a ride that cannot have happened.
+    if (!(sample.t > last.t) || !(sample.distanceM > last.distanceM)) continue;
+    if (sample.distanceM >= routeLengthM) break;
+    last = { t: sample.t, distanceM: sample.distanceM };
+    points.push(last);
+  }
+
+  // One point is a ride that recorded nothing to race: a ghost parked on the start line
+  // would read as a rider sitting there rather than as a ride that never set off.
+  if (points.length < 2) return null;
+  return { points, durationS: last.t, lengthM: last.distanceM, finished: false };
 }
 
 /** First index whose key is at or above `value`, by binary search. Never 0 when the
