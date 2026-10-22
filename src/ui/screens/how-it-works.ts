@@ -11,9 +11,9 @@
  * because the columns have moved once already.
  *
  * All three are pictograms in the same hand: a drawing of a screen reads as what the
- * screen is for, where a photograph of one reads as a photograph. There is no pictogram
- * of the pairing panel, so Set up takes the bike and the laptop — which is the kit list
- * above it, drawn.
+ * screen is for, where a photograph of one reads as a photograph. Each shows the thing
+ * its column is about — the whole rig for About, a session for Ride, and the panel that
+ * pairs for Set up, which is the one the connect steps beside it describe.
  */
 
 export interface ColumnImage {
@@ -55,8 +55,8 @@ export const COLUMNS: Column[] = [
   {
     title: 'About',
     image: {
-      src: '/how-it-works/workout-ride.webp',
-      alt: 'A workout in progress: the interval plan above the list of steps.',
+      src: '/how-it-works/trainer-and-browser.webp',
+      alt: 'A bike on a smart trainer, sending its numbers to a laptop.',
     },
     entries: [
       {
@@ -100,8 +100,8 @@ export const COLUMNS: Column[] = [
   {
     title: 'Ride',
     image: {
-      src: '/how-it-works/route-ride.webp',
-      alt: 'A ride in progress: power, cadence and heart rate above the route profile and map.',
+      src: '/how-it-works/workout-ride.webp',
+      alt: 'A workout in progress: the interval plan above the list of steps.',
     },
     entries: [
       {
@@ -130,8 +130,8 @@ export const COLUMNS: Column[] = [
   {
     title: 'Set up',
     image: {
-      src: '/how-it-works/trainer-and-browser.webp',
-      alt: 'A bike on a smart trainer, sending its numbers to a laptop.',
+      src: '/how-it-works/connect-settings.webp',
+      alt: 'The settings panel open over a ride, with Connect beside Trainer and Heart rate.',
     },
     entries: [
       {
