@@ -14,48 +14,48 @@ was recorded on.
 useless. What a rider actually needs is to open the thing in five years, on a machine that has
 never heard of this app, and still have their riding.
 
-The temptation runs the other way at every turn. A binary format is smaller and faster to write.
-A custom container is easier than fitting a standard. And some of what we store genuinely has no
-standard to fit: TCX has nowhere to put an FTP, so the frozen settings that make a ride's zones
-and load meaningful cannot be expressed in it at all.
+The temptation runs the other way at the boundary. A binary format is smaller and faster to
+write, a custom container is easier than fitting a standard, and some of what we hold has no
+standard to fit at all: TCX has nowhere to put an FTP, so the frozen settings that make a ride's
+zones and load meaningful cannot be expressed in it.
 
 ## Decision
 
-**Nothing leaves this app in a format that needs this app to read it.** Three cases, in order of
-preference:
+**Legibility is a property of the boundary, not of the store.** The two are separate decisions
+and this ADR governs only the first.
 
-**Where a standard exists, use it.** Routes export as GPX. A ride for another service exports as
-TCX, as [ADR-0005](0005-tcx-rather-than-fit.md) settled. These are portable by definition and we
-add nothing.
+**On the way out, nothing leaves in a format that needs this app to read it.** Three cases, in
+order of preference:
 
-**Where no standard exists but a human could read it, invent nothing.** Workouts are YAML —
-[ADR-0006](0006-yaml-for-workouts.md) chose it for hand-editing, and the same property is what
-makes an exported workout portable. Not a standard for workouts; legible, which is the half that
-matters when there is no standard to be had.
+- **Where a standard exists, use it.** Routes export as GPX. A ride for another service exports
+  as TCX, as [ADR-0005](0005-tcx-rather-than-fit.md) settled. Portable by definition; we add
+  nothing.
+- **Where no standard exists but a human could read it, invent nothing.** Workouts export as
+  YAML — [ADR-0006](0006-yaml-for-workouts.md) chose it for hand-editing, and the same property
+  is what makes an exported workout portable.
+- **Where the data is genuinely ours, write it plain.** A ride record with its frozen settings,
+  its lap splits and its TSS has no standard that will hold it, so it goes out as JSON: open,
+  self-describing, readable in any text editor. Ours is not the same as opaque.
 
-**Where the data is genuinely ours, keep it plain.** The ride record with its frozen settings,
-its lap splits and its TSS has no standard that will hold it. It is JSON: open, self-describing,
-and readable in any text editor. Ours is not the same as opaque.
-
-**The corollary, which is the part worth keeping:** if something we want to store cannot be
-expressed legibly, that is a reason to question the feature rather than to invent a binary format.
+**Inside, store whatever is most efficient.** The shape in IndexedDB is an implementation detail
+and carries no obligation from this ADR — a binary sample encoding, a packed typed array, a
+structured-clone blob are all fair game, and choosing one is an ordinary engineering decision
+rather than an amendment to this. The only requirement is that the exporter can still produce
+the formats above from it.
 
 ## Consequences
 
 - A full export is browsable. Unpacked it is a folder of real files — GPX you can open in any
   mapping tool, YAML you can read, JSON you can parse in four lines — rather than one artefact
   only this app understands.
-- It costs size. JSON samples at 1 Hz are repetitive and verbose, and a binary encoding would be
-  a fraction of it. Compression recovers most of that without costing legibility, which is why
-  the container compresses and the files inside do not.
-- It costs some speed on import, which is parsing text rather than mapping a buffer. An import is
-  a thing a rider does rarely and deliberately, so the trade is one-sided.
-- **It constrains future features**, deliberately. Anything that would want an opaque store — a
-  binary sample encoding for a thousand-hour history, a proprietary model file — has to justify
-  itself against this first.
-- It does not mean every format is a standard. There is no standard for a workout, a rider
+- Export may have to convert rather than copy, and that cost is accepted. It is work a rider
+  does rarely and deliberately.
+- The store is free to change shape — for speed, for size, for a thousand-hour history — without
+  touching this decision, so long as the exporter keeps up. If the two ever drift, the export is
+  the one that is right.
+- It does not mean every exported format is a standard. There is none for a workout, a rider
   profile or a ride's frozen settings, and inventing one for the sake of it would be worse than
   plain JSON that anyone can read.
 - The rider profile is currently in **no** export at all, which this makes a gap rather than an
-  oversight: FTP, maximum heart rate and the masses are the smallest data in the app and the only
-  part with no way out.
+  oversight: FTP, maximum heart rate and the masses are the smallest data in the app and the
+  only part with no way out.

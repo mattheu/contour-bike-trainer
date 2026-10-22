@@ -596,6 +596,32 @@ Phases 1 to 3 shipped as the MVP. What follows was re-cut afterwards, once ridin
 
 **ADRs written before this date use the old numbers** — "a backend in phase 5" means phase 8, "phase 6's Strava upload" means phase 9, and ADR-0000's "Electron from phase 5" means the mirror, now 6. They are left as written: an ADR records what was believed when it was decided, and editing one to match a later plan is the one thing `docs/adr/README.md` forbids. This table is the key.
 
+## Not losing things
+
+Three items, none of them a phase, all of them the same concern: this app keeps a rider's riding in one browser on one machine, and that is only a feature for as long as it does not lose it.
+
+**Autosave a ride in progress.** The recorder holds every sample in memory and nothing reaches storage until the ride is ended, so a crash, a closed tab or a flat battery takes the lot. The `beforeunload` guard warns before a reload and can do nothing about the rest. This is the only failure here that cannot be undone, and it is the first thing to build — ahead of the ghost, ahead of everything.
+
+**Ask for persistent storage when there is something to lose.** `navigator.storage.persist()` exempts the store from eviction, and Chrome weighs site engagement when deciding, so asking on first load is the weakest possible moment. Ask after the first thing a rider would mind losing: a completed ride, an imported archive, a workout they wrote, a GPX they added. It matters more once autosave makes the local store the only copy of a ride in progress.
+
+**Export everything, in one file you can unpack.** The rides archive carries rides and their samples and nothing else, so routes, workouts and — most seriously — the rider profile have no way out. FTP, maximum heart rate and the masses are the smallest data here and the only part with no export at all: lose them and every future ride is zoned against a number typed from memory.
+
+[ADR-0019](docs/adr/0019-data-is-legible-on-the-way-out.md) puts the obligation at the boundary and nowhere else: how any of this is held in IndexedDB is ours to optimise, and what comes out is a folder of real files. The archive converts rather than copies where it has to.
+
+```
+manifest.json          version, counts, exported at
+profile.json           FTP, hrMax, masses, CdA, Crr
+rides/<id>.json        the record and its samples
+routes/<slug>.gpx      real GPX, openable anywhere
+workouts/<slug>.yaml   the source as written
+```
+
+**`.tar.gz`, not `.zip`.** Tar is 512-byte headers and nothing else — no CRC, no central directory, no offset bookkeeping — so writing and reading it correctly is a fraction of the work, and a malformed zip fails silently rather than loudly. `CompressionStream` is in the browser, so the compression needs no dependency either; samples are repetitive and compress roughly ten to one. macOS unpacks `.tar.gz` on a double click.
+
+[ADR-0012](docs/adr/0012-deliberate-non-dependencies.md) rules out an archive dependency, which is why the workout and route bundles are multi-document YAML and multi-track GPX. If the container proves fiddly enough to want a library, that is an amendment to 0012 with a stated reason — "zip has sharp edges and a bad one fails silently" is a good one — rather than a rule to work around.
+
+The per-collection exports stay. They are portable artefacts for sharing one thing; this is a backup of everything.
+
 ## Phase 4 — Regroup and polish
 
 **Not a workout laid over a route.** Decided against on 2026-10-14 and recorded as [ADR-0016](docs/adr/0016-no-workouts-on-routes.md): in ERG the trainer holds the target whatever the gradient, so the route has no effect on the ride and the terrain is wallpaper. Either the hills are real or they are not. A plan held by the rider against real simulated terrain — the version where the hills stay real — is a different feature and is deferred to a later phase rather than smuggled in as a variant of this one.
