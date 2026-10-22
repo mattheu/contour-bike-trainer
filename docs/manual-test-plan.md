@@ -139,7 +139,10 @@ grade clamp and the descent that reaches the zero-power gravity and drag balance
 - [ ] On the descent, coasting at zero power gives a fast but finite speed — the balance of
       gravity against drag, around 72 km/h at 10 % and faster on anything steeper — rather than
       running away or sticking at a round number.
-- [ ] Reaching the end ends the ride, with a finish flag, rather than looping or stalling.
+- [ ] Reaching the end of a point-to-point route ends the ride, rather than stalling.
+- [ ] On a loop — Box Hill is the short one — the ride rolls through the start instead of ending.
+      The mark beside the name goes from LOOP to LAP 2, the profile and map fill again, and the
+      ride stops only when you end it.
 - [ ] The ride appears in the history with the right date, route, distance, time and average power.
 - [ ] **Leave the window hidden behind a full-screen video for at least ten minutes** during the
       ride (Chrome's intensive throttling only engages after five). On returning: no gap in the

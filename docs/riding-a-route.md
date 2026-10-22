@@ -72,9 +72,17 @@ reading that is no longer live, not a reading of nought.
 
 ## Finishing
 
-Reaching the end of the route ends the ride on its own — there is no lap two. Pressing **End
-ride** stops it wherever you are; a ride ended that way is marked _ended early_ on its summary,
-so a half-ridden route is never mistaken for a completed one.
+Reaching the end of a point-to-point route ends the ride on its own. **A loop does not stop you at
+the start line**: it rolls through onto the next lap, and keeps going until you end it. Three of the
+six — Greenhow Hill, Rosedale Chimney and Box Hill — start and finish in the same place, and the
+app works that out from the route itself rather than being told, so a loop you import laps too.
+
+A loop is marked **LOOP** beside its name, and once you come round it reads **LAP 2**. The profile
+and the map show the lap you are on, filling again each time; the distance beside them is your
+progress round this lap, and your total is the Distance reading. Pressing **End
+ride** stops it wherever you are. The summary shows how far you got against the route's length —
+`12.4 / 15.7 km` — so a half-ridden route is never mistaken for a completed one, and stopping a
+hundred metres from the top does not read the same as abandoning after two minutes.
 
 Either way you land on the ride summary: time, distance, climbing, average power and average
 heart rate, with the full profile and the ride's power laid under it. **Download TCX** is

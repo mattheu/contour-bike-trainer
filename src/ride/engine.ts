@@ -1,6 +1,7 @@
 import type { BikeData, ConnectionState } from '../ble/types';
 import { speedFromPower, type RiderParameters } from '../physics/speed';
 import { gradeAt, trainerGrade } from '../route/grade';
+import { isLoop, lapPositionM } from '../route/loop';
 import { positionAt } from '../route/position';
 import type { Route } from '../route/types';
 import { DEFAULT_ERG_MODE, type ErgMode, type RideSample } from '../storage/types';
@@ -132,15 +133,28 @@ export interface EngineWorkoutSnapshot {
 }
 
 export interface EngineSnapshot {
-  state: RideState;
   /**
-   * True when the ride reached its own end — the route ran out, or the workout did.
-   * Never true for a free ride with no route: there is nothing to reach.
+   * The state `'finished'` says the ride has stopped, and nothing more about why.
+   *
+   * There was a `finished` flag beside it recording whether the route had run out rather
+   * than the rider having pressed End. The only thing that ever read it was the summary's
+   * `ended early` label, which is gone: the summary shows distance against the route's
+   * own length instead, which says how far short rather than only that it was short. See
+   * Ride in storage/types.ts.
    */
-  finished: boolean;
+  state: RideState;
   elapsedS: number;
   pausedS: number;
+  /** How far the rider has ridden. On a loop this keeps accumulating past the route's
+   * own length, because that is what a second lap is. */
   distanceM: number;
+  /**
+   * Where that puts them ON the route, which stops being the same number the moment a
+   * loop rolls through its start line: distance modulo the route's length. Zero with no
+   * route. Everything that asks "where am I" — the gradient, the position, the charts —
+   * reads this, and everything that asks "how far have I ridden" reads distanceM.
+   */
+  routePositionM: number;
   ascentM: number;
   /** The REAL route grade, or zero with no route. Never the value written to the trainer. */
   gradePercent: number;
@@ -196,6 +210,13 @@ export class RideEngine {
   private readonly trainer: EngineTrainer;
   private readonly clock: Clock;
   private readonly route: Route | null;
+  /**
+   * Whether the route comes back to where it started, decided once from the geometry at
+   * construction. It cannot change under a ride, and it is what separates "ride to the
+   * finish line" from "keep going round" — so the finish check, the position on the
+   * route and the end of the ride all read this one answer.
+   */
+  private readonly loops: boolean;
   private settings: EngineSettings;
   /** Replaced rather than mutated on a skip, so the parsed workout is never touched. */
   private workout: { name: string; ftp: number; run: WorkoutRun } | null = null;
@@ -208,7 +229,6 @@ export class RideEngine {
   private readonly sampleListeners = new Set<(s: RideSample) => void>();
 
   private state: RideState = 'idle';
-  private finished = false;
   private elapsedS = 0;
   private pausedS = 0;
   private distanceM = 0;
@@ -238,6 +258,7 @@ export class RideEngine {
     this.trainer = options.trainer;
     this.clock = options.clock;
     this.route = options.route;
+    this.loops = options.route !== null && isLoop(options.route);
     this.settings = options.settings;
     const workout = options.workout ?? null;
     if (workout !== null) {
@@ -283,7 +304,7 @@ export class RideEngine {
     if (this.state !== 'idle') return;
     this.state = 'running';
     this.lastTickAtMs = this.clock.now();
-    this.gradePercent = this.gradeHere(0);
+    this.gradePercent = this.gradeHere();
     this.lastEleM = this.currentPosition().eleM;
     this.writeControl(this.lastTickAtMs);
     this.emitSample(0);
@@ -306,7 +327,7 @@ export class RideEngine {
     this.publish();
   }
 
-  /** Ends the ride deliberately. finished stays false: the route was not completed. */
+  /** Ends the ride deliberately, which on a loop is the only way it ever ends. */
   end(): void {
     if (this.state === 'idle' || this.state === 'finished') return;
     this.sampleFinal();
@@ -458,15 +479,20 @@ export class RideEngine {
     // ADR-0008: the REAL grade goes to the physics. The scaled one goes to the trainer
     // and nowhere else. Feeding trainerGradePercent in here makes distance a function of
     // a UI slider, and nothing visibly fails.
-    this.gradePercent = this.gradeHere(this.distanceM);
+    this.gradePercent = this.gradeHere();
     const speedMs = speedFromPower(this.powerW ?? 0, this.gradePercent, this.settings.rider);
     this.speedKmh = speedMs * 3.6;
 
     // With no course the distance is unbounded: the physics still runs, at zero grade,
     // so an indoor session covers ground the way a trainer and a head unit report it.
+    // A loop is unbounded for the same reason: rolling through the start line is the
+    // next lap, not the end, so distance ridden keeps accumulating past the route's
+    // length and routePositionM is what wraps.
     const travelled = this.distanceM + speedMs * dt;
     this.distanceM =
-      this.route === null ? travelled : Math.min(this.route.totalDistanceM, travelled);
+      this.route === null || this.loops
+        ? travelled
+        : Math.min(this.route.totalDistanceM, travelled);
 
     const eleM = this.currentPosition().eleM;
     if (eleM !== null) {
@@ -476,10 +502,10 @@ export class RideEngine {
 
     this.writeControl(now);
 
-    // No route is no finish line. The ride ends when the rider ends it.
-    if (this.route !== null && this.distanceM >= this.route.totalDistanceM) {
+    // No route is no finish line, and neither is a loop: both end when the rider ends
+    // them. On a loop the start line is simply the next lap's start.
+    if (this.route !== null && !this.loops && this.distanceM >= this.route.totalDistanceM) {
       this.sampleFinal();
-      this.finished = true;
       this.state = 'finished';
       this.publish();
       return;
@@ -489,7 +515,6 @@ export class RideEngine {
     // route — and skipping the last step reaches it by the same door.
     if (this.workout !== null && this.elapsedS >= this.workout.run.totalDurationS) {
       this.sampleFinal();
-      this.finished = true;
       this.state = 'finished';
       this.publish();
       return;
@@ -592,10 +617,24 @@ export class RideEngine {
     for (const listener of [...this.sampleListeners]) listener(sample);
   }
 
-  /** The real grade here, or zero where there is no course under the ride. */
-  private gradeHere(distanceM: number): number {
+  /**
+   * Where on the route the rider is, which on a loop is not how far they have ridden:
+   * past the route's length it wraps, and a second lap starts at the start.
+   *
+   * Zero with no course under the ride. Neither reader below gets that far — both answer
+   * for themselves before asking — so it is a value nothing acts on rather than a claim
+   * that the rider is at the start of a route that does not exist.
+   */
+  private routePositionM(): number {
     if (this.route === null) return 0;
-    return gradeAt(this.route, distanceM, this.settings.gradeLookaheadM);
+    if (!this.loops) return this.distanceM;
+    return lapPositionM(this.distanceM, this.route.totalDistanceM);
+  }
+
+  /** The real grade where the rider is, or zero where there is no course under the ride. */
+  private gradeHere(): number {
+    if (this.route === null) return 0;
+    return gradeAt(this.route, this.routePositionM(), this.settings.gradeLookaheadM);
   }
 
   /**
@@ -604,7 +643,9 @@ export class RideEngine {
    */
   private currentPosition(): { lat: number | null; lon: number | null; eleM: number | null } {
     if (this.route === null) return NO_POSITION;
-    return positionAt(this.route, this.distanceM);
+    // Position, not distance: on a second lap the coordinates repeat, which is exactly
+    // what a lapped ride looks like on a map and in the exported track.
+    return positionAt(this.route, this.routePositionM());
   }
 
   /** The runner's read of the clock, or null for a ride with no workout. */
@@ -662,10 +703,10 @@ export class RideEngine {
     const position = this.state === 'idle' ? null : this.currentPosition();
     return {
       state: this.state,
-      finished: this.finished,
       elapsedS: this.elapsedS,
       pausedS: this.pausedS,
       distanceM: this.distanceM,
+      routePositionM: this.routePositionM(),
       ascentM: this.ascentM,
       gradePercent: this.gradePercent,
       trainerGradePercent: this.trainerGradePercent,

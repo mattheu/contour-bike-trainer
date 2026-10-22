@@ -23,7 +23,6 @@ function ride(routeId: string | null, id: string): Ride {
     ascentM: 10,
     avgPowerW: 200,
     avgHeartRateBpm: null,
-    finished: true,
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,

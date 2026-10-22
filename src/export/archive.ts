@@ -208,7 +208,6 @@ function rideProblem(value: unknown): string | null {
   }
   if (!finiteOrNull(value.avgPowerW)) return 'its avgPowerW is unusable';
   if (!finiteOrNull(value.avgHeartRateBpm)) return 'its avgHeartRateBpm is unusable';
-  if (typeof value.finished !== 'boolean') return 'it does not say whether it finished';
   return settingsProblem(value.settings);
 }
 
@@ -251,7 +250,9 @@ export function validateRecord(value: unknown): { record: ArchiveRecord } | { re
         ascentM: ride.ascentM as number,
         avgPowerW: ride.avgPowerW as number | null,
         avgHeartRateBpm: ride.avgHeartRateBpm as number | null,
-        finished: ride.finished as boolean,
+        // An archive written while Ride carried a `finished` flag has one here. It is
+        // read by nothing now, so it is dropped rather than migrated: the record is
+        // rebuilt field by field, which is what lets an older file in without a check.
         settings: {
           trainerDifficulty: settings.trainerDifficulty as number,
           // Likewise: a ride recorded before the scale existed was ridden at full targets.

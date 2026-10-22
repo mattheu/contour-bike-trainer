@@ -29,6 +29,7 @@ import {
 } from '../ride/routes';
 import { builtInWorkoutIds, seedWorkouts } from '../ride/workouts';
 import { planRouteImport, routeGeometryKey } from '../route/import';
+import { isLoop } from '../route/loop';
 import type { Route as RouteGeometry } from '../route/types';
 import { TrainerTickSource } from '../ride/tick';
 import type { EngineTrainer } from '../ride/types';
@@ -761,6 +762,7 @@ function bridge(snapshot: EngineSnapshot): void {
     elapsedS: Math.floor(snapshot.elapsedS),
     pausedS: snapshot.pausedS,
     distanceM: snapshot.distanceM,
+    routePositionM: snapshot.routePositionM,
     ascentM: snapshot.ascentM,
     gradePercent: displayGradePercent,
     speedKmh: snapshot.speedKmh,
@@ -897,6 +899,9 @@ export async function startRide(routeId: string): Promise<void> {
     routeGeometry: geometry,
     routeTotalDistanceM: geometry.totalDistanceM,
     routeTotalAscentM: geometry.totalAscentM,
+    // The same check the engine made of the same geometry, so the screen's lap counter
+    // and the engine's refusal to stop at the start line cannot disagree.
+    routeLoops: isLoop(geometry),
     samples: [],
     savedRideId: null,
   });
@@ -966,6 +971,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
     routeGeometry: null,
     routeTotalDistanceM: null,
     routeTotalAscentM: null,
+    routeLoops: false,
     samples: [],
     savedRideId: null,
   });
@@ -1058,7 +1064,6 @@ async function persistRide(): Promise<string | null> {
   const snapshot = active.getSnapshot();
   const { ride, samples } = activeRecorder.build({
     pausedS: snapshot.pausedS,
-    finished: snapshot.finished,
     // Taken from the engine as the ride ended rather than from what it started with: the
     // rider settled somewhere, and that is what the session was.
     workoutScalePct: snapshot.workout?.scalePct ?? DEFAULT_WORKOUT_SCALE_PCT,

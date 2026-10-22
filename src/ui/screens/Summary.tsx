@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { detectClimbs } from '../../route/climbs';
+import { isLoop, lapsLabel } from '../../route/loop';
 import { buildProfile } from '../../route/profile';
 import type { Route } from '../../route/types';
 import type { AlertState } from '../../ride/types';
@@ -9,6 +10,7 @@ import { Button } from '../components/Button';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { CONTROL_GAP } from '../components/control';
 import { GradientKey } from '../components/GradientKey';
+import { LoopTag } from '../components/LoopTag';
 import { Stat } from '../components/Stat';
 import { LABEL } from '../components/styles';
 import { Logo } from '../components/Wordmark';
@@ -71,6 +73,19 @@ export function Summary({
   const words = deleteWording(origin);
   const mode = ergModeNote(ride);
   const { title } = rideTitle(ride);
+  const loops = route !== null && isLoop(route);
+  /**
+   * What the distance is measured against, which is the route's own length — the number
+   * that says whether this ride covered it. There was a `· ended early` label here
+   * instead, and it was a binary standing in for a comparison the screen never showed:
+   * stopping a hundred metres from the summit of Alpe d'Huez read the same as abandoning
+   * after two minutes. `12.4 of 15.7 km` says how early rather than only that it was.
+   *
+   * Absent on a loop, which has no length to be short of — the mark beside the title
+   * counts laps instead — and absent where the route has since been removed, which
+   * leaves nothing to compare against rather than something to guess at.
+   */
+  const routeTotal = route === null || loops ? undefined : distance(route.totalDistanceM / 1000);
 
   const press = () => {
     const outcome = pressDelete(armed, ride.id);
@@ -90,8 +105,10 @@ export function Summary({
               typeface between riding it and reading it back. */}
           <div className={LABEL}>{title}</div>
           <div className={`${LABEL} whitespace-nowrap`}>{rideDate(ride.startedAt)}</div>
-          {!ride.finished && (
-            <div className={`${LABEL} text-micro whitespace-nowrap`}>· ended early</div>
+          {/* Laps completed rather than the lap being ridden: reading a ride back is
+              about how far round it got, not which lap it was on. */}
+          {loops && route !== null && (
+            <LoopTag label={lapsLabel(ride.distanceM, route.totalDistanceM)} />
           )}
         </div>
         <div className={`flex items-center ${CONTROL_GAP}`}>
@@ -136,6 +153,7 @@ export function Summary({
             testId="summary-distance"
             label="Distance"
             value={distance(ride.distanceM / 1000)}
+            total={routeTotal}
             unit="km"
           />
         </Cell>

@@ -596,11 +596,11 @@ A route whose start and finish are the same place should not stop you at the sta
 
 2. **Position and distance stop being the same number**, which is the whole of the work. Today "18.2 km" is both how far you have ridden and where you are. On a second lap they diverge: distance ridden keeps accumulating, and position on the route is that distance modulo the route's length. Everything that reads one must be checked for which it meant.
 
-3. **The secondary reading says both.** "Distance of total" has no meaning when the total is however long you choose to keep going, so on a loop it becomes the lap's progress against the route, with the lap number beside it.
+3. **The secondary reading is lap progress; the lap number is the mark.** "Distance of total" has no meaning when the total is however long you choose to keep going, so on a loop the reading becomes this lap's progress against the route and the count lives in the tag beside the route's name — one slot, which is also what tells you it is a loop before a lap is complete.
 
 4. **The elevation profile and the map show the current lap.** The ridden portion fills, reaches the end, and starts again. That is what makes a second lap legible as a second lap rather than as a chart that has run out.
 
-5. **Only the rider ends it.** A loop has no natural finish, so there is no automatic end — which means `finished` cannot keep meaning what it means today. A point-to-point ride ended by hand is *ended early*; a loop ended by hand is simply over, and must not be labelled as cut short. Without this every lapped ride in the history reads as abandoned.
+5. **Only the rider ends it**, and there is no longer a flag saying so. `Ride.finished` existed to mark a ride as *ended early*, which a loop can never be — but the question it answered was "did I complete this?", and distance answers that better once the route's length is beside it. The summary reads `12.4 / 15.7 km` part-way and `15.7 / 15.7 km` complete, so a ride ended a hundred metres from the summit of the Alpe no longer gets the same label as one abandoned after two minutes. A lapped ride shows its distance alone, because a thing with no completion cannot be early of one. The field is gone rather than special-cased.
 
 6. **Nothing new is recorded.** The lap count is the ride's distance over the route's length, and routes now carry their own GPX, so it stays derivable rather than stored — the same rule [ADR-0015](docs/adr/0015-tss-is-the-only-load-figure.md) applies to load.
 

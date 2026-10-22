@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { AlertState } from '../../ride/types';
+import { LOOP_TAG, isLoop } from '../../route/loop';
 import type { Route as RouteGeometry } from '../../route/types';
 import type { Ride, Route as StoredRoute } from '../../storage/types';
 import { Sparkline } from '../charts';
@@ -7,6 +8,7 @@ import { AppHeader } from '../components/AppHeader';
 import { Button } from '../components/Button';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
+import { LoopTag } from '../components/LoopTag';
 import {
   ListHeader,
   ListHeaderFrame,
@@ -247,6 +249,10 @@ function RouteRow({
   // Still loading counts as rideable: the row is not dead while it waits, and a route
   // that turns out to have no geometry says so from services.startRide instead.
   const rideable = loaded === null || loaded.geometry !== null;
+  // Free: the row already parses its own geometry for the sparkline, and whether the
+  // track ends where it began is a question about those same points.
+  const loops = geometry !== null && isLoop(geometry);
+  const { region } = route;
 
   return (
     <ListRowFrame
@@ -319,7 +325,21 @@ function RouteRow({
           lead={geometry === null ? undefined : <Sparkline route={geometry} />}
           leadVariant="sparkline"
           title={route.name}
-          meta={rideable ? route.region : NO_SOURCE}
+          meta={
+            rideable ? (
+              // The region and the mark on one line: the row said where a route is, and
+              // whether it comes back to where it started is the other thing worth
+              // knowing from a list. Nothing at all where a route has neither.
+              region === undefined && !loops ? undefined : (
+                <span className="flex items-center gap-[8px]">
+                  {region}
+                  {loops && <LoopTag label={LOOP_TAG} />}
+                </span>
+              )
+            ) : (
+              NO_SOURCE
+            )
+          }
           cells={[
             <Figure key="distance" value={distance(route.totalDistanceM / 1000)} unit="km" />,
             <Figure key="gain" value={elevation(route.totalAscentM)} unit="m" />,
