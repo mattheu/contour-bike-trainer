@@ -20,7 +20,10 @@ settings all live in the browser on this machine.
 
 ## Pairing the trainer
 
-The first screen is **Connect**, with a row for the trainer and a row for the heart rate strap.
+The app opens on your routes. There are two ways to the device rows: the gear button in the
+header, which opens **Rider profile** from any of the lists, or **Settings** once you have
+picked something to ride. They are the same row for the trainer and row for the strap backed by
+the same connection, so pair wherever suits — before you choose, or on the bike afterwards.
 
 1. Wake the trainer up — spin the cranks a turn or two. A sleeping trainer does not advertise
    itself and will not appear in the list.
@@ -48,8 +51,9 @@ dropping out pauses anything.
 
 ## Then what
 
-Once the trainer is connected, **Choose a route** lights up. That is the only control on this
-screen that does anything else, and it takes you to [riding a route](riding-a-route.md).
+Close the panel and pick a route, which takes you to [riding a route](riding-a-route.md). A ride
+is armed and paused at 0:00 until you press **Start**, so you can still pair, or swap a device,
+after you have chosen.
 
 ## If it will not connect
 

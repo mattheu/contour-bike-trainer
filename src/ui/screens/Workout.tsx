@@ -14,6 +14,7 @@ import {
 import { Button } from '../components/Button';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { CONTROL_SIZE } from '../components/control';
+import type { DevicesView } from '../components/Devices';
 import { Hero } from '../components/Hero';
 import { RideHeader } from '../components/RideHeader';
 import { Segmented } from '../components/Segmented';
@@ -32,7 +33,7 @@ import {
   primaryControlLabel,
   readingTone,
 } from './ride-view';
-import { RideSettings, type DevicesView, type Targets } from './RideSettings';
+import { RideSettings, type Targets } from './RideSettings';
 import {
   anticipationDepth,
   cadenceBand,
