@@ -18,6 +18,7 @@ import {
   type RouteMapHandle,
   chartStackHeights,
 } from '../charts';
+import type { DevicesView } from '../components/Devices';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
 import { LoopTag } from '../components/LoopTag';
@@ -38,7 +39,7 @@ import {
   readingTone,
 } from './ride-view';
 import { powerSamplesFrom } from './summary-view';
-import { RideSettings, type DevicesView, type Targets } from './RideSettings';
+import { RideSettings, type Targets } from './RideSettings';
 import { useElementHeight, useElementWidth } from './use-element-width';
 
 type ProfileZoom = 'route' | 'window';

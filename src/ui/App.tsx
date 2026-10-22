@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ContourField } from './components/ContourField';
 import { Button } from './components/Button';
+import type { DevicesView } from './components/Devices';
 import { SERIF } from './components/styles';
 import type { Route as RouteGeometry } from '../route/types';
 import type { Ride, RideSample, Session, Route as StoredRoute } from '../storage/types';
@@ -223,6 +224,22 @@ function RideApp() {
     powerW: snapshot.targetPowerW,
     cadenceRpm: snapshot.targetCadenceRpm,
     heartRateBpm: snapshot.targetHeartRateBpm,
+  };
+
+  // The same rows the ride settings panel builds, for the profile panel over a list. The
+  // connection is module-wide in services, so one paired here is the one the next ride uses.
+  const devices: DevicesView = {
+    source: services.source,
+    trainerState: snapshot.trainerState,
+    trainerDeviceName: snapshot.trainerDeviceName,
+    trainerServices: snapshot.trainerServices,
+    powerW: snapshot.powerW,
+    hrmState: snapshot.hrmState,
+    heartRateBpm: snapshot.heartRateBpm,
+    onConnectTrainer: () => void services.connectTrainer(),
+    onDisconnectTrainer: () => void services.disconnectTrainer(),
+    onConnectHrm: () => void services.connectHrm(),
+    onDisconnectHrm: () => void services.disconnectHrm(),
   };
 
   // Published by services.startRide rather than looked up here: a route's GPX is on its
@@ -493,7 +510,11 @@ function RideApp() {
     profileOpen && settings !== null ? (
       <RiderProfile
         profile={settings}
+        devices={devices}
+        alert={snapshot.alert}
         onChange={(patch) => void services.updateRiderProfile(patch)}
+        onDismissAlert={services.dismissAlert}
+        onRetryTrainer={() => void services.connectTrainer()}
         onClose={closeProfile}
       />
     ) : null;

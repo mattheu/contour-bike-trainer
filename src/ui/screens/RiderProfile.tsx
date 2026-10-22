@@ -1,6 +1,9 @@
 import { useState } from 'react';
+import { Devices, type DevicesView } from '../components/Devices';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { LABEL, MONO } from '../components/styles';
+import type { AlertState } from '../store';
+import { AlertStrip } from './AlertStrip';
 import {
   ADVANCED_FIELDS,
   PRIMARY_FIELDS,
@@ -15,13 +18,21 @@ import {
 
 interface RiderProfileProps {
   profile: Profile;
+  devices: DevicesView;
+  /** A pairing failure raises a fault, and a list screen has no strip of its own to show it in. */
+  alert: AlertState | null;
   /** One field at a time, merged into the stored blob by the settings repository. */
   onChange: (patch: Partial<Profile>) => void;
+  onDismissAlert: () => void;
+  onRetryTrainer: () => void;
   onClose: () => void;
 }
 
-const SECTION =
-  'border-hairline flex flex-col gap-[16px] border-t pt-[32px] first:border-t-0 first:pt-0';
+/** The hairline that separates one block from the next. Split out because the rider
+ * fields take the same rule at a wider field gap than the advanced grid does. */
+const RULE = 'border-hairline border-t pt-[32px] first:border-t-0 first:pt-0';
+
+const SECTION = `${RULE} flex flex-col gap-[16px]`;
 
 type Drafts = Record<ProfileField, string>;
 type Errors = Partial<Record<ProfileField, string>>;
@@ -33,18 +44,28 @@ function draftsFrom(profile: Profile): Drafts {
 }
 
 /**
- * The set-once numbers, deliberately not in the ride settings panel.
+ * The set-once numbers, and the device rows above them.
  *
- * The split is the point: the ride panel holds what you change on the bike — devices,
- * difficulty, targets — and this holds what is true about the rider whatever they are
- * riding. Mixing them would put FTP a mis-tap away mid-interval, which is how a ride ends
- * up re-zoned halfway through.
+ * The split with the ride panel runs along what a setting belongs to. Difficulty and
+ * targets are properties of the ride in progress, so they stay there; FTP and the weights
+ * are true of the rider whatever they are riding, so they are here and not a mis-tap away
+ * mid-interval. Devices are in both because the connection is not part of any one ride —
+ * it is held module-wide and outlives every ride made over it — and a rider who has not
+ * picked a route yet still has to pair before they can ride.
  *
  * Each valid keystroke persists. There is no Save: a settings blob that merges one key at
  * a time has nothing to batch, and a Save button would only invent a state where what is
  * on the glass and what is stored disagree.
  */
-export function RiderProfile({ profile, onChange, onClose }: RiderProfileProps) {
+export function RiderProfile({
+  profile,
+  devices,
+  alert,
+  onChange,
+  onDismissAlert,
+  onRetryTrainer,
+  onClose,
+}: RiderProfileProps) {
   // Seeded once. The panel owns the draft text from here, so a re-render upstream cannot
   // take half-typed characters out of the field. Clamped on the way in because a blob
   // written by an older build can still hold an FTP the zones would divide by.
@@ -81,7 +102,14 @@ export function RiderProfile({ profile, onChange, onClose }: RiderProfileProps) 
 
   return (
     <SettingsPanel title="Rider profile" onClose={onClose}>
-      <div className="flex flex-col gap-[32px]">
+      <div className="flex flex-col gap-[16px]">
+        {/* The strip costs nothing while it is quiet, and is the only place a pairing
+            fault raised from a list screen can be read. */}
+        <AlertStrip alert={alert} onDismiss={onDismissAlert} onRetry={onRetryTrainer} />
+        <Devices devices={devices} />
+      </div>
+
+      <div className={`${RULE} flex flex-col gap-[32px]`}>
         {PRIMARY_FIELDS.map((spec) => (
           <Field
             key={spec.key}
