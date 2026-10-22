@@ -83,7 +83,7 @@ export const COLUMNS: Column[] = [
          */
         label: 'In the browser',
         sentence:
-          'For now, Contour is a browser app and nothing more. There is no account to make, and no ride leaves this machine.',
+          'For now, Contour is a browser app and nothing more. There is no account to make, and no ride leaves your machine.',
       },
       {
         /*
