@@ -600,7 +600,11 @@ Phases 1 to 3 shipped as the MVP. What follows was re-cut afterwards, once ridin
 
 Three items, none of them a phase, all of them the same concern: this app keeps a rider's riding in one browser on one machine, and that is only a feature for as long as it does not lose it.
 
-**Autosave a ride in progress.** The recorder holds every sample in memory and nothing reaches storage until the ride is ended, so a crash, a closed tab or a flat battery takes the lot. The `beforeunload` guard warns before a reload and can do nothing about the rest. This is the only failure here that cannot be undone, and it is the first thing to build — ahead of the ghost, ahead of everything.
+**Autosave a ride in progress.** Built. The recorder used to hold every sample in memory until the ride ended, so a crash, a closed tab or a flat battery took the whole session.
+
+A checkpoint now writes every 30 seconds of ride time, driven by the sample clock so that a paused ride writes nothing. Each checkpoint writes the finished ride's own records early: same ids, same shapes, same write path. A crash leaves a real ride in the history, truncated at its last checkpoint. A marker on the session record tells the next launch that a ride was part-written; it clears the marker and leaves the ride alone.
+
+Resuming a ride after a crash is deliberately not attempted. The recorded ride is what mattered; the session is not worth rebuilding.
 
 **Ask for persistent storage when there is something to lose.** `navigator.storage.persist()` exempts the store from eviction, and Chrome weighs site engagement when deciding, so asking on first load is the weakest possible moment. Ask after the first thing a rider would mind losing: a completed ride, an imported archive, a workout they wrote, a GPX they added. It matters more once autosave makes the local store the only copy of a ride in progress.
 
@@ -661,7 +665,7 @@ A route can be raced against up to five ghosts. Each slot has a fixed symbol.
 | Best | Square | Your fastest lap of this route. |
 | Best this year | Triangle | Your fastest lap of the last 365 days. Where that is the lap already in Best, the next fastest inside the window. |
 | Most recent | Star | The last route length you completed here. Where that is already shown, the one before it. |
-| Chosen ride | Diamond | A ride you picked with **Race this ride**. |
+| Picked ride | Diamond | A ride you chose with **Race this ride**. |
 | Friend | Hexagon | Reserved. Not built. |
 
 **The symbol belongs to the slot, not to the ride.** A square is always your best, on every route and in every session. Several ghosts can then share a screen without a legend.
@@ -672,7 +676,9 @@ A route can be raced against up to five ghosts. Each slot has a fixed symbol.
 
 A slot for the fastest lap of the current ride was considered and rejected. Where today's fastest lap is also your best, Best already holds it. Where it is not, Best is the harder target and Most recent is the closer one, so the extra slot would sit between two laps you can already race.
 
-**The label "Most recent" is wrong on a loop.** It describes a ride when the contents are a lap. "Last lap" is correct on a loop and wrong on a point-to-point, so this label varies by route type. It is the only one that does.
+**The label "Most recent" is wrong on a loop.** It describes a ride when the contents are a lap. "Last lap" is correct on a loop and wrong on a point-to-point.
+
+Not built. The label is currently fixed: "Most recent" in the settings panel and "Last" in the bottom band, on every route. Making it vary by route type is outstanding.
 
 ### The 365-day window
 
@@ -686,7 +692,7 @@ The cost is real: this slot can change without you riding. An old lap leaves the
 
 On a loop, "fastest ride" would reward the shortest ride, so one lap would always beat a three-lap session. Fastest lap is the only measure that compares like with like, and it means your best lap out of a long session can be raced.
 
-**A ride that never completed a route length cannot be best**, because it has no comparable time. It can still be raced through the Chosen ride slot.
+**A ride that never completed a route length cannot be best**, because it has no comparable time. It can still be raced through the Picked ride slot.
 
 **A lap from the ride in progress qualifies** as soon as it is complete.
 
@@ -694,9 +700,11 @@ On a loop, "fastest ride" would reward the shortest ride, so one lap would alway
 
 Ghosts are switched on and off in the ride settings panel, which also holds the trainer connection. The panel opens before a ride and during one.
 
-**Race this ride** on the rides list starts a ride on that route with that ride in the Chosen ride slot. It is available only for rides that have a route and whose route still exists. Workout rides have no route, so they are excluded.
+**Race this ride** on the rides list starts a ride on that route with that ride in the Picked ride slot. It is available only for rides that have a route and whose route still exists. Workout rides have no route, so they are excluded.
 
-**Add, change or remove a ghost at any time, including mid-ride.** Loading a ghost takes one read. A ghost loaded on lap three appears at its lap-relative position, which is where it would have been had it been loaded earlier.
+**Switch a ghost on or off at any time, including mid-ride.** Loading a ghost takes one read. A ghost loaded on lap three appears at its lap-relative position, which is where it would have been had it been loaded earlier.
+
+The Picked ride slot is the exception. It is filled only by **Race this ride**, which starts a ride, so the panel can empty it but cannot fill it. Choosing a different ride mid-ride is not possible.
 
 ### How a ghost ends
 
@@ -705,7 +713,9 @@ A ghost has two end states and they look different:
 - **Finished.** The ghost completed the route length. Its symbol stays at the route end. It does not fade.
 - **Stopped.** The ride ended part way round. Its symbol marks the point it reached, then fades out.
 
-Neither state shows a gap. The distinction matters because one ghost beat you and the other gave up.
+Neither state shows a gap. In place of one, the bottom band reads `done` for a finished ghost and `stopped` for one that ended early. The distinction matters because one ghost beat you and the other gave up.
+
+A finished ghost leaves the map. A stopped ghost stays on it, faded, because where it stopped is the information.
 
 ### Drawing
 
@@ -730,6 +740,14 @@ Splitting samples at each route length requires the samples, which the rides lis
 ### Ghosts are not shown on workouts
 
 A workout is ridden against a plan, and the plan chart already shows what you are chasing. A second target on the same screen would compete with it.
+
+### Not built yet
+
+Three parts of this phase are specified above but not in the build:
+
+- **Phone layouts.** The ride screen is desktop and tablet only. It has no responsive branching and nothing in the app handles orientation, while the design specifies three phone arrangements. The placement geometry for phones is built and tested — 4 px symbols, the gap beside the symbol rather than above it, a 60 × 16 collision box — but there is no layout to host it.
+- **A label that varies by route type**, so that Most recent reads "Last lap" on a loop.
+- **The gradient key in the bottom band.** `ride.html` and `tablet-portrait.html` disagree about its form, and the component is shared with the summary screen, so changing it is a separate decision.
 
 ### Limits and caveats
 
