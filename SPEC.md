@@ -588,22 +588,166 @@ Phases 1 to 3 shipped as the MVP. What follows was re-cut afterwards, once ridin
 | Now | Was |
 | --- | --- |
 | 4 — the ghost | 4, which was a list |
-| 5 — the phone mirror | the mirror half of 5 |
-| 6 — FTP tests | unscheduled |
-| 7 — accounts and storage | the backend half of 5 |
-| 8 — Strava sync | 6 |
+| 5 — usage and errors | nothing; added once it shipped to other people |
+| 6 — the phone mirror | the mirror half of 5 |
+| 7 — FTP tests | unscheduled |
+| 8 — accounts and storage | the backend half of 5 |
+| 9 — Strava sync | 6 |
 
-**ADRs written before this date use the old numbers** — "a backend in phase 5" means phase 7, "phase 6's Strava upload" means phase 8. They are left as written: an ADR records what was believed when it was decided, and editing one to match a later plan is the one thing `docs/adr/README.md` forbids. This table is the key.
+**ADRs written before this date use the old numbers** — "a backend in phase 5" means phase 8, "phase 6's Strava upload" means phase 9, and ADR-0000's "Electron from phase 5" means the mirror, now 6. They are left as written: an ADR records what was believed when it was decided, and editing one to match a later plan is the one thing `docs/adr/README.md` forbids. This table is the key.
 
-## Phase 4 — Regroup and polish
+## Not losing things
 
-**Not a workout laid over a route.** Decided against on 2026-10-14 and recorded as [ADR-0016](docs/adr/0016-no-workouts-on-routes.md): in ERG the trainer holds the target whatever the gradient, so the route has no effect on the ride and the terrain is wallpaper. Either the hills are real or they are not. A plan held by the rider against real simulated terrain — the version where the hills stay real — is a different feature and is deferred to a later phase rather than smuggled in as a variant of this one.
+Three items, none of them a phase, all of them the same concern: this app keeps a rider's riding in one browser on one machine, and that is only a feature for as long as it does not lose it.
 
-**The ghost, and nothing else.** Your previous ride on this route, drawn against the current one, so a route you have ridden before has something to ride against. The last ride on a route and the best one are the two candidates, and the choice between them is part of the work.
+**Autosave a ride in progress.** The recorder holds every sample in memory and nothing reaches storage until the ride is ended, so a crash, a closed tab or a flat battery takes the lot. The `beforeunload` guard warns before a reload and can do nothing about the rest. This is the only failure here that cannot be undone, and it is the first thing to build — ahead of the ghost, ahead of everything.
 
-The phase was a list; it is now one item, because the rest did not belong here. GPX upload shipped early. **Richer history and summary statistics moved to phase 5** — they rely on data being reliably persistent, which is what a backend is for, and a trend computed over a store a browser can clear is a trend about nothing. Workout import and a real basemap stay unscheduled.
+**Ask for persistent storage when there is something to lose.** `navigator.storage.persist()` exempts the store from eviction, and Chrome weighs site engagement when deciding, so asking on first load is the weakest possible moment. Ask after the first thing a rider would mind losing: a completed ride, an imported archive, a workout they wrote, a GPX they added. It matters more once autosave makes the local store the only copy of a ride in progress.
 
-Nothing in that list is a loss, because **this app is not trying to replace the ones that already do analysis.** Strava and TrainingPeaks read a ride back better than a side project will, and the export exists so they can. What Contour owes a rider is the ride itself.
+**Export everything, in one file you can unpack.** The rides archive carries rides and their samples and nothing else, so routes, workouts and — most seriously — the rider profile have no way out. FTP, maximum heart rate and the masses are the smallest data here and the only part with no export at all: lose them and every future ride is zoned against a number typed from memory.
+
+[ADR-0019](docs/adr/0019-data-is-legible-on-the-way-out.md) puts the obligation at the boundary and nowhere else: how any of this is held in IndexedDB is ours to optimise, and what comes out is a folder of real files. The archive converts rather than copies where it has to.
+
+```
+manifest.json          version, counts, exported at
+profile.json           FTP, hrMax, masses, CdA, Crr
+rides/<id>.json        the record and its samples
+routes/<slug>.gpx      real GPX, openable anywhere
+workouts/<slug>.yaml   the source as written
+```
+
+**`.tar.gz`, not `.zip`.** Tar is 512-byte headers and nothing else — no CRC, no central directory, no offset bookkeeping — so writing and reading it correctly is a fraction of the work, and a malformed zip fails silently rather than loudly. `CompressionStream` is in the browser, so the compression needs no dependency either; samples are repetitive and compress roughly ten to one. macOS unpacks `.tar.gz` on a double click.
+
+[ADR-0012](docs/adr/0012-deliberate-non-dependencies.md) rules out an archive dependency, which is why the workout and route bundles are multi-document YAML and multi-track GPX. If the container proves fiddly enough to want a library, that is an amendment to 0012 with a stated reason — "zip has sharp edges and a bad one fails silently" is a good one — rather than a rule to work around.
+
+The per-collection exports stay. They are portable artefacts for sharing one thing; this is a backup of everything.
+
+## Phase 4 — The ghost
+
+Race a previous ride of the same route, drawn against the ride you are on.
+
+**Not a workout laid over a route.** Rejected on 2026-10-14, recorded as [ADR-0016](docs/adr/0016-no-workouts-on-routes.md). In ERG the trainer holds the target whatever the gradient, so the route makes no difference to the ride. A plan held by the rider against simulated terrain is a different feature, deferred to a later phase.
+
+### How position is calculated
+
+A ghost is drawn at the point the earlier ride had reached **at your elapsed time**. You and the ghost run on one clock, so your positions differ and the gap between you changes as you ride.
+
+The alternative was to draw the ghost at your distance and compare times. Both markers would then sit in the same place for the whole ride, which shows the rider nothing.
+
+Position is interpolated from the recorded `distanceM` at your `elapsedS`. Both values exclude paused time, so pausing advances neither of you.
+
+**The gap is measured in seconds.** Metres would need a gradient to interpret: 180 m is a long way up a climb and nothing on a descent. The figure answers one question — when did the ghost reach the point you are at now.
+
+### Loops are raced lap by lap
+
+**On a loop, a ghost is always lap-relative.** Your elapsed time accumulates across laps, so at 42 minutes on lap three it cannot be compared with a ghost lap that lasted nine. Both clocks therefore restart at the line:
+
+1. You cross the line. Your lap clock resets to zero.
+2. The ghost restarts its lap from the line at the same moment.
+3. The gap resets. It now means the gap on this lap.
+
+This follows from a ghost being a lap rather than a whole ride. It also gives a loop one race per lap instead of a single race decided early.
+
+**A lap from the ride you are on can be raced.** If lap two is your fastest, lap three races lap two. The current ride's samples are already in memory and its lap boundaries are already detected, so this costs a comparison rather than a database read.
+
+**The ghost for a lap is chosen when you cross the line, and does not change until the next crossing.** Swapping mid-lap would move the gap by an amount you did not ride.
+
+### Slots
+
+A route can be raced against up to five ghosts. Each slot has a fixed symbol.
+
+| Slot | Symbol | Contents |
+| --- | --- | --- |
+| Best | Square | Your fastest lap of this route. |
+| Best this year | Triangle | Your fastest lap of the last 365 days. Where that is the lap already in Best, the next fastest inside the window. |
+| Most recent | Star | The last route length you completed here. Where that is already shown, the one before it. |
+| Chosen ride | Diamond | A ride you picked with **Race this ride**. |
+| Friend | Hexagon | Reserved. Not built. |
+
+**The symbol belongs to the slot, not to the ride.** A square is always your best, on every route and in every session. Several ghosts can then share a screen without a legend.
+
+**An empty slot stays empty.** A slot with no qualifying lap shows nothing. It does not fall through to another ride, because a triangle on a lap that is not your best of the year would make the symbols unreliable. A first ride on a route fills no slots.
+
+**Most recent means the last route length you completed here.** On a point-to-point that is your last ride. On a loop it is the previous lap, or — on a first lap — the closing lap of your last visit. One rule covers both.
+
+A slot for the fastest lap of the current ride was considered and rejected. Where today's fastest lap is also your best, Best already holds it. Where it is not, Best is the harder target and Most recent is the closer one, so the extra slot would sit between two laps you can already race.
+
+**The label "Most recent" is wrong on a loop.** It describes a ride when the contents are a lap. "Last lap" is correct on a loop and wrong on a point-to-point, so this label varies by route type. It is the only one that does.
+
+### The 365-day window
+
+**Best this year uses a rolling 365 days, not the calendar year.** The slot exists to show your current form when your all-time best is old, and form changes gradually. A calendar year would make your best on 31 December and your best on 1 January different questions when only the date has changed.
+
+The cost is real: this slot can change without you riding. An old lap leaves the window and a slower one becomes the best inside it. The alternative is a window that resets on a fixed date rather than when it stops describing you.
+
+### What counts as best
+
+**The fastest time over one route length.** On a point-to-point that is the whole ride. On a loop it is a single lap, taken from any ride.
+
+On a loop, "fastest ride" would reward the shortest ride, so one lap would always beat a three-lap session. Fastest lap is the only measure that compares like with like, and it means your best lap out of a long session can be raced.
+
+**A ride that never completed a route length cannot be best**, because it has no comparable time. It can still be raced through the Chosen ride slot.
+
+**A lap from the ride in progress qualifies** as soon as it is complete.
+
+### Choosing a ghost
+
+Ghosts are switched on and off in the ride settings panel, which also holds the trainer connection. The panel opens before a ride and during one.
+
+**Race this ride** on the rides list starts a ride on that route with that ride in the Chosen ride slot. It is available only for rides that have a route and whose route still exists. Workout rides have no route, so they are excluded.
+
+**Add, change or remove a ghost at any time, including mid-ride.** Loading a ghost takes one read. A ghost loaded on lap three appears at its lap-relative position, which is where it would have been had it been loaded earlier.
+
+### How a ghost ends
+
+A ghost has two end states and they look different:
+
+- **Finished.** The ghost completed the route length. Its symbol stays at the route end. It does not fade.
+- **Stopped.** The ride ended part way round. Its symbol marks the point it reached, then fades out.
+
+Neither state shows a gap. The distinction matters because one ghost beat you and the other gave up.
+
+### Drawing
+
+Ghost symbols are muted and appear on both the elevation profile and the map. The profile shows the gap as time; the map shows position, which matters on a loop. The accent colour stays reserved for your own marker.
+
+**Each ghost's gap sits above its own symbol on the profile.** Several ghosts are then readable without competing for one readout, and no fixed space is reserved for a figure that may not exist. Nothing on screen moves when you load a ghost mid-ride.
+
+### Stored data
+
+**A ride stores its lap splits when it is saved**: an array of seconds, one entry per completed route length. Ten entries for a ten-lap ride, one for a completed point-to-point, and none for a ride that finished no laps. An empty array is what makes a ride ineligible to be best, so no separate flag is needed.
+
+Splitting samples at each route length requires the samples, which the rides list does not load. Finding the best lap afterwards is a minimum over a short array, which it does load. The rule: **store the expensive derivation and derive the cheap one from it.** The position in the array matters as much as the value, because racing a lap means reading that lap's samples.
+
+**The TCX export writes one `<Lap>` per lap**, triggered by distance, from the same splits. The file and the record cannot then disagree about where a lap ended, and Strava shows the splits without further work. Before this, every ride exported as a single lap.
+
+**A ride also stores its TSS**, calculated when it is saved from its recorded power and the FTP it was ridden at. It needs the samples, so storing it later would mean walking every ride again. Displaying it can wait.
+
+**TSS is backfilled across existing rides**, exactly rather than approximately: every ride still has its samples and its frozen FTP.
+
+**Lap splits are not backfilled.** Loops shipped days before this field existed, so no lapped rides are in anyone's history to recover.
+
+### Ghosts are not shown on workouts
+
+A workout is ridden against a plan, and the plan chart already shows what you are chasing. A second target on the same screen would compete with it.
+
+### Limits and caveats
+
+**Trainer difficulty makes no difference.** Under [ADR-0008](docs/adr/0008-speed-uses-the-real-route-grade.md), difficulty changes how a hill feels but not how fast you travel. A ghost ridden at difficulty 0 is comparable with one ridden at 100.
+
+**Storage is not a constraint.** A thousand rides is roughly 500 KB of aggregates and 500 MB of samples, against a browser quota measured as a share of free disk.
+
+**Weight affects the comparison.** Speed is calculated from power and mass, and each ride freezes the settings it was ridden at. If you lose five kilograms you will beat an old ghost at the same power. The old ride was real and was ridden at that weight, but the comparison is not purely one of fitness.
+
+### After the ride
+
+The summary states whether you beat the ghost and by how much, calculated from two stored figures.
+
+### What moved out of this phase
+
+GPX upload shipped earlier than planned. **Richer history and summary statistics moved to phase 8**, because they depend on data that persists reliably, which requires a backend. Workout import and a real basemap are unscheduled.
+
+Contour does not aim to replace the applications that already analyse rides. Strava and TrainingPeaks read a ride back better than this will, and the export exists so that they can.
 
 ## A loop can be ridden round again
 
@@ -645,7 +789,23 @@ A workout can be ridden with the trainer holding the target, or with the rider h
 
    One thing improves. With ERG on, a ride's actual TSS is close to the planned figure by construction, because the trainer made it so. With ERG off the recorded figure measures the rider, and the plan chart's accent-over-grey stops being a formality.
 
-## Phase 5 — The phone mirror
+## Phase 5 — Usage and errors
+
+It is in other people's hands now, and nothing comes back. This is the phase that fixes that, and it is **not** the training statistics ruled out of phase 4 — that is a rider learning about themselves, which Strava does better. This is the author learning whether anyone rides the thing and what breaks when they do.
+
+**Errors are worth more than counts.** "Forty-seven people opened it" is a number to look at; "the app threw in Safari at the route list" is something to fix. Weight the work accordingly.
+
+What is worth knowing: whether a ride completes or is abandoned, whether pairing fails and at which step, which browser and platform, which features are never touched, and what threw. That last one answers the two unknowns this app currently has — what a private window does when IndexedDB is unavailable, and what someone on an iPhone sees before they press connect.
+
+**Self-hosted, on the same box.** A third-party tracker in an app whose premise is that it does not phone home would be a contradiction a rider could read in the network tab. Running it ourselves keeps that honest and keeps the data ours.
+
+**What never leaves: ride data.** No power, no heart rate, no routes, no positions, no files. Counts, error strings and the shape of a session. A rider's ride stays theirs, which is the whole arrangement this app makes.
+
+**Say so, plainly, and let it be turned off.** The app's first line is that it has no avatars, badges or leaderboards; something that reports back needs stating in the same voice rather than buried.
+
+It comes before the mirror for a practical reason as well as a product one. It is the same shape of deployment — a small process behind nginx on the VPS — so it establishes that pattern on something where a crash costs nothing, and it tells you whether anyone would use a mirror before you build one.
+
+## Phase 6 — The phone mirror
 
 **Browser-only is a feature, not a stage to grow out of.** Open a URL and ride: no install, no update, nothing to trust. That is worth keeping, and this phase exists for one reason only — a phone propped next to the bike showing live data in large type.
 
@@ -660,7 +820,7 @@ Two things that are easier here than the old framing assumed. The mirror page is
 
 Richer history and summary statistics are **not** here. They belong with the storage that makes them trustworthy, in phase 7: a trend computed over a store the browser can clear is a trend about nothing.
 
-## Phase 6 — FTP tests
+## Phase 7 — FTP tests
 
 The strongest candidate once the ghost is done, and the last phase that needs no server.
 
@@ -677,7 +837,7 @@ Two features, in order:
 
 Both are bound by [ADR-0017](docs/adr/0017-changing-ftp-never-rewrites-history.md): a new FTP changes only what is ahead. That was your FTP at that time.
 
-## Phase 7 — Accounts and storage
+## Phase 8 — Accounts and storage
 
 The point at which a ride stops living only in one browser. Deferred this long deliberately: browser-only is a feature, and every phase before this works without a server.
 
@@ -687,7 +847,7 @@ The point at which a ride stops living only in one browser. Deferred this long d
 
 **What this does not become.** A server owning the ride does not make the app need one. The local store stays the thing the ride is recorded into, and sync is what happens afterwards — a ride must never fail because a network did.
 
-## Phase 8 — Strava sync
+## Phase 9 — Strava sync
 
 A manual "upload to Strava" button on a completed ride. OAuth with a small serverless token exchange so the client secret never ships to the browser; upload the TCX; set the activity type to `VirtualRide`.
 
