@@ -617,10 +617,14 @@ Position comes from interpolating a sample's `distanceM` at your `elapsedS`. Bot
 In the ride settings panel, which already opens over a running ride. Three slots, filled top down, and **no ride appears twice** — a picker showing one ride under two labels looks broken:
 
 1. **Best** — the fastest you have covered this route. The target.
-2. **Best this year.** If that is the same ride as Best, the next fastest of this year instead.
+2. **Best, 12 months** — the fastest of the last 365 days. If that is the same ride as Best, the next fastest within the window instead.
 3. **Most recent.** If that is already shown, the next most recent.
 
-A slot with no candidate of its own falls through to the next unused ride, newest first, so three slots fill whenever three rides exist. "This year" is the calendar year: it is the phrase people use, and being short in January is itself informative.
+A slot with no candidate of its own falls through to the next unused ride, newest first, so three slots fill whenever three rides exist.
+
+**Rolling 365 days, not the calendar year.** The slot exists to say where your form is now when your all-time best is old, and form is a rolling thing — a calendar year implies that your best on 31 December and your best on 1 January are different questions, when the only thing that changed was the date. It is labelled "12 months" rather than "this year" for the same reason: the shorter phrase promises a calendar this does not use.
+
+The cost, which is real: the slot can change without you riding. An old ride drops out of the window and a slower one becomes the best within it. Nothing you did, and briefly puzzling — but the alternative is a window that resets on a date rather than when it stops describing you.
 
 **A historic ride's summary offers Race ghost**, which starts a ride on that route with that ride selected. It is the other direction into the same feature: you are looking at a ride and want to beat it.
 
