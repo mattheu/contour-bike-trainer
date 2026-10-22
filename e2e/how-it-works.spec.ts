@@ -32,8 +32,8 @@ test.describe('how it works', () => {
     await expect(page.getByRole('heading', { name: 'What you need' })).toBeVisible();
     await expect(page).toHaveURL(/#\/how-it-works$/);
 
-    // The previews are pictures of the ride screen, not a second copy of it: nothing in
-    // them is reachable by keyboard or announced, so the screen offers three links.
+    // Everything pressable here navigates, so the screen is all links and no buttons.
+    await expect(page.getByRole('link')).toHaveCount(2);
     await expect(page.getByRole('button')).toHaveCount(0);
   });
 });

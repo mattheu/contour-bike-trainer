@@ -1,4 +1,5 @@
 import { Button } from '../components/Button';
+import { CONTROL_SIZE } from '../components/control';
 import { COLOUR_SHIFT } from '../components/motion';
 import { LABEL, MONO } from '../components/styles';
 import { Lockup } from '../components/Wordmark';
@@ -14,9 +15,11 @@ import { formatHash } from '../routing';
  * rearrange the screen.
  *
  * Start is the screen's one accent control, which it earns under DESIGN.md: an action
- * that begins something. The link under it is deliberately not a second control: a box
- * is the signal that something is pressable, and How it works is a way out of this screen
- * rather than a way through it.
+ * that begins something. The link under it is a borderless button — a control's height
+ * and padding, so it is as easy to hit as Start, but no box: a box is the signal that
+ * something is pressable, and this is a way out of the screen rather than a way through
+ * it. The two sit flush for that reason as well; a gap would read as two boxes with a
+ * border missing.
  */
 export function Login({ onStart }: { onStart: () => void }) {
   return (
@@ -34,7 +37,7 @@ export function Login({ onStart }: { onStart: () => void }) {
           </Button>
           <a
             href={formatHash({ name: 'how-it-works' })}
-            className={`${LABEL} text-caption hover:text-ink ${COLOUR_SHIFT} mt-[4px] py-[8px] text-center no-underline`}
+            className={`${LABEL} ${CONTROL_SIZE} text-caption hover:text-ink ${COLOUR_SHIFT} flex items-center justify-center px-[20px] no-underline`}
           >
             How it works
           </a>

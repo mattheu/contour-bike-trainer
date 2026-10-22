@@ -2,8 +2,7 @@ import { AppHeader } from '../components/AppHeader';
 import { CONTROL_SIZE, LINK_TONE } from '../components/control';
 import { LABEL, MONO, SERIF } from '../components/styles';
 import { formatHash } from '../routing';
-import { COLUMNS, PLATFORM_NOTE, type Column, type ColumnVisual } from './how-it-works';
-import { ConnectPreview, PreviewFrame, RidePreview } from './ScreenPreview';
+import { COLUMNS, FOOT_NOTES, type Column } from './how-it-works';
 
 /**
  * design/mockups/tour.html and phone-tour.html.
@@ -30,15 +29,19 @@ export function HowItWorks() {
 
       {/* Three equal columns on desktop; on a phone they stack, each carrying the
           hairline that separates it from the one above. */}
-      <div className="flex grow flex-col sm:grid sm:grid-cols-3 sm:gap-[40px] sm:pt-[8px]">
+      <div className="flex grow flex-col sm:grid sm:grid-cols-3 sm:gap-[56px] sm:pt-[8px]">
         {COLUMNS.map((column) => (
           <ColumnBlock key={column.number} column={column} />
         ))}
       </div>
 
       <div className="border-hairline flex items-center justify-between gap-[24px] border-t pt-[20px] sm:pt-[24px]">
-        <div className="text-muted text-caption sm:text-label max-w-[220px] font-sans sm:max-w-none">
-          {PLATFORM_NOTE}
+        {/* Capped so the lines break somewhere readable rather than running the width of
+            the screen, and so Start keeps its corner. */}
+        <div className="text-muted text-caption sm:text-label flex max-w-[220px] flex-col gap-[4px] font-sans sm:max-w-[760px]">
+          {FOOT_NOTES.map((note) => (
+            <div key={note}>{note}</div>
+          ))}
         </div>
         {/* The one accent element on the screen: the action it exists to lead to. */}
         <ControlLink href={login} tone="accent">
@@ -57,7 +60,7 @@ function ColumnBlock({ column }: { column: Column }) {
         <h2 className={`${SERIF} text-title sm:text-stat`}>{column.title}</h2>
       </div>
 
-      <Visual visual={column.visual} />
+      <Visual column={column} />
 
       {column.entries.map((entry) => (
         <div key={entry.label} className="flex flex-col gap-[4px]">
@@ -71,44 +74,23 @@ function ColumnBlock({ column }: { column: Column }) {
   );
 }
 
-/** Each column's picture: a line drawing, or a real screen drawn small. */
-function Visual({ visual }: { visual: ColumnVisual }) {
-  return (
-    <PreviewFrame>
-      {visual === 'trainer-drawing' && <TrainerDrawing />}
-      {visual === 'connect-preview' && <ConnectPreview />}
-      {visual === 'ride-preview' && <RidePreview />}
-    </PreviewFrame>
-  );
-}
-
 /**
- * A bike on a trainer, as a line drawing: the only thing on this screen that is not
- * either type or a real screen. Muted at the chart stroke weight, so it sits in the same
- * family as the profile in the frame beside it.
+ * The column's picture: 16:10, the full width of the column, and no frame around it.
+ * The pictures carry their own edges — a light ground on one, a lit screen on the other
+ * two — so a hairline box around them would be a second border drawn on a first.
+ *
+ * The sources are cropped to 16:10 already, so `object-cover` has nothing to trim at this
+ * ratio and is here only to hold it if a column is ever a different shape.
  */
-function TrainerDrawing() {
+function Visual({ column }: { column: Column }) {
   return (
-    <svg
-      className="h-auto w-[55%]"
-      viewBox="0 0 200 100"
-      fill="none"
-      stroke="var(--color-muted)"
-      strokeWidth="var(--stroke-chart)"
-      strokeLinejoin="round"
-      strokeLinecap="round"
-      role="img"
-      aria-label="A bike on a smart trainer"
-    >
-      <circle cx="150" cy="62" r="26" />
-      <circle cx="150" cy="62" r="4" />
-      {/* The trainer: its feet and the A-frame the rear hub clamps into. */}
-      <path d="M110,88 L190,88 M124,88 L150,36 L176,88" />
-      {/* The bike: triangle, fork, stays and bars. */}
-      <path d="M150,62 L96,62 L72,22 L118,22 L150,62 M72,22 L58,22 M118,22 L110,8 M100,8 L120,8" />
-      <circle cx="36" cy="62" r="26" />
-      <path d="M36,62 L72,22 M36,62 L96,62" />
-    </svg>
+    <img
+      src={column.image.src}
+      alt={column.image.alt}
+      width={720}
+      height={450}
+      className="aspect-[16/10] w-full object-cover"
+    />
   );
 }
 

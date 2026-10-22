@@ -41,8 +41,6 @@ interface RideSettingsProps {
   onTargetsChange: (targets: Targets) => void;
   onEnd: () => void;
   onClose: () => void;
-  /** Forwarded to SettingsPanel, for the still of this panel on How it works. */
-  animateIn?: boolean;
 }
 
 const STATE_TEXT: Record<ConnectionState, string> = {
@@ -82,11 +80,10 @@ export function RideSettings({
   onTargetsChange,
   onEnd,
   onClose,
-  animateIn = true,
 }: RideSettingsProps) {
   const difficultyInert = difficultyInertReason !== null;
   return (
-    <SettingsPanel title="Ride settings" onClose={onClose} animateIn={animateIn}>
+    <SettingsPanel title="Ride settings" onClose={onClose}>
       <Devices devices={devices} />
 
       <div className={SECTION}>

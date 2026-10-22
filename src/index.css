@@ -163,20 +163,6 @@
   transform: rotate(-38deg);
 }
 
-/*
- * The one thing a scaled preview cannot do with a transform.
- *
- * A screen preview on How it works lays a real screen out on the 1440x900 artboard the
- * mockups are drawn at and scales the whole thing down. Every length inside follows the
- * transform except the viewport units: a screen root is `h-screen`, and 100vh is the
- * browser window whatever is wrapped around it, so the artboard would be the height of
- * the window rather than of the design. Pinning it here keeps the preview at the
- * proportions it claims, and reaches nothing outside a preview.
- */
-.screen-preview .h-screen {
-  height: 900px;
-}
-
 /* Stroke family. Plain custom properties: these are SVG attributes, not utilities. */
 :root {
   --stroke-hairline: 1px;
