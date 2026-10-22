@@ -4,7 +4,6 @@
     { "id": "sweet-spot-50", "file": "sweet-spot-50.yaml" },
     { "id": "over-unders-45", "file": "over-unders-45.yaml" },
     { "id": "vo2-max-50", "file": "vo2-max-50.yaml" },
-    { "id": "aerobic-builds-60", "file": "aerobic-builds-60.yaml" },
-    { "id": "format-test-15", "file": "format-test-15.yaml" }
+    { "id": "aerobic-builds-60", "file": "aerobic-builds-60.yaml" }
   ]
 }

@@ -4,7 +4,7 @@ A workout is a YAML file: a name, an optional warmup and cooldown, and a list of
 meant to be written by hand, and the app stores exactly the text you wrote — comments, blank
 lines and all — so editing one gives you back your own file rather than a machine's idea of it.
 
-The four workouts that ship with the app are the shortest way in. Open any of them in the
+The five workouts that ship with the app are the shortest way in. Open any of them in the
 **Workouts** tab and read it alongside this page.
 
 ## The shape of a file
@@ -87,8 +87,7 @@ hours a step, 300 % of FTP, 2,000 W, 200 rpm.
     - { duration: 3m, power: 50%, name: Recovery }
 ```
 
-A repeat block holds its own steps, and those may themselves be repeats — a set of sets, as in
-`format-test-15.yaml`:
+A repeat block holds its own steps, and those may themselves be repeats — a set of sets:
 
 ```yaml
 - repeat: 2
@@ -100,10 +99,10 @@ A repeat block holds its own steps, and those may themselves be repeats — a se
     - { duration: 1m, ramp: [60%, 180W], name: Mixed ramp }
 ```
 
-Repeats are flattened before you ride, so `format-test-15.yaml` is 14 steps and 15 minutes — each
-one listed in the panel and counted in the header. A count runs from 1 to 100, nesting is capped at
-ten deep, and the whole expansion at 1,000 steps — limits there to catch a typo, not to express a
-view on training.
+Repeats are flattened before you ride, so the block above is ten steps rather than the three
+written — each one listed in the panel and counted in the header. A count runs from 1 to 100,
+nesting is capped at ten deep, and the whole expansion at 1,000 steps — limits there to catch a
+typo, not to express a view on training.
 
 ## What the numbers mean
 
@@ -168,7 +167,7 @@ rather than a parsed tree is what makes that possible.
 condensed format reference sits beside the text box, so you need this page for the detail
 rather than for the basics.
 
-The six that ship with the app cannot be changed or deleted. **View** opens one to read — the YAML
+The five that ship with the app cannot be changed or deleted. **View** opens one to read — the YAML
 with its comments, beside the format reference — and **Duplicate** gives you a copy that is yours,
 to edit and delete like anything you wrote. They are refreshed from the project on every launch, so
 a correction to one reaches you.

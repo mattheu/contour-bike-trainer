@@ -130,13 +130,13 @@ describe('workoutRows', () => {
     expect(rows[0]?.status).toBe('broken');
   });
 
-  it('reads the six starter workouts as rows', () => {
+  it('reads the five starter workouts as rows', () => {
     const bundled = bundledWorkouts();
     const rows = workoutRows(
       bundled.workouts.map((entry) => stored(entry.id, entry.workout.name, entry.source)),
       FTP,
     );
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(5);
     expect(rows.every((row) => row.status === 'ok')).toBe(true);
     for (const row of rows) {
       if (row.status !== 'ok') continue;
