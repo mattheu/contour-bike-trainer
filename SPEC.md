@@ -622,123 +622,132 @@ workouts/<slug>.yaml   the source as written
 
 The per-collection exports stay. They are portable artefacts for sharing one thing; this is a backup of everything.
 
-## Phase 4 — Regroup and polish
+## Phase 4 — The ghost
 
-**Not a workout laid over a route.** Decided against on 2026-10-14 and recorded as [ADR-0016](docs/adr/0016-no-workouts-on-routes.md): in ERG the trainer holds the target whatever the gradient, so the route has no effect on the ride and the terrain is wallpaper. Either the hills are real or they are not. A plan held by the rider against real simulated terrain — the version where the hills stay real — is a different feature and is deferred to a later phase rather than smuggled in as a variant of this one.
+Race a previous ride of the same route, drawn against the ride you are on.
 
-**The ghost, and nothing else.** A previous ride on this route, drawn against the one you are on, so a route you have ridden before has something to ride against.
+**Not a workout laid over a route.** Rejected on 2026-10-14, recorded as [ADR-0016](docs/adr/0016-no-workouts-on-routes.md). In ERG the trainer holds the target whatever the gradient, so the route makes no difference to the ride. A plan held by the rider against simulated terrain is a different feature, deferred to a later phase.
 
-### Same clock, different places
+### How position is calculated
 
-The ghost is where that ride had got to **at your elapsed time**. Both of you run on one clock and your positions differ, which is what makes it a race you can watch — the convention every racing ghost uses.
+A ghost is drawn at the point the earlier ride had reached **at your elapsed time**. You and the ghost run on one clock, so your positions differ and the gap between you changes as you ride.
 
-The alternative was to draw it at your *distance* and compare times. That is a post-ride framing: both dots would sit permanently in the same place and there would be nothing to see.
+The alternative was to draw the ghost at your distance and compare times. Both markers would then sit in the same place for the whole ride, which shows the rider nothing.
 
-Position comes from interpolating a sample's `distanceM` at your `elapsedS`. Both are already pause-aware, so a pause advances neither of you and there is no free time in stopping.
+Position is interpolated from the recorded `distanceM` at your `elapsedS`. Both values exclude paused time, so pausing advances neither of you.
 
-**The gap is read in seconds, not metres.** "12 s up" means something; "180 m up" means nothing without knowing the gradient. It is the same samples read the other way: when did the ghost reach the distance you are at now.
+**The gap is measured in seconds.** Metres would need a gradient to interpret: 180 m is a long way up a climb and nothing on a descent. The figure answers one question — when did the ghost reach the point you are at now.
 
-### On a loop the clock is the lap
+### Loops are raced lap by lap
 
-**A ghost on a loop is always lap-relative.** Your `elapsedS` is cumulative across laps, so on lap three at 42 minutes "where the ghost was at 42 minutes" asks about a lap that lasted nine. Both of you therefore run on lap time: the ghost restarts at the line each time you cross it, and the gap resets with it. "12 s up" means up on *this* lap.
+**On a loop, a ghost is always lap-relative.** Your elapsed time accumulates across laps, so at 42 minutes on lap three it cannot be compared with a ghost lap that lasted nine. Both clocks therefore restart at the line:
 
-That falls out of best being a lap rather than a ride, and it is also the better ride. A single race decided by minute ten becomes a fresh race every lap, which is what laps are for.
+1. You cross the line. Your lap clock resets to zero.
+2. The ghost restarts its lap from the line at the same moment.
+3. The gap resets. It now means the gap on this lap.
 
-**The lap you are chasing can come from the ride you are on.** Put in a blinder on lap two and lap three races lap two. The current ride's samples are already in memory and its lap boundaries already fire, so this costs a comparison rather than a query — and it is the honest reading of "fastest lap", which has no reason to exclude the last nine minutes.
+This follows from a ghost being a lap rather than a whole ride. It also gives a loop one race per lap instead of a single race decided early.
 
-**The ghost is chosen at the line and never changes mid-lap.** A swap part-way through would move the gap by a step the rider did not ride. So each crossing re-asks which lap is fastest, and that lap is raced for the next one.
+**A lap from the ride you are on can be raced.** If lap two is your fastest, lap three races lap two. The current ride's samples are already in memory and its lap boundaries are already detected, so this costs a comparison rather than a database read.
 
-### Choosing one
+**The ghost for a lap is chosen when you cross the line, and does not change until the next crossing.** Swapping mid-lap would move the gap by an amount you did not ride.
 
-In the settings panel — the one that already holds the trainer connection, reachable before a ride and over a running one. One place rather than two, so there is nothing to learn twice.
+### Slots
 
-Three fixed slots, each toggled on or off independently, and **no ride appears twice** — a picker showing one ride under two labels looks broken:
+A route can be raced against up to five ghosts. Each slot has a fixed symbol.
 
-| Slot | Shape | What it is |
+| Slot | Symbol | Contents |
 | --- | --- | --- |
-| **Best** | Triangle | The fastest you have covered this route. The target. |
-| **Best, 12 months** | Square | The fastest of the last 365 days. Where that is the same ride as Best, the next fastest inside the window. |
-| **Most recent** | Star | The last route length you completed here. Where that is already shown, the one before it. |
+| Best | Square | Your fastest lap of this route. |
+| Best this year | Triangle | Your fastest lap of the last 365 days. Where that is the lap already in Best, the next fastest inside the window. |
+| Most recent | Star | The last route length you completed here. Where that is already shown, the one before it. |
+| Chosen ride | Diamond | A ride you picked with **Race this ride**. |
+| Friend | Hexagon | Reserved. Not built. |
 
-**On a loop the star is your previous lap.** "The last route length you completed here" is one sentence covering both shapes of route: on a point-to-point it is your last ride, on a loop it is the lap before this one — and on a first lap, the closing lap of whenever you were last here. It is the slot that benefits most from being lap-relative, because it turns into a fresh rabbit every lap, always just up or just down the road and always achievable, where the triangle may be a target you have no business chasing today.
+**The symbol belongs to the slot, not to the ride.** A square is always your best, on every route and in every session. Several ghosts can then share a screen without a legend.
 
-A fourth slot for the fastest lap of the current ride was considered and left out. Where today's fastest lap is your best it is already the triangle, and where it is not, the triangle is the better target and the previous lap the more motivating one — so it would spend a slot on the gap between two things already raceable. The reachable-target argument for it is the one **Best, 12 months** already answers.
+**An empty slot stays empty.** A slot with no qualifying lap shows nothing. It does not fall through to another ride, because a triangle on a lap that is not your best of the year would make the symbols unreliable. A first ride on a route fills no slots.
 
-**"Most recent" is the wrong label on a loop**, and it is the only slot whose label has to move: it reads as a ride when the thing is a lap. "Last lap" is correct there and wrong on a climb. Design is picking this up with the rest of the labelling.
+**Most recent means the last route length you completed here.** On a point-to-point that is your last ride. On a loop it is the previous lap, or — on a first lap — the closing lap of your last visit. One rule covers both.
 
-**The shape belongs to the slot, not to the ride.** A triangle is always your best, on every route, in every session. That is what lets three ghosts share a screen without a legend, and it is why a shape has to mean one thing forever.
+A slot for the fastest lap of the current ride was considered and rejected. Where today's fastest lap is also your best, Best already holds it. Where it is not, Best is the harder target and Most recent is the closer one, so the extra slot would sit between two laps you can already race.
 
-**An unfillable slot stays empty.** No falling through to the next unused ride — a square that is not actually your best of the year would spend the shape's meaning to avoid an empty row, and the shape is worth more. A first ride on a route offers no slots at all.
+**The label "Most recent" is wrong on a loop.** It describes a ride when the contents are a lap. "Last lap" is correct on a loop and wrong on a point-to-point, so this label varies by route type. It is the only one that does.
 
-**Add, change or remove a ghost at any point, including mid-ride.** Loading one costs a read and a slice, and a ghost loaded on lap three simply appears at its lap-relative position, which is where it would have been all along. There was a case for locking the choice at the start; it buys nothing, because nothing downstream depends on the selection having been stable.
+### The 365-day window
 
-**Rolling 365 days, not the calendar year.** The slot exists to say where your form is now when your all-time best is old, and form is a rolling thing — a calendar year implies that your best on 31 December and your best on 1 January are different questions, when the only thing that changed was the date. It is labelled "12 months" rather than "this year" for the same reason: the shorter phrase promises a calendar this does not use.
+**Best this year uses a rolling 365 days, not the calendar year.** The slot exists to show your current form when your all-time best is old, and form changes gradually. A calendar year would make your best on 31 December and your best on 1 January different questions when only the date has changed.
 
-The cost, which is real: the slot can change without you riding. An old ride drops out of the window and a slower one becomes the best within it. Nothing you did, and briefly puzzling — but the alternative is a window that resets on a date rather than when it stops describing you.
-
-**A historic ride's summary offers Race ghost**, which starts a ride on that route with that ride selected. It is the other direction into the same feature: you are looking at a ride and want to beat it.
+The cost is real: this slot can change without you riding. An old lap leaves the window and a slower one becomes the best inside it. The alternative is a window that resets on a fixed date rather than when it stops describing you.
 
 ### What counts as best
 
-**The fastest time over one route length.** On a point-to-point that is the ride; on a loop it is a lap — the quickest one you have done, from any ride.
+**The fastest time over one route length.** On a point-to-point that is the whole ride. On a loop it is a single lap, taken from any ride.
 
-One definition rather than two, and it is forced rather than tidy: on a loop, "fastest ride" rewards the shortest ride, so a single lap would beat a three-lap session every time. Fastest lap is the only reading that means anything there, and it has the better consequence — your best lap out of a long session is raceable, which is exactly the lap you would want to chase.
+On a loop, "fastest ride" would reward the shortest ride, so one lap would always beat a three-lap session. Fastest lap is the only measure that compares like with like, and it means your best lap out of a long session can be raced.
 
-**A ride that never completed a route length cannot be best**, because there is no comparable time. It can still be raced individually.
+**A ride that never completed a route length cannot be best**, because it has no comparable time. It can still be raced through the Chosen ride slot.
 
-**The ride in progress is a candidate like any other**, from the moment it completes its first lap. Nothing distinguishes a lap ridden ten minutes ago from one ridden last March except that the recent one is not in storage yet.
+**A lap from the ride in progress qualifies** as soon as it is complete.
 
-### Partial rides race fine
+### Choosing a ghost
 
-A ride that stopped early is a legitimate ghost: your climb-then-quit is still something to beat up the climb. The ghost ends where that ride ended — **marked where it stopped, then faded out**, rather than a dot that blinks away unexplained.
+Ghosts are switched on and off in the ride settings panel, which also holds the trainer connection. The panel opens before a ride and during one.
 
-**A ghost that finishes ahead of you sits at the line and stays there.** No fade: it did not give up, it won, and that is the one moment the rider most wants to see where it is. Fading is reserved for the ride that stopped — the two endings have to look different or the mark says nothing.
+**Race this ride** on the rides list starts a ride on that route with that ride in the Chosen ride slot. It is available only for rides that have a route and whose route still exists. Workout rides have no route, so they are excluded.
 
-### Drawing it
+**Add, change or remove a ghost at any time, including mid-ride.** Loading a ghost takes one read. A ghost loaded on lap three appears at its lap-relative position, which is where it would have been had it been loaded earlier.
 
-Muted, on **both the profile and the map**. The profile is where a gap reads as time; the map is where position reads on a loop, and it already draws a rider dot. Accent stays the rider's.
+### How a ghost ends
 
-**Each ghost carries its own gap, set just above its marker on the profile.** This is what makes three ghosts legible rather than three numbers competing for one slot: the figure sits where the thing it describes is, moves with it, and needs no legend to say which is which. It also means the readout costs no fixed space on a screen with none going spare — no ghosts, no numbers, and nothing shifts when one is loaded mid-ride. Design is mocking this up.
+A ghost has two end states and they look different:
 
-**Up to three at once**, which the two decisions above together make ordinary rather than ambitious: a gap that travels with its marker removes the readout problem, and a shape bound permanently to its slot removes the identification one. Tone stays spoken for by the rider's accent, so shape does the work.
+- **Finished.** The ghost completed the route length. Its symbol stays at the route end. It does not fade.
+- **Stopped.** The ride ended part way round. Its symbol marks the point it reached, then fades out.
 
-### Where lap times live
+Neither state shows a gap. The distinction matters because one ghost beat you and the other gave up.
 
-Splitting samples at each route length is expensive, and the samples are deliberately out of the rides list's reach. So **a ride stores its lap splits when it is saved** — an array of seconds, one entry per completed route length. Ten numbers for a ten-lap ride, one for a point-to-point, **empty for a ride that never finished one**, which says "not eligible for best" without a flag saying so.
+### Drawing
 
-Best is then `min()` over short arrays across the aggregates the list already loads, and no samples are read until a ghost is actually raced. The index matters as much as the value: to race a best lap you have to slice *that* lap's samples, which a stored scalar could not tell you.
+Ghost symbols are muted and appear on both the elevation profile and the map. The profile shows the gap as time; the map shows position, which matters on a loop. The accent colour stays reserved for your own marker.
 
-**The rule worth writing into the ADR**, because it is what stops someone adding a `bestLapS` beside it or deleting the array as redundant: *store the expensive derivation, derive the cheap one from it.*
+**Each ghost's gap sits above its own symbol on the profile.** Several ghosts are then readable without competing for one readout, and no fixed space is reserved for a figure that may not exist. Nothing on screen moves when you load a ghost mid-ride.
 
-**The same computation feeds the export.** TCX models laps natively and we write exactly one `<Lap>` per activity, which has been wrong since loops shipped. One per lap, triggered by distance, from the same split — so the file and the record cannot disagree about where a lap ended, and Strava shows the splits without any work of ours.
+### Stored data
 
-**A ride also stores its TSS**, computed at save from its recorded power and the FTP it was ridden at. Same rule and the same reason: it needs the samples, so not storing it means either a backfill later or a permanent gap where earned load is unknowable. Displaying it can wait — the obvious home is beside the planned figure a workout already shows in the library — but storing it cannot, because the day it is wanted the samples would have to be walked again.
+**A ride stores its lap splits when it is saved**: an array of seconds, one entry per completed route length. Ten entries for a ten-lap ride, one for a completed point-to-point, and none for a ride that finished no laps. An empty array is what makes a ride ineligible to be best, so no separate flag is needed.
 
-Unlike the splits, this one **is** backfilled, and completely: every existing ride still has its samples and its frozen FTP, so a single pass fills the history exactly rather than approximately.
+Splitting samples at each route length requires the samples, which the rides list does not load. Finding the best lap afterwards is a minimum over a short array, which it does load. The rule: **store the expensive derivation and derive the cheap one from it.** The position in the array matters as much as the value, because racing a lap means reading that lap's samples.
 
-**No backfill for the splits.** Rides recorded before this have none and will not get any: loops shipped days before the ghost did, so there is no history of lapped rides to recover. A ride with no splits is simply not eligible to be best, which the empty array already says.
+**The TCX export writes one `<Lap>` per lap**, triggered by distance, from the same splits. The file and the record cannot then disagree about where a lap ended, and Strava shows the splits without further work. Before this, every ride exported as a single lap.
 
-### Not on workouts
+**A ride also stores its TSS**, calculated when it is saved from its recorded power and the FTP it was ridden at. It needs the samples, so storing it later would mean walking every ride again. Displaying it can wait.
 
-A workout is effort against a plan, and the plan chart already draws what you are chasing. A ghost there would be a second thing to beat on a screen that has one.
+**TSS is backfilled across existing rides**, exactly rather than approximately: every ride still has its samples and its frozen FTP.
 
-### Two things that look like problems and are not, and one that is
+**Lap splits are not backfilled.** Loops shipped days before this field existed, so no lapped rides are in anyone's history to recover.
 
-**Trainer difficulty does not affect it.** [ADR-0008](docs/adr/0008-speed-uses-the-real-route-grade.md) means difficulty changes how a hill feels and never how fast you move, so a ghost ridden at 0 is directly comparable to one at 100.
+### Ghosts are not shown on workouts
 
-**Storage is not a limit.** A thousand rides is about 500 KB of aggregates and 500 MB of samples, against a browser quota measured in a large share of free disk.
+A workout is ridden against a plan, and the plan chart already shows what you are chasing. A second target on the same screen would compete with it.
 
-**Weight is the honest caveat.** Speed comes from power and mass, and a ride freezes the settings it was ridden at. Lose five kilos and you will beat an old ghost at the same power. That is true rather than a bug — it was a real ride at a real weight — but it is not purely a fitness comparison, and someone will notice before we explain it.
+### Limits and caveats
 
-### Afterwards
+**Trainer difficulty makes no difference.** Under [ADR-0008](docs/adr/0008-speed-uses-the-real-route-grade.md), difficulty changes how a hill feels but not how fast you travel. A ghost ridden at difficulty 0 is comparable with one ridden at 100.
 
-The summary says whether you beat it, and by how much. Cheap, from two numbers, and it is the point of having raced.
+**Storage is not a constraint.** A thousand rides is roughly 500 KB of aggregates and 500 MB of samples, against a browser quota measured as a share of free disk.
 
-### Why the rest of the phase went
+**Weight affects the comparison.** Speed is calculated from power and mass, and each ride freezes the settings it was ridden at. If you lose five kilograms you will beat an old ghost at the same power. The old ride was real and was ridden at that weight, but the comparison is not purely one of fitness.
 
-The phase was a list; it is now one item. GPX upload shipped early. **Richer history and summary statistics moved to phase 8** — they rely on data being reliably persistent, which is what a backend is for, and a trend computed over a store a browser can clear is a trend about nothing. Workout import and a real basemap stay unscheduled.
+### After the ride
 
-Nothing in that list is a loss, because **this app is not trying to replace the ones that already do analysis.** Strava and TrainingPeaks read a ride back better than a side project will, and the export exists so they can. What Contour owes a rider is the ride itself.
+The summary states whether you beat the ghost and by how much, calculated from two stored figures.
+
+### What moved out of this phase
+
+GPX upload shipped earlier than planned. **Richer history and summary statistics moved to phase 8**, because they depend on data that persists reliably, which requires a backend. Workout import and a real basemap are unscheduled.
+
+Contour does not aim to replace the applications that already analyse rides. Strava and TrainingPeaks read a ride back better than this will, and the export exists so that they can.
 
 ## A loop can be ridden round again
 
