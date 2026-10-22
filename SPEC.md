@@ -588,12 +588,13 @@ Phases 1 to 3 shipped as the MVP. What follows was re-cut afterwards, once ridin
 | Now | Was |
 | --- | --- |
 | 4 — the ghost | 4, which was a list |
-| 5 — the phone mirror | the mirror half of 5 |
-| 6 — FTP tests | unscheduled |
-| 7 — accounts and storage | the backend half of 5 |
-| 8 — Strava sync | 6 |
+| 5 — usage and errors | nothing; added once it shipped to other people |
+| 6 — the phone mirror | the mirror half of 5 |
+| 7 — FTP tests | unscheduled |
+| 8 — accounts and storage | the backend half of 5 |
+| 9 — Strava sync | 6 |
 
-**ADRs written before this date use the old numbers** — "a backend in phase 5" means phase 7, "phase 6's Strava upload" means phase 8. They are left as written: an ADR records what was believed when it was decided, and editing one to match a later plan is the one thing `docs/adr/README.md` forbids. This table is the key.
+**ADRs written before this date use the old numbers** — "a backend in phase 5" means phase 8, "phase 6's Strava upload" means phase 9, and ADR-0000's "Electron from phase 5" means the mirror, now 6. They are left as written: an ADR records what was believed when it was decided, and editing one to match a later plan is the one thing `docs/adr/README.md` forbids. This table is the key.
 
 ## Phase 4 — Regroup and polish
 
@@ -645,7 +646,23 @@ A workout can be ridden with the trainer holding the target, or with the rider h
 
    One thing improves. With ERG on, a ride's actual TSS is close to the planned figure by construction, because the trainer made it so. With ERG off the recorded figure measures the rider, and the plan chart's accent-over-grey stops being a formality.
 
-## Phase 5 — The phone mirror
+## Phase 5 — Usage and errors
+
+It is in other people's hands now, and nothing comes back. This is the phase that fixes that, and it is **not** the training statistics ruled out of phase 4 — that is a rider learning about themselves, which Strava does better. This is the author learning whether anyone rides the thing and what breaks when they do.
+
+**Errors are worth more than counts.** "Forty-seven people opened it" is a number to look at; "the app threw in Safari at the route list" is something to fix. Weight the work accordingly.
+
+What is worth knowing: whether a ride completes or is abandoned, whether pairing fails and at which step, which browser and platform, which features are never touched, and what threw. That last one answers the two unknowns this app currently has — what a private window does when IndexedDB is unavailable, and what someone on an iPhone sees before they press connect.
+
+**Self-hosted, on the same box.** A third-party tracker in an app whose premise is that it does not phone home would be a contradiction a rider could read in the network tab. Running it ourselves keeps that honest and keeps the data ours.
+
+**What never leaves: ride data.** No power, no heart rate, no routes, no positions, no files. Counts, error strings and the shape of a session. A rider's ride stays theirs, which is the whole arrangement this app makes.
+
+**Say so, plainly, and let it be turned off.** The app's first line is that it has no avatars, badges or leaderboards; something that reports back needs stating in the same voice rather than buried.
+
+It comes before the mirror for a practical reason as well as a product one. It is the same shape of deployment — a small process behind nginx on the VPS — so it establishes that pattern on something where a crash costs nothing, and it tells you whether anyone would use a mirror before you build one.
+
+## Phase 6 — The phone mirror
 
 **Browser-only is a feature, not a stage to grow out of.** Open a URL and ride: no install, no update, nothing to trust. That is worth keeping, and this phase exists for one reason only — a phone propped next to the bike showing live data in large type.
 
@@ -660,7 +677,7 @@ Two things that are easier here than the old framing assumed. The mirror page is
 
 Richer history and summary statistics are **not** here. They belong with the storage that makes them trustworthy, in phase 7: a trend computed over a store the browser can clear is a trend about nothing.
 
-## Phase 6 — FTP tests
+## Phase 7 — FTP tests
 
 The strongest candidate once the ghost is done, and the last phase that needs no server.
 
@@ -677,7 +694,7 @@ Two features, in order:
 
 Both are bound by [ADR-0017](docs/adr/0017-changing-ftp-never-rewrites-history.md): a new FTP changes only what is ahead. That was your FTP at that time.
 
-## Phase 7 — Accounts and storage
+## Phase 8 — Accounts and storage
 
 The point at which a ride stops living only in one browser. Deferred this long deliberately: browser-only is a feature, and every phase before this works without a server.
 
@@ -687,7 +704,7 @@ The point at which a ride stops living only in one browser. Deferred this long d
 
 **What this does not become.** A server owning the ride does not make the app need one. The local store stays the thing the ride is recorded into, and sync is what happens afterwards — a ride must never fail because a network did.
 
-## Phase 8 — Strava sync
+## Phase 9 — Strava sync
 
 A manual "upload to Strava" button on a completed ride. OAuth with a small serverless token exchange so the client secret never ships to the browser; upload the TCX; set the activity type to `VirtualRide`.
 
