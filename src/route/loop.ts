@@ -37,6 +37,33 @@ export function isLoop(route: Route): boolean {
   return haversineM(first.lat, first.lon, last.lat, last.lon) <= LOOP_CLOSE_M;
 }
 
+/** What a loop reads before a lap is complete, and on the routes list, where there is no
+ * ride to count laps of. One word in one place: see lapLabel. */
+export const LOOP_TAG = 'Loop';
+
+/**
+ * What shape of thing a route is: back to where it started, or ending somewhere else.
+ *
+ * A property of the route rather than a yes/no about loops, because the two are not one
+ * fact and its absence. A loop can be ridden round again; a point-to-point ride ends at
+ * the finish. Both are worth naming on a list, and a row that only marked loops left the
+ * other kind reading as a route about which nothing was known.
+ *
+ * Still derived from the geometry — isLoop and its 50 m tolerance are the whole of the
+ * detection, and nothing is declared in the manifest or stored on the record.
+ */
+export type RouteKind = 'loop' | 'point_to_point';
+
+export function routeKind(route: Route): RouteKind {
+  return isLoop(route) ? 'loop' : 'point_to_point';
+}
+
+/** The word for each kind. Sentence case; the label row sets the caps. */
+export const KIND_LABEL: Record<RouteKind, string> = {
+  loop: LOOP_TAG,
+  point_to_point: 'Point to point',
+};
+
 /**
  * Where on the route you are after riding distanceM round it — distance modulo the
  * route's length. This is the number that stops being the same as distance ridden on a
@@ -77,10 +104,6 @@ export function lapLabel(distanceM: number, lengthM: number): string {
   const lap = lapNumber(distanceM, lengthM);
   return lap <= 1 ? LOOP_TAG : `Lap ${String(lap)}`;
 }
-
-/** What a loop reads before a lap is complete, and on the routes list, where there is no
- * ride to count laps of. One word in one place: see lapLabel. */
-export const LOOP_TAG = 'Loop';
 
 /**
  * How many whole laps a finished ride got round, for the summary.

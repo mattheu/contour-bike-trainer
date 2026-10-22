@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  KIND_LABEL,
   LOOP_CLOSE_M,
   isLoop,
   lapLabel,
@@ -7,6 +8,7 @@ import {
   lapPositionM,
   lapStartM,
   lapsLabel,
+  routeKind,
 } from './loop';
 import type { Route, RoutePoint } from './types';
 import { climbRoute, diamondLoopRoute, flatRoute } from '../../test/fixtures';
@@ -49,6 +51,38 @@ describe('isLoop', () => {
 
   it('is false for a route with no points to compare', () => {
     expect(isLoop({ points: [], totalDistanceM: 1000, totalAscentM: 0 })).toBe(false);
+  });
+});
+
+describe('routeKind', () => {
+  it('names both shapes rather than marking one and leaving the other blank', () => {
+    expect(routeKind(diamondLoopRoute())).toBe('loop');
+    expect(routeKind(climbRoute())).toBe('point_to_point');
+  });
+
+  it('agrees with isLoop, which is still the whole of the detection', () => {
+    for (const route of [diamondLoopRoute(), climbRoute(), flatRoute()]) {
+      expect(routeKind(route) === 'loop').toBe(isLoop(route));
+    }
+  });
+
+  it('reads the same tolerance: a few metres short is still a loop', () => {
+    expect(routeKind(routeEndingNorthOfStart(LOOP_CLOSE_M - 5))).toBe('loop');
+    expect(routeKind(routeEndingNorthOfStart(LOOP_CLOSE_M + 5))).toBe('point_to_point');
+  });
+
+  it('calls a route with no points a point to point, not a loop', () => {
+    // The expensive mistake is the other way: a point-to-point route shown as a loop
+    // never finishes. Nothing is known here, so the row says the kind that ends.
+    expect(routeKind({ points: [], totalDistanceM: 1000, totalAscentM: 0 })).toBe('point_to_point');
+  });
+});
+
+describe('KIND_LABEL', () => {
+  it('gives every kind a word, and reuses the loop tag for the loop', () => {
+    expect(KIND_LABEL.loop).toBe('Loop');
+    expect(KIND_LABEL.point_to_point).toBe('Point to point');
+    expect(KIND_LABEL[routeKind(diamondLoopRoute())]).toBe(lapLabel(0, 1000));
   });
 });
 

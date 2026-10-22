@@ -3,6 +3,8 @@ import type { Ride, Route as StoredRoute } from '../../storage/types';
 import {
   ROUTE_DELETE_WORDING,
   canRemoveRoute,
+  descriptionLine,
+  labelRow,
   rideCounts,
   riddenLabel,
   sortRoutes,
@@ -68,6 +70,55 @@ describe('sortRoutes', () => {
     const input = [route('b', 'Sa Calobra'), route('a', 'Box Hill Repeats')];
     expect(sortRoutes(input).map((r) => r.id)).toEqual(['a', 'b']);
     expect(input.map((r) => r.id)).toEqual(['b', 'a']);
+  });
+});
+
+describe('labelRow', () => {
+  it('reads kind then region, which is the order the row draws them in', () => {
+    expect(labelRow('loop', 'Surrey, UK')).toEqual(['Loop', 'Surrey, UK']);
+    expect(labelRow('point_to_point', 'Oisans, France')).toEqual([
+      'Point to point',
+      'Oisans, France',
+    ]);
+  });
+
+  it('names a point-to-point route as plainly as a loop', () => {
+    // Both kinds get a word and a mark. Marking loops alone made the other kind read as
+    // a route about which nothing was known.
+    expect(labelRow('point_to_point', undefined)).toEqual(['Point to point']);
+  });
+
+  it('leaves the kind out until the row knows it', () => {
+    // Geometry loads per row and the sparkline comes with it; until then the row says
+    // where the route is and nothing about its shape.
+    expect(labelRow(null, 'Mallorca, Spain')).toEqual(['Mallorca, Spain']);
+  });
+
+  it('gives no label row at all to a route with neither', () => {
+    expect(labelRow(null, undefined)).toEqual([]);
+    expect(labelRow(null, '   ')).toEqual([]);
+  });
+});
+
+describe('descriptionLine', () => {
+  it('is the route’s own description', () => {
+    const described = { ...route('a', 'Box Hill'), description: 'Zig Zag Road, three times.' };
+    expect(descriptionLine(described)).toBe('Zig Zag Road, three times.');
+  });
+
+  it('is null where a route has none, so the row closes up instead of leaving a gap', () => {
+    // The common case for an imported GPX: no <desc> in the file, no line on the row.
+    expect(descriptionLine(route('a', 'Imported'))).toBeNull();
+  });
+
+  it('treats a blank description as none, not as an empty line', () => {
+    expect(descriptionLine({ ...route('a', 'Blank'), description: '   \n ' })).toBeNull();
+  });
+
+  it('trims a description that is only padded', () => {
+    expect(descriptionLine({ ...route('a', 'Padded'), description: '  Over the moor.  ' })).toBe(
+      'Over the moor.',
+    );
   });
 });
 

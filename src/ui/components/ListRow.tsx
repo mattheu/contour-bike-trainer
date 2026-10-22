@@ -105,11 +105,37 @@ interface ListRowProps {
   leadVariant?: 'text' | 'sparkline';
   /** The route or workout name. */
   title: ReactNode;
-  /**
-   * The line under the title. Tracked caps beside a text lead (the workout behind a ride),
-   * plain muted beside a sparkline (the region a route is in) — the two list screens.
-   */
+  /** The line under the title: the workout behind a ride, a route's kind and region. */
   meta?: ReactNode;
+  /**
+   * How that line is set. Tracked caps by default beside a text lead (the rides list),
+   * plain muted beside a sparkline (a workout's own second line), with the routes list
+   * asking for caps explicitly — its label row is a row of labels, and the description
+   * underneath is the prose.
+   */
+  metaVariant?: 'label' | 'plain';
+  /**
+   * A third line under the meta: one line of ink body text, clipped to the column with an
+   * ellipsis and never wrapped. The routes list puts a route's own description here.
+   *
+   * Its own slot rather than more meta, because the two lines are different kinds of
+   * thing — the meta is a row of labels, this is prose — and because either can be absent
+   * on its own. Absent means absent: no element, no reserved space, so a row without one
+   * is exactly as tall as a row that never had the slot.
+   *
+   * Deliberately ignorant of what it is showing. Nothing here knows it is a description,
+   * which is what lets another list take the same line later.
+   */
+  description?: ReactNode;
+  /**
+   * The row's vertical padding, in pixels. Per screen rather than per row: a list where
+   * some rows carried a description and some did not would otherwise sit at two heights,
+   * and the slot being optional is exactly the case that happens.
+   *
+   * The default is what the three lists rendered at before the slot existed. The routes
+   * list asks for the mockup's 22 px, because its rows are three lines deep.
+   */
+  paddingY?: number;
   /** The three right-aligned cells. */
   cells: readonly [ReactNode, ReactNode, ReactNode];
   /**
@@ -127,27 +153,40 @@ export function ListRow({
   leadVariant = 'text',
   title,
   meta,
+  metaVariant,
+  description,
+  paddingY,
   cells,
   cellsOverlay,
 }: ListRowProps) {
   const sparkline = leadVariant === 'sparkline';
+  const metaLabel = (metaVariant ?? (sparkline ? 'plain' : 'label')) === 'label';
+  const padY = paddingY ?? (sparkline ? 26 : 22);
 
   return (
     <a
       href={href}
       // The rule is ListRowFrame's: it has to span the actions as well as the figures.
-      className={`${GRID} text-ink no-underline ${
-        sparkline ? 'items-center py-[26px]' : 'items-baseline py-[22px]'
-      }`}
-      style={{ gridTemplateColumns: columns.join(' ') }}
+      className={`${GRID} text-ink no-underline ${sparkline ? 'items-center' : 'items-baseline'}`}
+      style={{
+        gridTemplateColumns: columns.join(' '),
+        paddingTop: `${String(padY)}px`,
+        paddingBottom: `${String(padY)}px`,
+      }}
     >
       <div className={sparkline ? 'h-[28px] w-[120px]' : undefined}>{lead}</div>
-      <div className="flex flex-col gap-[4px]">
+      {/* min-w-0 is what lets anything in this column clip: a 1fr grid track will not let
+          a nowrap child shrink without it. Harmless where nothing clips — the two lists
+          with no description measure the same with it as without. */}
+      <div className="flex min-w-0 flex-col gap-[4px]">
         <div className={`${SERIF} text-title`}>{title}</div>
         {meta !== undefined && (
-          <div className={sparkline ? 'text-label text-muted font-sans' : `${LABEL} text-micro`}>
+          <div className={metaLabel ? `${LABEL} text-micro` : 'text-label text-muted font-sans'}>
             {meta}
           </div>
+        )}
+        {description !== undefined && (
+          <div className="text-label mt-[3px] truncate font-sans">{description}</div>
         )}
       </div>
       {cellsOverlay === undefined ? (

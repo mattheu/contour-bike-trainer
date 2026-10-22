@@ -1,6 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { Fragment, useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { AlertState } from '../../ride/types';
-import { LOOP_TAG, isLoop } from '../../route/loop';
+import { routeKind, type RouteKind } from '../../route/loop';
 import type { Route as RouteGeometry } from '../../route/types';
 import type { Ride, Route as StoredRoute } from '../../storage/types';
 import { Sparkline } from '../charts';
@@ -8,7 +8,6 @@ import { AppHeader } from '../components/AppHeader';
 import { Button } from '../components/Button';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
-import { LoopTag } from '../components/LoopTag';
 import {
   ListHeader,
   ListHeaderFrame,
@@ -16,6 +15,7 @@ import {
   ListRowFrame,
   ROUTES_COLUMNS,
 } from '../components/ListRow';
+import { RouteKindMark } from '../components/RouteKindMark';
 import { LABEL, MONO } from '../components/styles';
 import { distance, elevation } from '../format';
 import { AlertStrip } from './AlertStrip';
@@ -34,6 +34,8 @@ import { routeImportAlert, type RouteImportResult } from './routes-import';
 import {
   ROUTE_DELETE_WORDING,
   canRemoveRoute,
+  descriptionLine,
+  labelRow,
   rideCounts,
   riddenLabel,
   sortRoutes,
@@ -249,10 +251,16 @@ function RouteRow({
   // Still loading counts as rideable: the row is not dead while it waits, and a route
   // that turns out to have no geometry says so from services.startRide instead.
   const rideable = loaded === null || loaded.geometry !== null;
-  // Free: the row already parses its own geometry for the sparkline, and whether the
-  // track ends where it began is a question about those same points.
-  const loops = geometry !== null && isLoop(geometry);
-  const { region } = route;
+  // Free: the row already parses its own geometry for the sparkline, and what shape the
+  // track is is a question about those same points. Null while it loads — the row is
+  // honest about not knowing yet rather than calling everything a point to point.
+  const kind = geometry === null ? null : routeKind(geometry);
+  const description = descriptionLine(route);
+  // Decided here rather than inside the row, because an empty label row is not an empty
+  // element: ListRow's slots are a flex column, so one that rendered nothing would still
+  // cost its 4 px of gap under the name. A route with neither a known kind nor a region
+  // gets no slot at all.
+  const labels = labelRow(kind, route.region);
 
   return (
     <ListRowFrame
@@ -325,21 +333,15 @@ function RouteRow({
           lead={geometry === null ? undefined : <Sparkline route={geometry} />}
           leadVariant="sparkline"
           title={route.name}
-          meta={
-            rideable ? (
-              // The region and the mark on one line: the row said where a route is, and
-              // whether it comes back to where it started is the other thing worth
-              // knowing from a list. Nothing at all where a route has neither.
-              region === undefined && !loops ? undefined : (
-                <span className="flex items-center gap-[8px]">
-                  {region}
-                  {loops && <LoopTag label={LOOP_TAG} />}
-                </span>
-              )
-            ) : (
-              NO_SOURCE
-            )
-          }
+          meta={rideable ? meta(kind, labels) : NO_SOURCE}
+          metaVariant="label"
+          // The mockup's row, which is three lines deep. Set for every row rather than
+          // only the described ones, so a route with no description is the same height as
+          // the one above it.
+          paddingY={22}
+          // Absent rather than blank where a route has none, which is most imported ones:
+          // the row closes up instead of holding an empty line open under the name.
+          description={description ?? undefined}
           cells={[
             <Figure key="distance" value={distance(route.totalDistanceM / 1000)} unit="km" />,
             <Figure key="gain" value={elevation(route.totalAscentM)} unit="m" />,
@@ -357,6 +359,30 @@ function RouteRow({
         />
       </Selectable>
     </ListRowFrame>
+  );
+}
+
+/**
+ * The micro label row: the route's kind as a glyph and a word, then where it is, parted by
+ * a hairline middot — design/mockups/routes.html.
+ *
+ * Both halves can be missing. The kind is unknown until the row's geometry resolves, and
+ * an imported GPX need not name a region; a route with neither gets no label row at all,
+ * because an empty line under the name is a worse answer than no line.
+ */
+function meta(kind: RouteKind | null, words: readonly string[]): ReactNode {
+  if (words.length === 0) return undefined;
+
+  return (
+    <span className="flex items-center gap-[6px]">
+      {kind !== null && <RouteKindMark kind={kind} />}
+      {words.map((word, index) => (
+        <Fragment key={word}>
+          {index > 0 && <span className="text-hairline">·</span>}
+          <span>{word}</span>
+        </Fragment>
+      ))}
+    </span>
   );
 }
 
