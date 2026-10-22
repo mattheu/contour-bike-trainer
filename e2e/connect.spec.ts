@@ -80,7 +80,7 @@ test.describe('connecting from the rider profile panel', () => {
     await expect(profile).toBeHidden();
 
     // The connection is held outside any one ride, so arming one must not drop it.
-    await openRoute(page, ROLLING_ROUTE_NAME);
+    await openRoute(page, RIDE_ROUTE_NAME);
     const settings = await openRideSettings(page);
     await expect(deviceRow(settings, 'trainer')).toContainText(/Connected · \d+ W/);
   });

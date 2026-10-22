@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Button } from '../components/Button';
 import { Devices, type DevicesView } from '../components/Devices';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { LABEL, MONO } from '../components/styles';
@@ -25,6 +26,13 @@ interface RiderProfileProps {
   onChange: (patch: Partial<Profile>) => void;
   onDismissAlert: () => void;
   onRetryTrainer: () => void;
+  /**
+   * Opens How it works. It lives here because this panel is the only thing reachable
+   * from every list screen, and because it is now also where a rider pairs — so the
+   * screen that says what a trainer has to speak and what the browser has to be is one
+   * press from the rows that do the pairing.
+   */
+  onHowItWorks: () => void;
   onClose: () => void;
 }
 
@@ -64,6 +72,7 @@ export function RiderProfile({
   onChange,
   onDismissAlert,
   onRetryTrainer,
+  onHowItWorks,
   onClose,
 }: RiderProfileProps) {
   // Seeded once. The panel owns the draft text from here, so a re-render upstream cannot
@@ -149,6 +158,11 @@ export function RiderProfile({
       <div className="text-caption text-muted font-sans">
         Rides already recorded keep the FTP, maximum heart rate and weights they were ridden with,
         so changing these does not re-zone your history.
+      </div>
+      {/* Grey: this leaves the panel rather than committing anything in it, and DESIGN.md
+          keeps the ink tone for the one action that does. */}
+      <div className="self-start">
+        <Button onClick={onHowItWorks}>How it works</Button>
       </div>
     </SettingsPanel>
   );

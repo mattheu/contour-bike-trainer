@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { formatHash, parseHash, resolve, rideLabel, type Location } from './routing';
+import {
+  formatHash,
+  parseHash,
+  resolve,
+  resolveSignedOut,
+  rideLabel,
+  type Location,
+} from './routing';
 
 const NOTHING_RIDDEN = { label: null, finishedRideId: null };
 
@@ -16,6 +23,11 @@ describe('parseHash', () => {
     expect(parseHash('#/')).toEqual({ name: 'login' });
     expect(parseHash('#/login')).toEqual({ name: 'login' });
     expect(parseHash('#/login/extra')).toBeNull();
+  });
+
+  it('reads How it works, which is the one other screen reachable signed out', () => {
+    expect(parseHash('#/how-it-works')).toEqual({ name: 'how-it-works' });
+    expect(parseHash('#/how-it-works/extra')).toBeNull();
   });
 
   it('reads the two screens that carry a record id', () => {
@@ -63,6 +75,7 @@ describe('parseHash', () => {
 describe('formatHash', () => {
   it('writes the paths ADR-0018 names', () => {
     expect(formatHash({ name: 'login' })).toBe('#/login');
+    expect(formatHash({ name: 'how-it-works' })).toBe('#/how-it-works');
     expect(formatHash({ name: 'routes' })).toBe('#/routes');
     expect(formatHash({ name: 'workout', workoutId: '30-30s' })).toBe('#/workouts/30-30s');
     expect(formatHash({ name: 'summary', rideId: 'abc' })).toBe('#/rides/abc');
@@ -76,6 +89,7 @@ describe('formatHash', () => {
 describe('round trip', () => {
   const every: Location[] = [
     { name: 'login' },
+    { name: 'how-it-works' },
     { name: 'routes' },
     { name: 'workouts' },
     { name: 'rides' },
@@ -106,8 +120,13 @@ describe('resolve', () => {
     expect(resolve({ name: 'login' }, NOTHING_RIDDEN)).toEqual({ name: 'routes' });
   });
 
+  it('leaves How it works alone, which a signed-in rider can reach from the profile', () => {
+    expect(resolve({ name: 'how-it-works' }, NOTHING_RIDDEN)).toEqual({ name: 'how-it-works' });
+  });
+
   it('leaves every screen that stands on its own alone', () => {
     const standalone: Location[] = [
+      { name: 'how-it-works' },
       { name: 'routes' },
       { name: 'workouts' },
       { name: 'rides' },
@@ -151,6 +170,20 @@ describe('resolve', () => {
     expect(resolve(once, ride)).toEqual(once);
     const riding = resolve({ name: 'ride', label: null }, ride);
     expect(resolve(riding, ride)).toEqual(riding);
+  });
+});
+
+describe('resolveSignedOut', () => {
+  it('keeps the two screens an install with no session can show', () => {
+    expect(resolveSignedOut({ name: 'how-it-works' })).toEqual({ name: 'how-it-works' });
+    expect(resolveSignedOut({ name: 'login' })).toEqual({ name: 'login' });
+  });
+
+  it('sends a hash carried in from a signed-in install back to login', () => {
+    expect(resolveSignedOut(null)).toEqual({ name: 'login' });
+    expect(resolveSignedOut({ name: 'routes' })).toEqual({ name: 'login' });
+    expect(resolveSignedOut({ name: 'summary', rideId: 'def' })).toEqual({ name: 'login' });
+    expect(resolveSignedOut({ name: 'ride', label: null })).toEqual({ name: 'login' });
   });
 });
 
