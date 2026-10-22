@@ -747,7 +747,6 @@ Three parts of this phase are specified above but not in the build:
 
 - **Phone layouts.** The ride screen is desktop and tablet only. It has no responsive branching and nothing in the app handles orientation, while the design specifies three phone arrangements. The placement geometry for phones is built and tested — 4 px symbols, the gap beside the symbol rather than above it, a 60 × 16 collision box — but there is no layout to host it.
 - **A label that varies by route type**, so that Most recent reads "Last lap" on a loop.
-- **The gradient key in the bottom band.** `ride.html` and `tablet-portrait.html` disagree about its form, and the component is shared with the summary screen, so changing it is a separate decision.
 
 ### Limits and caveats
 
