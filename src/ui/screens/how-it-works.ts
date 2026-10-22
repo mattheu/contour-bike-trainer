@@ -66,15 +66,17 @@ export const COLUMNS: Column[] = [
       },
       {
         /*
-         * Named rather than implied. Web Bluetooth is Chromium-only: neither Gecko nor
-         * WebKit implements it and both have taken a position against it, so Firefox and
-         * Safari are not "not yet" — and every browser on iOS is WebKit underneath,
-         * which is why Chrome on an iPhone does not help either. SPEC.md makes the same
-         * point a hard constraint rather than a preference.
+         * Named, and in the words a reader expects to find. Web Bluetooth is
+         * Chromium-only: neither Gecko nor WebKit implements it and both have taken a
+         * position against it, so Firefox and Safari are not "not yet". iOS is listed as
+         * the platform rather than by browser because every browser on it is WebKit
+         * underneath — naming Safari alone would leave someone to try Chrome on an
+         * iPhone. SPEC.md makes the same point a hard constraint rather than a
+         * preference.
          */
         label: 'Browser',
         sentence:
-          'Chrome or Edge on a Mac, Windows or Android. Not Firefox, not Safari, and nothing on iOS.',
+          'Chrome or Edge on a Mac, Windows or Android. Firefox, Safari and iOS are not supported.',
       },
       {
         label: 'Heart rate · optional',
@@ -137,15 +139,16 @@ export const COLUMNS: Column[] = [
       },
       {
         /*
-         * "Today" is doing real work in these two labels. Accounts and a mirror to a
-         * second screen are both on the table — SPEC.md already has the phone mirror in
-         * phase 5 — so the copy says what is true now rather than what will always be
-         * true. It stops short of announcing either: a signed-out screen that sells an
-         * unbuilt feature is how onboarding starts lying.
+         * "For now" is doing real work, and it is in the sentence rather than tucked
+         * into the label where a reader skimming the prose would miss it. Accounts and a
+         * mirror to a second screen are both on the table — SPEC.md already has the
+         * phone mirror in phase 5 — so this says what is true now rather than what will
+         * always be true. It stops short of announcing either: a signed-out screen that
+         * sells an unbuilt feature is how onboarding starts lying.
          */
-        label: 'Today · in the browser',
+        label: 'In the browser',
         sentence:
-          'Contour is a browser app and nothing more. There is no account to make, and no ride leaves this machine.',
+          'For now, Contour is a browser app and nothing more. There is no account to make, and no ride leaves this machine.',
       },
       {
         /*
@@ -154,9 +157,9 @@ export const COLUMNS: Column[] = [
          * when the disk is nearly full — true, rare, and more words than a column can
          * carry, so docs/getting-started.md is where that belongs.
          */
-        label: 'Today · your data',
+        label: 'Your data',
         sentence:
-          'Everything is stored in this browser, and Chrome keeps it until you clear the site data. Each library exports to a file and imports back.',
+          'Everything is stored in this browser, and Chrome keeps it until you clear the site data. You can export your rides, routes and workouts, and import them back.',
       },
     ],
   },
