@@ -117,9 +117,17 @@ export const COLUMNS: Column[] = [
           'Choose a route and press Start. Your trainer simulates the gradient. Import a GPX file to ride roads you know.',
       },
       {
+        /*
+         * Three claims, all checked: targets carry a unit of ftpPercent or watts
+         * (workout/types.ts), ERG is a control the rider can switch off mid-step
+         * (Workout.tsx > ErgControl, and e2e/workout.spec.ts drives it), and New workout
+         * is the Workouts screen's accent control. YAML is named rather than softened
+         * into "easily" — ADR-0006 chose it, docs/writing-a-workout.md explains it, and
+         * for the rider this app is for, the format is the feature.
+         */
         label: 'Workouts',
         sentence:
-          "Choose a workout and press Start. ERG holds each step's target; pedal and the trainer does the rest.",
+          'Structured rides with power targets set from your FTP. ERG holds each one, or switch it off and hold them yourself. Write your own in YAML.',
       },
       {
         /*
