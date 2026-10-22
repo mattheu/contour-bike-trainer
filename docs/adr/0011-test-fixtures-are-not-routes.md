@@ -33,7 +33,7 @@ committed deterministic script in `scripts/` so they are reproducible and tunabl
 plainly as test routes rather than dressed up as real places. Each exercises a different code
 path: Rolling stresses the once-per-second and ≥0.1 % control point write thresholds with
 near-continuous grade change; Mixed has the sustained climb that exercises grade clamping and the
-descent that reaches the zero-power gravity and drag balance and the 80 km/h cap. Real GPX files
+descent that reaches the zero-power gravity and drag balance. Real GPX files
 drop in alongside them and need nothing beyond a manifest entry.
 
 **`test/fixtures/`** — small synthetic GPX with exactly computable answers: a 1 km flat, a

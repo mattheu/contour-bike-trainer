@@ -149,10 +149,12 @@ describe('the mixed route', () => {
     expect(buildProfile(mixed).bins.some((b) => b.band === '10+')).toBe(true);
   });
 
-  it('descends steeply enough to reach the 80 km/h cap at zero power', () => {
+  it('descends steeply enough to coast well past 80 km/h at zero power', () => {
+    // The route exists partly to exercise the fast end of the physics. It used to be
+    // pinned to a clamp; now it is pinned to the balance the grade actually produces.
     const steepest = Math.min(...grades(mixed));
     expect(steepest).toBeLessThan(-13);
-    expect(speedFromPowerKmh(0, steepest)).toBe(80);
+    expect(speedFromPowerKmh(0, steepest)).toBeGreaterThan(80);
   });
 
   it('shades every gradient band, so the chart legend has something in each', () => {

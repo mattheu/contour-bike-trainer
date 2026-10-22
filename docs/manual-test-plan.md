@@ -128,7 +128,7 @@ load.
 ## 6. A full route, end to end
 
 Ride one of the bundled routes to completion. Mixed is the better test — it has the climb, the
-grade clamp and the descent that reaches the 80 km/h cap.
+grade clamp and the descent that reaches the zero-power gravity and drag balance.
 
 - [ ] Resistance tracks the profile: the climb is hard, the descent is free.
 - [ ] The rider dot moves along both the elevation profile and the route trace, and the two agree.
@@ -136,8 +136,9 @@ grade clamp and the descent that reaches the 80 km/h cap.
 - [ ] Distance, elapsed time, elevation gained and average power all look plausible and monotonic.
 - [ ] Space bar pauses and resumes. Paused means the clock stops and distance does not advance.
 - [ ] Resuming carries on from the same distance, not a new one.
-- [ ] On the descent, coasting at zero power gives a fast but finite speed that caps at 80 km/h
-      rather than running away.
+- [ ] On the descent, coasting at zero power gives a fast but finite speed — the balance of
+      gravity against drag, around 72 km/h at 10 % and faster on anything steeper — rather than
+      running away or sticking at a round number.
 - [ ] Reaching the end ends the ride, with a finish flag, rather than looping or stalling.
 - [ ] The ride appears in the history with the right date, route, distance, time and average power.
 - [ ] **Leave the window hidden behind a full-screen video for at least ten minutes** during the

@@ -2,7 +2,7 @@
   "routes": [
     {
       "id": "test-rolling",
-      "name": "Test Route 1 \u2014 Rolling",
+      "name": "Test Route 1 — Rolling",
       "region": "Synthetic",
       "file": "test-rolling.gpx",
       "description": "Generated test route: a 20 km loop of continuous 2-5 % undulations, nothing sustained.",
@@ -11,7 +11,7 @@
     },
     {
       "id": "test-mixed",
-      "name": "Test Route 2 \u2014 Mixed",
+      "name": "Test Route 2 — Mixed",
       "region": "Synthetic",
       "file": "test-mixed.gpx",
       "description": "Generated test route: flat start, a sustained 5 km climb ramping to 12 %, a fast descent, then rolling terrain.",
@@ -44,6 +44,24 @@
       "description": "Real route: the 21 hairpins, finishing at the summit.",
       "totalDistanceM": 15713,
       "totalAscentM": 1259
+    },
+    {
+      "id": "rosedale-chimney",
+      "name": "Rosedale Chimney, UK",
+      "region": "North York Moors",
+      "file": "rosedale-chimney.gpx",
+      "description": "Real route: a moor loop over one of the steepest surfaced roads in England.",
+      "totalDistanceM": 18907,
+      "totalAscentM": 346
+    },
+    {
+      "id": "settle-grassington",
+      "name": "Settle to Grassington, UK",
+      "region": "Yorkshire Dales",
+      "file": "settle-grassington.gpx",
+      "description": "Real route: dale to dale across the limestone, climbing out of both.",
+      "totalDistanceM": 31710,
+      "totalAscentM": 552
     }
   ]
 }
