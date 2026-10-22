@@ -5,22 +5,20 @@
 The **Routes** tab lists what you can ride. Each row shows a thumbnail of the route's profile, its
 name, distance, elevation gain, and how many times you have ridden it.
 
-Three real climbs ship with the app:
+Six real routes ship with the app — no synthetic ones, because an app about riding real roads
+should not open on a test fixture:
 
-- **Greenhow Hill**, Yorkshire Dales. 67 km, 1,104 m — the long one, and the only route here where
-  the climbing is spread rather than stacked.
-- **Sa Calobra**, Mallorca. 13 km, 702 m — relentlessly consistent, which makes it the honest test
+- **Greenhow Hill, UK**, Yorkshire Dales. 67 km, 1,104 m — the long one, and the only route here
+  where the climbing is spread rather than stacked.
+- **Settle to Grassington, UK**, Yorkshire Dales. 32 km, 552 m across the limestone, climbing out
+  of both dales and dropping to −17 % on the way over.
+- **Rosedale Chimney, UK**, North York Moors. 19 km, 346 m — a moor loop over one of the steepest
+  surfaced roads in England, ramping past 21 %.
+- **Box Hill, UK**, Surrey. 16 km, 236 m — the Olympic circuit, and a true loop.
+- **Sa Calobra, Mallorca**. 13 km, 702 m — relentlessly consistent, which makes it the honest test
   of whether you can hold a number.
-- **Alpe d'Huez**, Oisans. 16 km, 1,259 m — trimmed to finish at the top rather than running on
-  through the village.
-
-Two synthetic routes ship alongside them, named as what they are:
-
-- **Test Route 1 — Rolling.** 20 km, about 250 m of climbing, continuous gentle undulation with
-  nothing sustained.
-- **Test Route 2 — Mixed.** 30 km, about 700 m of climbing: a flat start, a 5 km climb that ramps
-  to 12 %, a fast descent, then rolling terrain to the finish. This is the one that makes the
-  difficulty slider obvious.
+- **Alpe d'Huez, France**, Oisans. 16 km, 1,259 m — trimmed to finish at the top rather than
+  running on through the village.
 
 Clicking a row starts the ride immediately. There is no confirmation step — the row _is_ the
 button.

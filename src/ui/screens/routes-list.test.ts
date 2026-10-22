@@ -94,12 +94,12 @@ describe('ROUTE_DELETE_WORDING', () => {
 });
 
 describe('canRemoveRoute', () => {
-  const builtIn: ReadonlySet<string> = new Set(['test-rolling', 'alpe-dhuez']);
+  const builtIn: ReadonlySet<string> = new Set(['greenhow-hill', 'alpe-dhuez']);
 
   it('offers no Remove on a route the build supplies', () => {
     // Absent, not disabled. Seeding writes a built-in route back on the next boot, so a
     // control here would be a question with one honest answer.
-    expect(canRemoveRoute('test-rolling', builtIn)).toBe(false);
+    expect(canRemoveRoute('greenhow-hill', builtIn)).toBe(false);
   });
 
   it('offers Remove on a route the rider imported', () => {
@@ -108,6 +108,6 @@ describe('canRemoveRoute', () => {
 
   it('offers Remove once a route has left the manifest', () => {
     // The way out for a stale record: drop the entry and the id stops being built in.
-    expect(canRemoveRoute('test-rolling', new Set(['alpe-dhuez']))).toBe(true);
+    expect(canRemoveRoute('greenhow-hill', new Set(['alpe-dhuez']))).toBe(true);
   });
 });

@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
   FIXTURE_ROUTE,
+  OTHER_ROUTE_NAME,
+  RIDE_ROUTE_NAME,
   connectDevices,
   openApp,
   readElapsedSeconds,
@@ -28,8 +30,8 @@ test.describe('riding a route', () => {
   test('picks a route from the list, and the numbers and charts advance', async ({ page }) => {
     // The routes list is the cold start, so the bundled routes and the seeded fixture are
     // the first thing on screen, each with its own totals.
-    await expect(page.getByRole('link', { name: 'Test Route 1 — Rolling' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Test Route 2 — Mixed' })).toBeVisible();
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: OTHER_ROUTE_NAME })).toBeVisible();
     const fixture = page.getByRole('link', { name: FIXTURE_ROUTE.name });
     await expect(fixture).toContainText('0.2');
 

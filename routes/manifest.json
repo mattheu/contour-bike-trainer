@@ -1,24 +1,6 @@
 {
   "routes": [
     {
-      "id": "test-rolling",
-      "name": "Test Route 1 — Rolling",
-      "region": "Synthetic",
-      "file": "test-rolling.gpx",
-      "description": "Generated test route: a 20 km loop of continuous 2-5 % undulations, nothing sustained.",
-      "totalDistanceM": 19977,
-      "totalAscentM": 250
-    },
-    {
-      "id": "test-mixed",
-      "name": "Test Route 2 — Mixed",
-      "region": "Synthetic",
-      "file": "test-mixed.gpx",
-      "description": "Generated test route: flat start, a sustained 5 km climb ramping to 12 %, a fast descent, then rolling terrain.",
-      "totalDistanceM": 29937,
-      "totalAscentM": 699
-    },
-    {
       "id": "greenhow-hill",
       "name": "Greenhow Hill, UK",
       "region": "Yorkshire Dales",
@@ -62,6 +44,15 @@
       "description": "Real route: dale to dale across the limestone, climbing out of both.",
       "totalDistanceM": 31710,
       "totalAscentM": 552
+    },
+    {
+      "id": "box-hill",
+      "name": "Box Hill, UK",
+      "region": "Surrey",
+      "file": "box-hill.gpx",
+      "description": "Real route: the Olympic circuit over the Zig Zag, and a true loop.",
+      "totalDistanceM": 15647,
+      "totalAscentM": 236
     }
   ]
 }

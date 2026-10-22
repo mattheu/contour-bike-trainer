@@ -1,11 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { detectClimbs } from '../../route/climbs';
-import { parseGpx } from '../../route/gpx';
 import { elevationAt } from '../../route/position';
 import { WINDOW_NARROW_M, WINDOW_WIDE_M, buildProfile, projectWindow } from '../../route/profile';
 import type { Route, RoutePoint } from '../../route/types';
-import mixedGpx from '../../../routes/test-mixed.gpx?raw';
-import rollingGpx from '../../../routes/test-rolling.gpx?raw';
 import {
   MAX_RELIEF_FRACTION,
   MIN_RELIEF_FRACTION,
@@ -17,9 +14,6 @@ import {
 
 const WIDTH = 944;
 const HEIGHT = 220;
-
-const rolling = parseGpx(rollingGpx);
-const mixed = parseGpx(mixedGpx);
 
 /** A straight synthetic route: only distance and elevation matter to the profile. */
 function syntheticRoute(totalM: number, eleAt: (distM: number) => number, stepM = 50): Route {
@@ -33,6 +27,57 @@ function syntheticRoute(totalM: number, eleAt: (distM: number) => number, stepM 
   }
   return { points, totalDistanceM: totalM, totalAscentM };
 }
+
+/** The straight line between each pair of corners, so a profile reads as the shape it is. */
+function profileFrom(corners: readonly (readonly [number, number])[]) {
+  return (distM: number): number => {
+    for (let i = 1; i < corners.length; i += 1) {
+      const [startM, startEleM] = corners[i - 1]!;
+      const [endM, endEleM] = corners[i]!;
+      if (distM <= endM) {
+        return startEleM + ((endEleM - startEleM) * (distM - startM)) / (endM - startM);
+      }
+    }
+    return corners[corners.length - 1]![1];
+  };
+}
+
+/**
+ * Two declared profiles rather than two measured ones (ADR-0011). Every figure the
+ * assertions below quote — 450 m of gain, one climb, 30.0 km — is written here first,
+ * so a failure means the chart read the profile wrongly rather than that a file moved.
+ */
+const CLIMB_FOOT_M = 10_000;
+const CLIMB_SUMMIT_M = 15_000;
+const CLIMB_GAIN_M = 450;
+const SUMMIT_ELE_M = 550;
+/** Mid-climb, where the marker meets a gradient worth asserting about. */
+const ON_THE_CLIMB_M = 12_000;
+/** A 750 m ramp at 3 %: shaded on the chart, and 22.5 m is far short of a named climb. */
+const RAMP_CENTRE_M = 22_375;
+const VARIED_TOTAL_M = 30_000;
+const VARIED_RELIEF_M = CLIMB_GAIN_M;
+
+const varied = syntheticRoute(
+  VARIED_TOTAL_M,
+  profileFrom([
+    [0, 100],
+    [CLIMB_FOOT_M, 100],
+    [CLIMB_SUMMIT_M, SUMMIT_ELE_M], // 5 km at 9 %
+    [20_000, 100], // and straight back down at 9 %
+    [22_000, 100],
+    [22_750, 122.5], // the 3 % ramp
+    [23_500, 100],
+    [VARIED_TOTAL_M, 100],
+  ]),
+);
+
+/** 20 km of 2 km undulations, 8 m either side of 100 m: 16 m of relief and no climb. */
+const UNDULATION_AMPLITUDE_M = 8;
+const undulating = syntheticRoute(
+  20_000,
+  (distM) => 100 + UNDULATION_AMPLITUDE_M * Math.sin((2 * Math.PI * distM) / 2000),
+);
 
 function relief(route: Route): number {
   const eles = route.points.map((point) => point.eleM);
@@ -52,21 +97,24 @@ function scaleFor(route: Route, width = WIDTH, height = HEIGHT) {
 
 describe('vertical exaggeration', () => {
   it('draws elevation at a fixed multiple of the horizontal scale in the normal regime', () => {
-    // Mixed: 516.6 m of relief over 29.9 km. Wanted, and granted, without clamping.
-    const scale = scaleFor(mixed);
-    const expected = (WIDTH / mixed.totalDistanceM) * VERTICAL_EXAGGERATION;
+    // 450 m of relief over 30 km: the exaggeration it asks for is the one it gets.
+    const scale = scaleFor(varied);
+    expect(relief(varied)).toBe(VARIED_RELIEF_M);
+    const expected = (WIDTH / varied.totalDistanceM) * VERTICAL_EXAGGERATION;
 
     expect(scale.clamp).toBe('none');
     expect(scale.pxPerMetre).toBeCloseTo(expected, 9);
-    expect(scale.reliefPx).toBeCloseTo(relief(mixed) * expected, 6);
+    expect(scale.reliefPx).toBeCloseTo(relief(varied) * expected, 6);
     expect(scale.reliefPx).toBeGreaterThan(HEIGHT * MIN_RELIEF_FRACTION);
     expect(scale.reliefPx).toBeLessThan(HEIGHT * MAX_RELIEF_FRACTION);
   });
 
   it('lifts a near-flat route off the floor so it still shows shape', () => {
-    // Rolling: 16.2 m over 20 km would be 8 px unclamped, which reads as a ruled line.
-    const scale = scaleFor(rolling);
-    const unclamped = relief(rolling) * (WIDTH / rolling.totalDistanceM) * VERTICAL_EXAGGERATION;
+    // 16 m over 20 km would be 7.6 px unclamped, which reads as a ruled line.
+    const scale = scaleFor(undulating);
+    expect(relief(undulating)).toBeCloseTo(2 * UNDULATION_AMPLITUDE_M, 9);
+    const unclamped =
+      relief(undulating) * (WIDTH / undulating.totalDistanceM) * VERTICAL_EXAGGERATION;
 
     expect(unclamped).toBeLessThan(HEIGHT * MIN_RELIEF_FRACTION);
     expect(scale.clamp).toBe('floor');
@@ -92,15 +140,15 @@ describe('vertical exaggeration', () => {
     expect(scale.yFor(100)).toBeCloseTo(HEIGHT - HEIGHT * 0.08, 9);
   });
 
-  it('keeps the two bundled routes honestly different from each other', () => {
-    // The whole point of a fixed ratio: the rolling route must not read as a
-    // mountain range next to the one with a real 349 m climb.
-    expect(scaleFor(mixed).reliefPx / scaleFor(rolling).reliefPx).toBeGreaterThan(5);
+  it('keeps the two profiles honestly different from each other', () => {
+    // The whole point of a fixed ratio: the undulating route must not read as a
+    // mountain range next to the one with a 450 m climb in it.
+    expect(scaleFor(varied).reliefPx / scaleFor(undulating).reliefPx).toBeGreaterThan(5);
   });
 
   it('re-exaggerates against the window when zoomed in', () => {
-    const profile = buildProfile(mixed);
-    const window = projectWindow(mixed, profile, 8000, WINDOW_WIDE_M);
+    const profile = buildProfile(varied);
+    const window = projectWindow(varied, profile, 8000, WINDOW_WIDE_M);
     const eles = window.points.map((point) => point.eleM);
     const zoomed = elevationScale({
       eleMinM: Math.min(...eles),
@@ -110,23 +158,23 @@ describe('vertical exaggeration', () => {
       height: HEIGHT,
     });
 
-    expect(zoomed.pxPerMetre).toBeGreaterThan(scaleFor(mixed).pxPerMetre);
+    expect(zoomed.pxPerMetre).toBeGreaterThan(scaleFor(varied).pxPerMetre);
   });
 });
 
 describe('tickStepM', () => {
   it('steps 5 km on a route, 1 km at the 5 km zoom and 100 m at 500 m', () => {
-    expect(tickStepM(rolling.totalDistanceM)).toBe(5000);
+    expect(tickStepM(undulating.totalDistanceM)).toBe(5000);
     expect(tickStepM(WINDOW_WIDE_M)).toBe(1000);
     expect(tickStepM(WINDOW_NARROW_M)).toBe(100);
   });
 });
 
 describe('elevationGeometry, route view', () => {
-  const profile = buildProfile(mixed);
-  const climbs = detectClimbs(mixed);
+  const profile = buildProfile(varied);
+  const climbs = detectClimbs(varied);
   const geometry = elevationGeometry({
-    route: mixed,
+    route: varied,
     profile,
     climbs,
     width: WIDTH,
@@ -135,9 +183,9 @@ describe('elevationGeometry, route view', () => {
 
   it('maps the route across the full chart width', () => {
     expect(geometry.xFor(0)).toBe(0);
-    expect(geometry.xFor(mixed.totalDistanceM)).toBeCloseTo(WIDTH, 9);
+    expect(geometry.xFor(varied.totalDistanceM)).toBeCloseTo(WIDTH, 9);
     expect(geometry.xFor(-500)).toBe(0);
-    expect(geometry.xFor(mixed.totalDistanceM + 500)).toBeCloseTo(WIDTH, 9);
+    expect(geometry.xFor(varied.totalDistanceM + 500)).toBeCloseTo(WIDTH, 9);
   });
 
   it('smooths the profile line and closes the area onto the baseline', () => {
@@ -149,12 +197,12 @@ describe('elevationGeometry, route view', () => {
   });
 
   it('ticks every 5 km, alternating long and short, with an end label only', () => {
-    const expected = Math.floor(mixed.totalDistanceM / 5000) + 1;
+    const expected = Math.floor(varied.totalDistanceM / 5000) + 1;
     expect(geometry.ticks).toHaveLength(expected);
     expect(geometry.ticks.map((tick) => tick.long).slice(0, 4)).toEqual([true, false, true, false]);
-    expect(geometry.ticks[1]?.x).toBeCloseTo((5000 / mixed.totalDistanceM) * WIDTH, 6);
+    expect(geometry.ticks[1]?.x).toBeCloseTo((5000 / varied.totalDistanceM) * WIDTH, 6);
     expect(geometry.startLabel).toBeNull();
-    expect(geometry.endLabel).toBe('29.9 km');
+    expect(geometry.endLabel).toBe(`${VARIED_TOTAL_M / 1000}.0 km`);
     expect(geometry.showEndCircles).toBe(true);
   });
 
@@ -162,8 +210,8 @@ describe('elevationGeometry, route view', () => {
     expect(climbs).toHaveLength(1);
     expect(geometry.summits).toHaveLength(1);
     const summit = geometry.summits[0];
-    expect(summit?.label).toBe('+349 m');
-    expect(summit?.label).not.toContain('749');
+    expect(summit?.label).toBe(`+${CLIMB_GAIN_M} m`);
+    expect(summit?.label).not.toContain(String(SUMMIT_ELE_M));
     expect(summit?.x).toBeGreaterThan(0);
     expect(summit?.x).toBeLessThan(WIDTH);
     expect(summit?.y).toBeCloseTo(geometry.yFor(climbs[0]?.summitEleM ?? 0), 9);
@@ -184,37 +232,37 @@ describe('elevationGeometry, route view', () => {
     expect(geometry.riddenLinePath(0)).toBe('');
     expect(geometry.riddenAreaPath(0)).toBe('');
 
-    const quarter = geometry.riddenLinePath(mixed.totalDistanceM / 4);
-    const half = geometry.riddenLinePath(mixed.totalDistanceM / 2);
+    const quarter = geometry.riddenLinePath(varied.totalDistanceM / 4);
+    const half = geometry.riddenLinePath(varied.totalDistanceM / 2);
     expect(quarter.length).toBeGreaterThan(0);
     expect(half.length).toBeGreaterThan(quarter.length);
     expect(half.startsWith('M0,')).toBe(true);
 
-    const whole = geometry.riddenAreaPath(mixed.totalDistanceM);
+    const whole = geometry.riddenAreaPath(varied.totalDistanceM);
     expect(whole.endsWith(`L0,${HEIGHT} Z`)).toBe(true);
   });
 
   it('places the rider on the profile with the gradient it is about to meet', () => {
     expect(geometry.marker(0).x).toBe(0);
-    expect(geometry.marker(mixed.totalDistanceM).x).toBeCloseTo(WIDTH, 9);
+    expect(geometry.marker(varied.totalDistanceM).x).toBeCloseTo(WIDTH, 9);
 
-    const onTheClimb = geometry.marker(8000);
+    const onTheClimb = geometry.marker(ON_THE_CLIMB_M);
     expect(onTheClimb.gradePercent).toBeGreaterThan(2);
-    expect(onTheClimb.y).toBeCloseTo(geometry.yFor(elevationAt(mixed, 8000)), 9);
-    expect(onTheClimb.x).toBeCloseTo((8000 / mixed.totalDistanceM) * WIDTH, 6);
+    expect(onTheClimb.y).toBeCloseTo(geometry.yFor(elevationAt(varied, ON_THE_CLIMB_M)), 9);
+    expect(onTheClimb.x).toBeCloseTo((ON_THE_CLIMB_M / varied.totalDistanceM) * WIDTH, 6);
   });
 });
 
 describe('elevationGeometry, zoom windows', () => {
-  const profile = buildProfile(mixed);
-  const climbs = detectClimbs(mixed);
+  const profile = buildProfile(varied);
+  const climbs = detectClimbs(varied);
 
   function windowed(centreM: number, widthM: number) {
-    const window = projectWindow(mixed, profile, centreM, widthM);
+    const window = projectWindow(varied, profile, centreM, widthM);
     return {
       window,
       geometry: elevationGeometry({
-        route: mixed,
+        route: varied,
         profile,
         climbs,
         window,
@@ -247,7 +295,9 @@ describe('elevationGeometry, zoom windows', () => {
   });
 
   it('renders the same 250 m bins wider rather than re-binning', () => {
-    const { window, geometry: zoomed } = windowed(8000, WINDOW_WIDE_M);
+    // Centred on the 3 % ramp, which is the one shaded run short enough to sit whole
+    // inside a 5 km window.
+    const { window, geometry: zoomed } = windowed(RAMP_CENTRE_M, WINDOW_WIDE_M);
     const widths = window.bins.map((bin) => bin.endM - bin.startM);
     expect(new Set(widths)).toEqual(new Set([250]));
 
@@ -257,7 +307,7 @@ describe('elevationGeometry, zoom windows', () => {
     );
     expect(run).toBeDefined();
     const route = elevationGeometry({
-      route: mixed,
+      route: varied,
       profile,
       climbs,
       width: WIDTH,
@@ -265,7 +315,7 @@ describe('elevationGeometry, zoom windows', () => {
     });
     const routeWidth = route.xFor(run!.endM) - route.xFor(run!.startM);
     const zoomWidth = zoomed.xFor(run!.endM) - zoomed.xFor(run!.startM);
-    expect(zoomWidth / routeWidth).toBeCloseTo(mixed.totalDistanceM / WINDOW_WIDE_M, 6);
+    expect(zoomWidth / routeWidth).toBeCloseTo(varied.totalDistanceM / WINDOW_WIDE_M, 6);
   });
 
   it('shows a summit only while it is inside the window', () => {
@@ -282,8 +332,8 @@ describe('elevationGeometry, zoom windows', () => {
 });
 
 describe('elevationGeometry at sparkline size', () => {
-  it('produces a line for both bundled routes without fills or ticks needed', () => {
-    for (const route of [rolling, mixed]) {
+  it('produces a line for both profiles without fills or ticks needed', () => {
+    for (const route of [undulating, varied]) {
       const geometry = elevationGeometry({ route, width: 120, height: 28 });
       expect(geometry.linePath.startsWith('M0,')).toBe(true);
       expect(geometry.bands).toHaveLength(0);
@@ -302,23 +352,23 @@ describe('elevationGeometry at sparkline size', () => {
         width: 120,
         height: 28,
       });
-    expect(at120(rolling).clamp).toBe('floor');
-    expect(at120(mixed).reliefPx).toBeGreaterThan(at120(rolling).reliefPx * 3);
+    expect(at120(undulating).clamp).toBe('floor');
+    expect(at120(varied).reliefPx).toBeGreaterThan(at120(undulating).reliefPx * 3);
   });
 });
 
 describe('distFor', () => {
-  const profile = buildProfile(mixed);
+  const profile = buildProfile(varied);
 
   function geometryFor(window: ReturnType<typeof projectWindow> | null) {
-    return elevationGeometry({ route: mixed, profile, window, width: WIDTH, height: HEIGHT });
+    return elevationGeometry({ route: varied, profile, window, width: WIDTH, height: HEIGHT });
   }
 
   it('is the inverse of xFor across the route view', () => {
     const geometry = geometryFor(null);
 
     for (const fraction of [0, 0.25, 0.5, 0.75, 1]) {
-      const distM = mixed.totalDistanceM * fraction;
+      const distM = varied.totalDistanceM * fraction;
       expect(geometry.distFor(geometry.xFor(distM))).toBeCloseTo(distM, 6);
     }
   });
@@ -327,11 +377,11 @@ describe('distFor', () => {
     const geometry = geometryFor(null);
 
     expect(geometry.distFor(-40)).toBe(0);
-    expect(geometry.distFor(WIDTH + 40)).toBeCloseTo(mixed.totalDistanceM, 6);
+    expect(geometry.distFor(WIDTH + 40)).toBeCloseTo(varied.totalDistanceM, 6);
   });
 
   it('answers in the window it is drawn over, not in route distance', () => {
-    const window = projectWindow(mixed, profile, 12000, WINDOW_WIDE_M);
+    const window = projectWindow(varied, profile, 12000, WINDOW_WIDE_M);
     const geometry = geometryFor(window);
 
     expect(geometry.distFor(0)).toBeCloseTo(window.startM, 6);

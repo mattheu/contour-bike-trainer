@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseGpx } from '../../route/gpx';
+import { diamondLoopRoute, staircaseRoute } from '../../../test/fixtures';
 import type { Route, RoutePoint } from '../../route/types';
-import mixedGpx from '../../../routes/test-mixed.gpx?raw';
-import rollingGpx from '../../../routes/test-rolling.gpx?raw';
 import {
   HOVER_SNAP_PX,
   MAP_PADDING_PX,
@@ -18,8 +16,14 @@ import {
 const WIDTH = 320;
 const HEIGHT = 302;
 
-const rolling = parseGpx(rollingGpx);
-const mixed = parseGpx(mixedGpx);
+/**
+ * ADR-0011, and the awkward half of it: the straight-line fixtures cannot serve a module
+ * whose whole subject is plan shape, so these two are the bending ones. The loop closes
+ * on itself, which is what makes a pixel ambiguous; the staircase never does, which is
+ * what lets a pixel be checked against the one distance that belongs to it.
+ */
+const loop = diamondLoopRoute();
+const staircase = staircaseRoute();
 
 function singlePointRoute(): Route {
   const point: RoutePoint = { lat: 51.5, lon: -0.1, eleM: 10, distM: 0 };
@@ -51,7 +55,7 @@ describe('scaleBarLabel', () => {
 
 describe('routeMapGeometry, whole route', () => {
   const geometry = routeMapGeometry({
-    route: rolling,
+    route: loop,
     width: WIDTH,
     height: HEIGHT,
     zoom: 'route',
@@ -73,7 +77,7 @@ describe('routeMapGeometry, whole route', () => {
 
   it('centres the trace with a plain translate', () => {
     expect(geometry.transform(0)).toMatch(/^translate\(-?[\d.]+,-?[\d.]+\)$/);
-    expect(geometry.transform(0)).toBe(geometry.transform(rolling.totalDistanceM));
+    expect(geometry.transform(0)).toBe(geometry.transform(loop.totalDistanceM));
   });
 
   it('draws a smoothed trace and grows the ridden prefix along it', () => {
@@ -81,15 +85,15 @@ describe('routeMapGeometry, whole route', () => {
     expect(geometry.tracePath).toContain(' C');
     expect(geometry.riddenPath(0)).toBe('');
 
-    const quarter = geometry.riddenPath(rolling.totalDistanceM / 4);
-    const half = geometry.riddenPath(rolling.totalDistanceM / 2);
+    const quarter = geometry.riddenPath(loop.totalDistanceM / 4);
+    const half = geometry.riddenPath(loop.totalDistanceM / 2);
     expect(half.length).toBeGreaterThan(quarter.length);
     expect(geometry.tracePath).not.toContain('NaN');
   });
 
   it('moves the rider dot across the frame in screen space', () => {
     const start = geometry.riderScreen(0);
-    const later = geometry.riderScreen(rolling.totalDistanceM / 3);
+    const later = geometry.riderScreen(loop.totalDistanceM / 3);
     expect(start).not.toEqual(later);
     expect(start.x).toBeGreaterThanOrEqual(MAP_PADDING_PX - 1e-6);
     expect(start.x).toBeLessThanOrEqual(WIDTH - MAP_PADDING_PX + 1e-6);
@@ -117,7 +121,7 @@ describe('routeMapGeometry, whole route', () => {
  * one can move without dragging the other.
  */
 describe('routeMapGeometry, 5 km view', () => {
-  const geometry = routeMapGeometry({ route: rolling, width: WIDTH, height: HEIGHT, zoom: 'near' });
+  const geometry = routeMapGeometry({ route: loop, width: WIDTH, height: HEIGHT, zoom: 'near' });
 
   it('zooms so the frame spans the 5 km window and clips', () => {
     expect(geometry.clipped).toBe(true);
@@ -128,7 +132,7 @@ describe('routeMapGeometry, 5 km view', () => {
   });
 
   it('centres the rider and pans the trace under it', () => {
-    for (const distM of [0, 5000, rolling.totalDistanceM]) {
+    for (const distM of [0, 5000, loop.totalDistanceM]) {
       const screen = geometry.riderScreen(distM);
       expect(screen.x).toBeCloseTo(WIDTH / 2, 9);
       expect(screen.y).toBeCloseTo(HEIGHT / 2, 9);
@@ -148,15 +152,15 @@ describe('routeMapGeometry, 5 km view', () => {
 
     // The zoomed view covers less ground per pixel, so its bar never reads a longer
     // distance than the whole-route view's and the same distance draws wider.
-    const whole = routeMapGeometry({ route: rolling, width: WIDTH, height: HEIGHT, zoom: 'route' });
+    const whole = routeMapGeometry({ route: loop, width: WIDTH, height: HEIGHT, zoom: 'route' });
     expect(geometry.scaleBar.metres).toBeLessThanOrEqual(whole.scaleBar.metres);
     expect(impliedPxPerMetre).toBeGreaterThan(whole.scaleBar.lengthPx / whole.scaleBar.metres);
   });
 });
 
 describe('routeMapGeometry edge cases', () => {
-  it('handles both bundled routes without producing NaN', () => {
-    for (const route of [rolling, mixed]) {
+  it('handles both bending fixtures without producing NaN', () => {
+    for (const route of [loop, staircase]) {
       for (const zoom of ['route', 'near'] as const) {
         const geometry = routeMapGeometry({ route, width: WIDTH, height: HEIGHT, zoom });
         expect(geometry.tracePath).not.toContain('NaN');
@@ -183,8 +187,8 @@ describe('routeMapGeometry edge cases', () => {
 describe('screenFor', () => {
   it('agrees with riderScreen when the frame is panned to the point itself', () => {
     for (const zoom of ['route', 'near'] as const) {
-      const geometry = routeMapGeometry({ route: mixed, width: WIDTH, height: HEIGHT, zoom });
-      const distM = mixed.totalDistanceM / 3;
+      const geometry = routeMapGeometry({ route: staircase, width: WIDTH, height: HEIGHT, zoom });
+      const distM = staircase.totalDistanceM / 3;
 
       expect(geometry.screenFor(distM, distM)).toEqual(geometry.riderScreen(distM));
     }
@@ -192,25 +196,27 @@ describe('screenFor', () => {
 
   it('ignores the pan on the whole-route view, which never pans', () => {
     const geometry = routeMapGeometry({
-      route: mixed,
+      route: staircase,
       width: WIDTH,
       height: HEIGHT,
       zoom: 'route',
     });
-    const distM = mixed.totalDistanceM / 4;
+    const distM = staircase.totalDistanceM / 4;
 
     expect(geometry.screenFor(distM, 0)).toEqual(geometry.riderScreen(distM));
-    expect(geometry.screenFor(distM, mixed.totalDistanceM)).toEqual(geometry.riderScreen(distM));
+    expect(geometry.screenFor(distM, staircase.totalDistanceM)).toEqual(
+      geometry.riderScreen(distM),
+    );
   });
 
   it('places a point away from the rider off-centre on the 5 km view', () => {
     const geometry = routeMapGeometry({
-      route: mixed,
+      route: staircase,
       width: WIDTH,
       height: HEIGHT,
       zoom: 'near',
     });
-    const riderM = mixed.totalDistanceM / 2;
+    const riderM = staircase.totalDistanceM / 2;
     const centre = { x: WIDTH / 2, y: HEIGHT / 2 };
 
     // The rider is the centre of this view by construction, and a marker for somewhere
@@ -314,12 +320,12 @@ describe('routeAt', () => {
 
   /**
    * Position, not distance. A point on the map does not determine a distance — a loop
-   * comes back to its own start, and test-rolling is one — so the invariant that holds
+   * comes back to its own start, and the diamond is one — so the invariant that holds
    * for every route is that the distance it answers is drawn at the pixel that was
    * asked about. Where the route visits a place once, that is the same thing.
    */
   it('round-trips every distance back to the pixel screenFor put it at', () => {
-    for (const route of [rolling, mixed]) {
+    for (const route of [loop, staircase]) {
       for (const zoom of ['route', 'near'] as const) {
         const geometry = at(route, zoom);
         const pan = route.totalDistanceM / 2;
@@ -336,10 +342,10 @@ describe('routeAt', () => {
 
   it('recovers the distance itself where the route passes a place only once', () => {
     for (const zoom of ['route', 'near'] as const) {
-      const geometry = at(mixed, zoom);
-      const pan = mixed.totalDistanceM / 2;
+      const geometry = at(staircase, zoom);
+      const pan = staircase.totalDistanceM / 2;
       for (const fraction of [0.1, 0.25, 0.5, 0.75]) {
-        const distM = mixed.totalDistanceM * fraction;
+        const distM = staircase.totalDistanceM * fraction;
         // Within a few metres of ground rather than exactly: the trace is resampled, so
         // the search answers from a chord rather than from the route's own vertex.
         expect(geometry.routeAt(geometry.screenFor(distM, pan), pan).distM).toBeCloseTo(distM, -1);
@@ -353,16 +359,16 @@ describe('routeAt', () => {
    * than something in between.
    */
   it('answers a loop closing on itself with one of its two ends', () => {
-    const geometry = at(rolling, 'route');
+    const geometry = at(loop, 'route');
     const hit = geometry.routeAt(geometry.screenFor(0, 0), 0);
     expect(hit.offsetPx).toBeLessThan(1);
-    expect(Math.min(hit.distM, Math.abs(rolling.totalDistanceM - hit.distM))).toBeLessThan(5);
+    expect(Math.min(hit.distM, Math.abs(loop.totalDistanceM - hit.distM))).toBeLessThan(5);
   });
 
   it('measures the offset in screen pixels at either zoom', () => {
     for (const zoom of ['route', 'near'] as const) {
-      const geometry = at(mixed, zoom);
-      const pan = mixed.totalDistanceM / 2;
+      const geometry = at(staircase, zoom);
+      const pan = staircase.totalDistanceM / 2;
       const on = geometry.screenFor(pan, pan);
 
       // A fixed pixel offset reads as the same number of pixels however far the view is
@@ -379,7 +385,7 @@ describe('routeAt', () => {
   });
 
   it('reports empty space as well beyond the snap threshold', () => {
-    const geometry = at(rolling, 'route');
+    const geometry = at(loop, 'route');
     // The frame corners are outside the padded box the trace is fitted into, so no part
     // of the route can be near them.
     for (const corner of [
@@ -393,7 +399,7 @@ describe('routeAt', () => {
   });
 
   it('answers for the frame the rider is holding, not the untransformed plane', () => {
-    const geometry = at(mixed, 'near');
+    const geometry = at(staircase, 'near');
     const centre = { x: WIDTH / 2, y: HEIGHT / 2 };
 
     // The rider is the centre of the 5 km view, so the centre pixel is the rider's own
@@ -411,9 +417,9 @@ describe('routeAt', () => {
   });
 
   it('ignores the pan on the whole-route view, which never pans', () => {
-    const geometry = at(mixed, 'route');
-    const screen = geometry.screenFor(mixed.totalDistanceM / 3, 0);
-    expect(geometry.routeAt(screen, 0)).toEqual(geometry.routeAt(screen, mixed.totalDistanceM));
+    const geometry = at(staircase, 'route');
+    const screen = geometry.screenFor(staircase.totalDistanceM / 3, 0);
+    expect(geometry.routeAt(screen, 0)).toEqual(geometry.routeAt(screen, staircase.totalDistanceM));
   });
 
   it('survives a route with a single point', () => {
