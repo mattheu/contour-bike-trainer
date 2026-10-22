@@ -656,7 +656,11 @@ Best is then `min()` over short arrays across the aggregates the list already lo
 
 **The same computation feeds the export.** TCX models laps natively and we write exactly one `<Lap>` per activity, which has been wrong since loops shipped. One per lap, triggered by distance, from the same split — so the file and the record cannot disagree about where a lap ended, and Strava shows the splits without any work of ours.
 
-**No backfill.** Rides recorded before this have no splits and will not get any: loops shipped days before the ghost did, so there is no history of lapped rides to recover. A ride with no splits is simply not eligible to be best, which the empty array already says.
+**A ride also stores its TSS**, computed at save from its recorded power and the FTP it was ridden at. Same rule and the same reason: it needs the samples, so not storing it means either a backfill later or a permanent gap where earned load is unknowable. Displaying it can wait — the obvious home is beside the planned figure a workout already shows in the library — but storing it cannot, because the day it is wanted the samples would have to be walked again.
+
+Unlike the splits, this one **is** backfilled, and completely: every existing ride still has its samples and its frozen FTP, so a single pass fills the history exactly rather than approximately.
+
+**No backfill for the splits.** Rides recorded before this have none and will not get any: loops shipped days before the ghost did, so there is no history of lapped rides to recover. A ride with no splits is simply not eligible to be best, which the empty array already says.
 
 ### Not on workouts
 
