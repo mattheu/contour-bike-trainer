@@ -7,6 +7,13 @@ interface SettingsPanelProps {
   /** Required: a panel called "Settings" says nothing in an app that has two of them. */
   title: string;
   onClose: () => void;
+  /**
+   * Whether the panel slides in on mount. Off in a preview, where the panel is a picture
+   * of an open one rather than one that just opened: a still should be still, and an
+   * animation driven by requestAnimationFrame never starts at all in a tab the browser
+   * has backgrounded, which leaves the panel parked off the right edge for good.
+   */
+  animateIn?: boolean;
   children: ReactNode;
 }
 
@@ -20,13 +27,14 @@ interface SettingsPanelProps {
  * trainer that reports a long service list can outgrow it, and a discovery block that
  * pushes End ride off the bottom is worse than a scrollbar.
  */
-export function SettingsPanel({ title, onClose, children }: SettingsPanelProps) {
-  const [shown, setShown] = useState(false);
+export function SettingsPanel({ title, onClose, animateIn = true, children }: SettingsPanelProps) {
+  const [shown, setShown] = useState(!animateIn);
 
   useEffect(() => {
+    if (!animateIn) return;
     const frame = requestAnimationFrame(() => setShown(true));
     return () => cancelAnimationFrame(frame);
-  }, []);
+  }, [animateIn]);
 
   return (
     <div className="fixed inset-0 z-50">
@@ -41,7 +49,7 @@ export function SettingsPanel({ title, onClose, children }: SettingsPanelProps) 
         className={[
           'bg-ground border-hairline absolute top-0 right-0 bottom-0 flex w-[580px]',
           'flex-col gap-[48px] overflow-y-auto border-l px-[48px] py-[44px]',
-          SLIDE,
+          animateIn ? SLIDE : '',
         ].join(' ')}
         style={{ transform: shown ? 'translateX(0)' : 'translateX(100%)' }}
       >

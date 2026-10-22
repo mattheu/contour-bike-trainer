@@ -5,6 +5,7 @@ import { SERIF } from './components/styles';
 import type { Route as RouteGeometry } from '../route/types';
 import type { Ride, RideSample, Session, Route as StoredRoute } from '../storage/types';
 import { Experiment } from './screens/Experiment';
+import { HowItWorks } from './screens/HowItWorks';
 import { Login } from './screens/Login';
 import type { ListScreen } from './screens/Nav';
 import { Ride as RideScreen } from './screens/Ride';
@@ -19,7 +20,14 @@ import type { Targets } from './screens/RideSettings';
 import { RiderProfile } from './screens/RiderProfile';
 import { useAsync } from './screens/use-async';
 import { LEAVE_RIDE_PROMPT, rideAtRisk } from './ride-guard';
-import { formatHash, parseHash, resolve, rideLabel, type Location } from './routing';
+import {
+  formatHash,
+  parseHash,
+  resolve,
+  resolveSignedOut,
+  rideLabel,
+  type Location,
+} from './routing';
 import * as services from './services';
 import { useRideStore } from './useRideStore';
 
@@ -46,7 +54,7 @@ export function App() {
 }
 
 /**
- * The login screen until this install has a session, and the app after.
+ * The two screens an install with no session can show, and the app after it has one.
  *
  * Its own component because the gate has to resolve before RideApp's hooks run: a screen
  * cannot be chosen conditionally inside a component that already called twenty hooks.
@@ -56,6 +64,12 @@ export function App() {
  * 'none' rather than null for a fresh install: useAsync's null already means "still
  * loading", and showing the login screen for a frame before the read lands would be the
  * one flicker a rider sees every launch.
+ *
+ * It reads the hash as well, for the one screen reachable before signing in: How it
+ * works. A second, much smaller router than RideApp's, and deliberately not the same one
+ * — resolve() is a function of what the engine is riding, and nothing is being ridden
+ * here. Both screens move between each other with plain anchors, so the listener below is
+ * all the navigation there is.
  */
 function SessionGate() {
   const [started, setStarted] = useState(0);
@@ -63,27 +77,41 @@ function SessionGate() {
     await services.ready;
     return services.currentSession() ?? 'none';
   }, [started]);
+  const [hash, setHash] = useState(() => window.location.hash);
 
   const start = useCallback(() => {
     void services.startGuestSession().then(() => setStarted((n) => n + 1));
   }, []);
 
+  useEffect(() => {
+    const read = (): void => setHash(window.location.hash);
+    window.addEventListener('hashchange', read);
+    return () => {
+      window.removeEventListener('hashchange', read);
+    };
+  }, []);
+
+  const signedOut = resolveSignedOut(parseHash(hash));
+
   /**
-   * An install with no session belongs at `/login`, whatever it was opened on. A deeper
-   * hash — a bookmark carried from somewhere else — would otherwise sign in and land on a
-   * record it has never had, so the bar is put back to the screen actually on it.
+   * An install with no session belongs on one of those two screens, whatever it was
+   * opened on. A deeper hash — a bookmark carried from somewhere else — would otherwise
+   * sign in and land on a record it has never had, so the bar is put back to the screen
+   * actually on it.
    */
   useEffect(() => {
     if (session !== 'none') return;
-    const login = formatHash({ name: 'login' });
-    if (window.location.hash === login) return;
+    const target = formatHash(signedOut);
+    if (window.location.hash === target) return;
     // Replaced, not pushed, like every other correction here: back must not return to a
     // screen this install cannot show.
-    window.location.replace(login);
-  }, [session]);
+    window.location.replace(target);
+  }, [session, signedOut]);
 
   if (session === null) return <Loading />;
-  if (session === 'none') return <Login onStart={start} />;
+  if (session === 'none') {
+    return signedOut.name === 'how-it-works' ? <HowItWorks /> : <Login onStart={start} />;
+  }
   return <RideApp />;
 }
 

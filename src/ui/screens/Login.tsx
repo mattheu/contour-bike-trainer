@@ -1,6 +1,8 @@
 import { Button } from '../components/Button';
-import { MONO } from '../components/styles';
+import { COLOUR_SHIFT } from '../components/motion';
+import { LABEL, MONO } from '../components/styles';
 import { Lockup } from '../components/Wordmark';
+import { formatHash } from '../routing';
 
 /**
  * design/mockups/login.html, with one control and no fields.
@@ -12,7 +14,9 @@ import { Lockup } from '../components/Wordmark';
  * rearrange the screen.
  *
  * Start is the screen's one accent control, which it earns under DESIGN.md: an action
- * that begins something.
+ * that begins something. The link under it is deliberately not a second control: a box
+ * is the signal that something is pressable, and How it works is a way out of this screen
+ * rather than a way through it.
  */
 export function Login({ onStart }: { onStart: () => void }) {
   return (
@@ -28,6 +32,12 @@ export function Login({ onStart }: { onStart: () => void }) {
           <Button tone="accent" onClick={onStart}>
             Start
           </Button>
+          <a
+            href={formatHash({ name: 'how-it-works' })}
+            className={`${LABEL} text-caption hover:text-ink ${COLOUR_SHIFT} mt-[4px] py-[8px] text-center no-underline`}
+          >
+            How it works
+          </a>
         </div>
       </div>
 

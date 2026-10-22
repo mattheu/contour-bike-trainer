@@ -4,7 +4,10 @@ import { IconButton } from './IconButton';
 import { Logo } from './Wordmark';
 
 interface AppHeaderProps {
-  /** The Rides · Routes · Workouts Segmented. */
+  /**
+   * The Rides · Routes · Workouts Segmented, or a label on a screen that has no nav to
+   * carry — How it works is the one of those.
+   */
   nav: ReactNode;
   /** One accent action, or the period summary on screens that have no action. */
   action?: ReactNode;

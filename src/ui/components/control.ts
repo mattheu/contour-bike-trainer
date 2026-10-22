@@ -52,6 +52,21 @@ export const TONE: Record<ControlTone, string> = {
   accent: `${CONTROL_BOX} z-[2] border-accent text-accent ${HOVER_ACCENT}`,
 };
 
+/**
+ * The same three tones on an anchor.
+ *
+ * `:enabled` matches form controls and nothing else, so a link built from TONE would
+ * never reach its hover state — and a control that does not light up under the pointer is
+ * one a rider is not sure is pressable. Written out rather than composed from the strings
+ * above because Tailwind reads complete class names out of the source: a tone assembled
+ * from a prefix would generate no CSS at all.
+ */
+export const LINK_TONE: Record<ControlTone, string> = {
+  grey: `${CONTROL_BOX} z-[1] border-hairline text-muted hover:bg-ink hover:text-ground hover:border-ink hover:z-[3]`,
+  ink: `${CONTROL_BOX} z-[2] border-ink text-ink hover:bg-ink hover:text-ground hover:border-ink hover:z-[3]`,
+  accent: `${CONTROL_BOX} z-[2] border-accent text-accent hover:bg-accent hover:text-ground hover:border-accent hover:z-[3]`,
+};
+
 /** An icon button is a grey box with an ink glyph, and hovers like any other grey box. */
 export const ICON = `${CONTROL_BOX} z-[1] border-hairline text-ink ${HOVER_INK}`;
 
