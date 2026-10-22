@@ -599,9 +599,79 @@ Phases 1 to 3 shipped as the MVP. What follows was re-cut afterwards, once ridin
 
 **Not a workout laid over a route.** Decided against on 2026-10-14 and recorded as [ADR-0016](docs/adr/0016-no-workouts-on-routes.md): in ERG the trainer holds the target whatever the gradient, so the route has no effect on the ride and the terrain is wallpaper. Either the hills are real or they are not. A plan held by the rider against real simulated terrain — the version where the hills stay real — is a different feature and is deferred to a later phase rather than smuggled in as a variant of this one.
 
-**The ghost, and nothing else.** Your previous ride on this route, drawn against the current one, so a route you have ridden before has something to ride against. The last ride on a route and the best one are the two candidates, and the choice between them is part of the work.
+**The ghost, and nothing else.** A previous ride on this route, drawn against the one you are on, so a route you have ridden before has something to ride against.
 
-The phase was a list; it is now one item, because the rest did not belong here. GPX upload shipped early. **Richer history and summary statistics moved to phase 5** — they rely on data being reliably persistent, which is what a backend is for, and a trend computed over a store a browser can clear is a trend about nothing. Workout import and a real basemap stay unscheduled.
+### Same clock, different places
+
+The ghost is where that ride had got to **at your elapsed time**. Both of you run on one clock and your positions differ, which is what makes it a race you can watch — the convention every racing ghost uses.
+
+The alternative was to draw it at your *distance* and compare times. That is a post-ride framing: both dots would sit permanently in the same place and there would be nothing to see.
+
+Position comes from interpolating a sample's `distanceM` at your `elapsedS`. Both are already pause-aware, so a pause advances neither of you and there is no free time in stopping.
+
+**The gap is read in seconds, not metres.** "12 s up" means something; "180 m up" means nothing without knowing the gradient. It is the same samples read the other way: when did the ghost reach the distance you are at now.
+
+### Choosing one
+
+In the ride settings panel, which already opens over a running ride. Three slots, filled top down, and **no ride appears twice** — a picker showing one ride under two labels looks broken:
+
+1. **Best** — the fastest you have covered this route. The target.
+2. **Best this year.** If that is the same ride as Best, the next fastest of this year instead.
+3. **Most recent.** If that is already shown, the next most recent.
+
+A slot with no candidate of its own falls through to the next unused ride, newest first, so three slots fill whenever three rides exist. "This year" is the calendar year: it is the phrase people use, and being short in January is itself informative.
+
+**A historic ride's summary offers Race ghost**, which starts a ride on that route with that ride selected. It is the other direction into the same feature: you are looking at a ride and want to beat it.
+
+### What counts as best
+
+**The fastest time over one route length.** On a point-to-point that is the ride; on a loop it is a lap — the quickest one you have done, from any ride.
+
+One definition rather than two, and it is forced rather than tidy: on a loop, "fastest ride" rewards the shortest ride, so a single lap would beat a three-lap session every time. Fastest lap is the only reading that means anything there, and it has the better consequence — your best lap out of a long session is raceable, which is exactly the lap you would want to chase.
+
+**A ride that never completed a route length cannot be best**, because there is no comparable time. It can still be raced individually.
+
+### Partial rides race fine
+
+A ride that stopped early is a legitimate ghost: your climb-then-quit is still something to beat up the climb. The ghost ends where that ride ended — **marked where it stopped, then faded out**, rather than a dot that blinks away unexplained.
+
+### Drawing it
+
+Muted, on **both the profile and the map**. The profile is where a gap reads as time; the map is where position reads on a loop, and it already draws a rider dot. Accent stays the rider's.
+
+**One ghost, modelled as a collection of one.** Racing your best self, your best of this year and a friend at once is a real want and the data supports it — three positions on one clock. What it needs is a readout that does not become three numbers, which is a design problem for the day it arrives. Build the list now so that day is additive, and differentiate by **shape** when it comes, because tone is already spoken for.
+
+### Where lap times live
+
+Splitting samples at each route length is expensive, and the samples are deliberately out of the rides list's reach. So **a ride stores its lap splits when it is saved** — an array of seconds, one entry per completed route length. Ten numbers for a ten-lap ride, one for a point-to-point, **empty for a ride that never finished one**, which says "not eligible for best" without a flag saying so.
+
+Best is then `min()` over short arrays across the aggregates the list already loads, and no samples are read until a ghost is actually raced. The index matters as much as the value: to race a best lap you have to slice *that* lap's samples, which a stored scalar could not tell you.
+
+**The rule worth writing into the ADR**, because it is what stops someone adding a `bestLapS` beside it or deleting the array as redundant: *store the expensive derivation, derive the cheap one from it.*
+
+**The same computation feeds the export.** TCX models laps natively and we write exactly one `<Lap>` per activity, which has been wrong since loops shipped. One per lap, triggered by distance, from the same split — so the file and the record cannot disagree about where a lap ended, and Strava shows the splits without any work of ours.
+
+Older rides have no splits and compute them when their summary is opened, where the samples are being loaded anyway.
+
+### Not on workouts
+
+A workout is effort against a plan, and the plan chart already draws what you are chasing. A ghost there would be a second thing to beat on a screen that has one.
+
+### Two things that look like problems and are not, and one that is
+
+**Trainer difficulty does not affect it.** [ADR-0008](docs/adr/0008-speed-uses-the-real-route-grade.md) means difficulty changes how a hill feels and never how fast you move, so a ghost ridden at 0 is directly comparable to one at 100.
+
+**Storage is not a limit.** A thousand rides is about 500 KB of aggregates and 500 MB of samples, against a browser quota measured in a large share of free disk.
+
+**Weight is the honest caveat.** Speed comes from power and mass, and a ride freezes the settings it was ridden at. Lose five kilos and you will beat an old ghost at the same power. That is true rather than a bug — it was a real ride at a real weight — but it is not purely a fitness comparison, and someone will notice before we explain it.
+
+### Afterwards
+
+The summary says whether you beat it, and by how much. Cheap, from two numbers, and it is the point of having raced.
+
+### Why the rest of the phase went
+
+The phase was a list; it is now one item. GPX upload shipped early. **Richer history and summary statistics moved to phase 8** — they rely on data being reliably persistent, which is what a backend is for, and a trend computed over a store a browser can clear is a trend about nothing. Workout import and a real basemap stay unscheduled.
 
 Nothing in that list is a loss, because **this app is not trying to replace the ones that already do analysis.** Strava and TrainingPeaks read a ride back better than a side project will, and the export exists so they can. What Contour owes a rider is the ride itself.
 
