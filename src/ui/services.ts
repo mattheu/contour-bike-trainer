@@ -1406,7 +1406,15 @@ export async function exportAllRoutes(): Promise<void> {
 
   const tracks = ordered.flatMap((route) => {
     const read = storedRouteGeometry(route);
-    return read.status === 'ok' ? [{ name: route.name, points: read.geometry.points }] : [];
+    return read.status === 'ok'
+      ? [
+          {
+            name: route.name,
+            ...(route.description === undefined ? {} : { description: route.description }),
+            points: read.geometry.points,
+          },
+        ]
+      : [];
   });
 
   download(

@@ -164,7 +164,15 @@ export function planRouteImport(
     routes.push({
       name,
       ...(track.description === null ? {} : { description: track.description }),
-      gpx: verbatim ? text : buildRouteGpx([{ name, points: track.route.points }]),
+      gpx: verbatim
+        ? text
+        : buildRouteGpx([
+            {
+              name,
+              ...(track.description === null ? {} : { description: track.description }),
+              points: track.route.points,
+            },
+          ]),
       totalDistanceM: Math.round(track.route.totalDistanceM),
       totalAscentM: Math.round(track.route.totalAscentM),
     });
