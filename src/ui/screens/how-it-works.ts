@@ -115,6 +115,17 @@ export const COLUMNS: Column[] = [
         sentence:
           "Choose a workout and press Start. ERG holds each step's target; pedal and the trainer does the rest.",
       },
+      {
+        /*
+         * A ride saves itself when it ends, whether the rider pressed End or the route
+         * ran out — see savedRideId in ui/store.ts. TCX rather than "export to Strava",
+         * because Contour does not talk to Strava: you get a file and upload it, which
+         * is what docs/exporting-to-strava.md walks through.
+         */
+        label: 'Rides',
+        sentence:
+          'Every ride is saved when it ends. Open one to see its summary, or download it as a TCX file for Strava.',
+      },
     ],
   },
   {
