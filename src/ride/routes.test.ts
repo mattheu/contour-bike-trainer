@@ -31,8 +31,8 @@ describe('bundledRoutes', () => {
 
   it('uses the id declared in the manifest rather than minting one', () => {
     // Rides reference this id. Minting one at runtime orphans every ride on reseed.
-    expect(bundledRoute('greenhow-hill')?.name).toBe('Greenhow Hill, UK');
-    expect(bundledRoute('sa-calobra')?.name).toBe('Sa Calobra, Mallorca');
+    expect(bundledRoute('greenhow-hill')?.name).toBe('Greenhow Hill');
+    expect(bundledRoute('sa-calobra')?.name).toBe('Sa Calobra');
     expect(bundledRoute('no-such-route')).toBeUndefined();
   });
 
@@ -162,7 +162,7 @@ describe('seedRoutes', () => {
     expect(greenhow).toMatchObject({
       id: 'greenhow-hill',
       file: 'greenhow-hill.gpx',
-      region: 'Yorkshire Dales',
+      region: 'Yorkshire Dales, UK',
     });
     expect(greenhow?.totalDistanceM).toBeGreaterThan(0);
   });

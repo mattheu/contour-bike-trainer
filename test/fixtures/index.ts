@@ -38,6 +38,17 @@ export const FIXTURE_LENGTH_M = 1000;
 export const FIXTURE_POINT_SPACING_M = 100;
 
 /**
+ * The <desc> on the flat fixture's <trk>, and the only fixture that carries one.
+ *
+ * Here rather than in a sixth fixture file: a route that differs from this one only by a
+ * line of text would be the near-duplicate ADR-0011 warns about, and a description is a
+ * property of a file as handed over rather than of a shape. The flat fixture is the one
+ * the import tests use as "a file the rider picked", so it is the one that carries it.
+ */
+export const FLAT_FIXTURE_DESCRIPTION =
+  'A level kilometre at 100 m, for tests that need no gradient.';
+
+/**
  * A closed diamond: four straight limbs of six equal steps, N to E to S to W and back to
  * the point it started from. 25 points, 17.0 km round, about 6 km across either way —
  * wide enough that the map's 5 km view has to zoom in, and the only fixture whose last

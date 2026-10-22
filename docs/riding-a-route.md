@@ -8,16 +8,16 @@ name, distance, elevation gain, and how many times you have ridden it.
 Six real routes ship with the app — no synthetic ones, because an app about riding real roads
 should not open on a test fixture:
 
-- **Greenhow Hill, UK**, Yorkshire Dales. 67 km, 1,104 m — the long one, and the only route here
+- **Greenhow Hill**, Yorkshire Dales, UK. 67 km, 1,104 m — the long one, and the only route here
   where the climbing is spread rather than stacked.
-- **Settle to Grassington, UK**, Yorkshire Dales. 32 km, 552 m across the limestone, climbing out
+- **Settle to Grassington**, Yorkshire Dales, UK. 32 km, 552 m across the limestone, climbing out
   of both dales and dropping to −17 % on the way over.
-- **Rosedale Chimney, UK**, North York Moors. 19 km, 346 m — a moor loop over one of the steepest
+- **Rosedale Chimney**, North York Moors, UK. 19 km, 346 m — a moor loop over one of the steepest
   surfaced roads in England, ramping past 21 %.
-- **Box Hill, UK**, Surrey. 16 km, 236 m — the Olympic circuit, and a true loop.
-- **Sa Calobra, Mallorca**. 13 km, 702 m — relentlessly consistent, which makes it the honest test
+- **Box Hill**, Surrey, UK. 16 km, 236 m — the Olympic circuit, and a true loop.
+- **Sa Calobra**, Mallorca, Spain. 13 km, 702 m — relentlessly consistent, which makes it the honest test
   of whether you can hold a number.
-- **Alpe d'Huez, France**, Oisans. 16 km, 1,259 m — trimmed to finish at the top rather than
+- **Alpe d'Huez**, Oisans, France. 16 km, 1,259 m — trimmed to finish at the top rather than
   running on through the village.
 
 Clicking a row starts the ride immediately. There is no confirmation step — the row _is_ the

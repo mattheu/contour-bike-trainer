@@ -7,6 +7,7 @@ import {
   flatGpxText,
   flatRoute,
   FIXTURE_LENGTH_M,
+  FLAT_FIXTURE_DESCRIPTION,
 } from '../../test/fixtures';
 import { buildRouteGpx } from '../export/route-gpx';
 import { parseGpx } from './gpx';
@@ -183,6 +184,38 @@ describe('planRouteImport', () => {
     const plan = planRouteImport(waypoints, 'pins.gpx');
 
     expect(plan.status === 'failed' && plan.reason).toMatch(/no usable points/);
+  });
+
+  it('carries the description the file gives itself', () => {
+    const plan = planRouteImport(flatGpxText, 'untitled-1.gpx');
+
+    expect(plan.status === 'read' && plan.routes[0]?.description).toBe(FLAT_FIXTURE_DESCRIPTION);
+  });
+
+  it('leaves the description absent for a file that gives none, rather than empty', () => {
+    // Absent, not ''. The stored field is optional, and a route row with a blank line
+    // under its name is worse than a row with no line at all.
+    const undescribed = flatGpxText.replace(/<desc>[^<]*<\/desc>/g, '');
+
+    const plan = planRouteImport(undescribed, 'flat.gpx');
+
+    expect(plan.status).toBe('read');
+    if (plan.status !== 'read') return;
+    expect(plan.routes[0]).not.toHaveProperty('description');
+  });
+
+  it('describes each route of a multi-track file from its own track, or not at all', () => {
+    const bundle = buildRouteGpx([
+      { name: 'Flat', points: flatRoute().points },
+      { name: 'Climb', points: climbEastRoute().points },
+    ]).replace('<name>Flat</name>', '<name>Flat</name><desc>The level one.</desc>');
+
+    const plan = planRouteImport(bundle, 'two.gpx');
+
+    expect(plan.status).toBe('read');
+    if (plan.status !== 'read') return;
+    expect(plan.routes[0]?.description).toBe('The level one.');
+    expect(plan.routes[1]).not.toHaveProperty('description');
   });
 
   it('reads a planner export of <rte> as a route', () => {

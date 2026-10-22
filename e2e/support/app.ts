@@ -40,10 +40,10 @@ export const FIXTURE_ROUTE: SeedRoute = {
 };
 
 /** A bundled route, for the specs that need one long enough not to end mid-test. */
-export const RIDE_ROUTE_NAME = 'Rosedale Chimney, UK';
+export const RIDE_ROUTE_NAME = 'Rosedale Chimney';
 
 /** A second one, for the specs that check the list has more than a single route on it. */
-export const OTHER_ROUTE_NAME = 'Greenhow Hill, UK';
+export const OTHER_ROUTE_NAME = 'Greenhow Hill';
 
 export interface OpenOptions {
   fake?: FakeScript;

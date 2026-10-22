@@ -2,55 +2,55 @@
   "routes": [
     {
       "id": "greenhow-hill",
-      "name": "Greenhow Hill, UK",
-      "region": "Yorkshire Dales",
+      "name": "Greenhow Hill",
+      "region": "Yorkshire Dales, UK",
       "file": "greenhow-hill.gpx",
-      "description": "Real route: a 67 km Dales loop over five climbs, the longest 4.2 km at 6.9 %.",
+      "description": "Greenhow Hill is a climb in Nidderdale, North Yorkshire, rising steeply out of Pateley Bridge to one of the highest villages in England. This loop takes it in alongside four more Dales climbs, the longest 4.2 km at 7 %.",
       "totalDistanceM": 66622,
       "totalAscentM": 1104
     },
     {
       "id": "sa-calobra",
-      "name": "Sa Calobra, Mallorca",
-      "region": "Mallorca",
+      "name": "Sa Calobra",
+      "region": "Mallorca, Spain",
       "file": "sa-calobra.gpx",
-      "description": "Real route: the Coll dels Reis ascent, 10.2 km at 6.9 % averaging 700 m of gain.",
+      "description": "Sa Calobra (Coll dels Reis) is a famous climb in the Serra de Tramuntana mountains of Mallorca, Spain. Built in the 1930s purely to reach the coast, it is 10 km of hairpins at an average of 7 %, including a 270-degree spiral that passes under itself.",
       "totalDistanceM": 13063,
       "totalAscentM": 702
     },
     {
       "id": "alpe-dhuez",
-      "name": "Alpe d'Huez, France",
-      "region": "Oisans",
+      "name": "Alpe d'Huez",
+      "region": "Oisans, France",
       "file": "alpe-dhuez.gpx",
-      "description": "Real route: the 21 hairpins, finishing at the summit.",
+      "description": "Alpe d'Huez is a ski resort in the Oisans, in the French Alps, and the most famous climb in the Tour de France. From Bourg d’Oisans it is 13.8 km at over 8 %, numbered backwards from hairpin 21 to the summit.",
       "totalDistanceM": 15713,
       "totalAscentM": 1259
     },
     {
       "id": "rosedale-chimney",
-      "name": "Rosedale Chimney, UK",
-      "region": "North York Moors",
+      "name": "Rosedale Chimney",
+      "region": "North York Moors, UK",
       "file": "rosedale-chimney.gpx",
-      "description": "Real route: a moor loop over one of the steepest surfaced roads in England.",
+      "description": "Rosedale Chimney Bank is one of the steepest surfaced roads in England, climbing out of Rosedale onto the North York Moors. It is named after the ironstone kiln chimney that stood at the top until 1972, and this loop crosses the moor and comes back down.",
       "totalDistanceM": 18907,
       "totalAscentM": 346
     },
     {
       "id": "settle-grassington",
-      "name": "Settle to Grassington, UK",
-      "region": "Yorkshire Dales",
+      "name": "Settle to Grassington",
+      "region": "Yorkshire Dales, UK",
       "file": "settle-grassington.gpx",
-      "description": "Real route: dale to dale across the limestone, climbing out of both.",
+      "description": "A crossing of the limestone country between Ribblesdale and Wharfedale in the Yorkshire Dales, over Malham Moor. It climbs out of Settle, runs high and open across the top, and drops fast into Grassington.",
       "totalDistanceM": 31710,
       "totalAscentM": 552
     },
     {
       "id": "box-hill",
-      "name": "Box Hill, UK",
-      "region": "Surrey",
+      "name": "Box Hill",
+      "region": "Surrey, UK",
       "file": "box-hill.gpx",
-      "description": "Real route: the Olympic circuit over the Zig Zag, and a true loop.",
+      "description": "Box Hill is a chalk hill on the North Downs in Surrey, England, climbed by the Zig Zag Road. It carried the 2012 Olympic road race, which lapped it nine times, and this circuit returns to where it started.",
       "totalDistanceM": 15647,
       "totalAscentM": 236
     }

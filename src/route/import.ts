@@ -12,6 +12,10 @@ import type { Route } from './types';
 
 export interface ImportedRoute {
   name: string;
+  /** The file's own <desc>, where it carries one. Absent rather than empty when it does
+   * not, because the stored record's description is optional and a blank line under a
+   * route name is worse than no line. */
+  description?: string;
   /** What gets stored, and what everything downstream parses. See the rule below. */
   gpx: string;
   totalDistanceM: number;
@@ -159,6 +163,7 @@ export function planRouteImport(
       track.name ?? (read.tracks.length === 1 ? fallback : `${fallback} ${String(position + 1)}`);
     routes.push({
       name,
+      ...(track.description === null ? {} : { description: track.description }),
       gpx: verbatim ? text : buildRouteGpx([{ name, points: track.route.points }]),
       totalDistanceM: Math.round(track.route.totalDistanceM),
       totalAscentM: Math.round(track.route.totalAscentM),

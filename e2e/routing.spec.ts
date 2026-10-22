@@ -19,7 +19,7 @@ function nav(page: Page, section: 'Routes' | 'Workouts' | 'Rides') {
 }
 
 /** The ridden route's name as its label: a slug of the name, never an id. */
-const RIDE_LABEL = '#/ride?route=rosedale-chimney-uk';
+const RIDE_LABEL = '#/ride?route=rosedale-chimney';
 
 test.describe('the hash', () => {
   test('names each list, survives a reload, and goes back and forward between them', async ({

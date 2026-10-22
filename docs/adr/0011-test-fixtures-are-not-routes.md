@@ -55,10 +55,17 @@ Two rules for adding one, both learned the hard way:
   10 m a point throughout for this reason, and a loop is flat because it returns to the height it
   left.
 
-**Unit tests use fixtures, with no exceptions.** There used to be one — the test asserting the
+**Unit tests use fixtures, with one exception.** There used to be one — the test asserting the
 generator reproduced its output byte for byte, which necessarily read `routes/`. Both are gone, so
 the rule is now absolute: a unit test that opens a file from `routes/` is reaching for a 30 km
 profile whose expected values nobody can verify, which is the thing this ADR exists to prevent.
+
+The exception is a test that asserts _which element of a real file was read_ rather than a figure
+computed from it. `routes/alpe-dhuez.gpx` carries seven `<desc>` elements on its waypoints — French
+turn-by-turn notes — and the import must take a description from `<trk>`, `<rte>` or `<metadata>`
+and never from those. Only a real export has that shape, and the test guards against reading the
+wrong element rather than against a number nobody can verify. It first asserts the file still
+contains the waypoint text, so it cannot pass by the file having changed underneath it.
 
 `DESPIKE_THRESHOLD_M` in `src/route/elevation.ts` is the sharpest case. It is tuned under the rule
 that a correction must leave known-good data unchanged, and its evidence used to be the generated
