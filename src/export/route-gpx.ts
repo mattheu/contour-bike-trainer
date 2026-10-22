@@ -16,6 +16,12 @@ import type { RoutePoint } from '../route/types';
 
 export interface RouteTrack {
   name: string;
+  /**
+   * Written when there is one, so a route survives a round trip whole rather than losing
+   * its description to the export. Absent is absent: an empty <desc> would come back as a
+   * description that is the empty string, which is not the same as having none.
+   */
+  description?: string;
   points: readonly RoutePoint[];
 }
 
@@ -42,10 +48,14 @@ function point(p: RoutePoint): string {
   return `      <trkpt lat="${lat}" lon="${lon}"><ele>${p.eleM.toFixed(ELEVATION_DP)}</ele></trkpt>`;
 }
 
-function track({ name, points }: RouteTrack): string {
+function track({ name, description, points }: RouteTrack): string {
+  const described = description !== undefined && description.trim() !== '';
   return [
     '  <trk>',
     `    <name>${escapeXml(name)}</name>`,
+    // After <name>, which is the order GPX 1.1 requires: name, cmt, desc, then the rest.
+    // Out of order it is still readable by most tools and rejected by a strict one.
+    ...(described ? [`    <desc>${escapeXml(description.trim())}</desc>`] : []),
     '    <trkseg>',
     ...points.map(point),
     '    </trkseg>',

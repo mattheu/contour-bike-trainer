@@ -40,7 +40,10 @@ export const FIXTURE_ROUTE: SeedRoute = {
 };
 
 /** A bundled route, for the specs that need one long enough not to end mid-test. */
-export const ROLLING_ROUTE_NAME = 'Test Route 1 — Rolling';
+export const RIDE_ROUTE_NAME = 'Rosedale Chimney';
+
+/** A second one, for the specs that check the list has more than a single route on it. */
+export const OTHER_ROUTE_NAME = 'Greenhow Hill';
 
 export interface OpenOptions {
   fake?: FakeScript;
@@ -83,8 +86,9 @@ async function seedSession(page: Page): Promise<void> {
   );
 }
 
-/** Boots the app on the Routes list, which is now the cold start: pairing lives in the
- * ride settings panel, so there is nothing to do before choosing something to ride.
+/** Boots the app on the Routes list, which is now the cold start: pairing is reachable
+ * from the rider profile panel here and from the ride settings panel once something is
+ * chosen, so nothing has to happen before picking a route.
  * Seeded routes are installed before any app code runs, so the boot-time route seeding
  * picks them up. */
 export async function openApp(page: Page, options: OpenOptions = {}): Promise<void> {
@@ -97,7 +101,7 @@ export async function openApp(page: Page, options: OpenOptions = {}): Promise<vo
     }, options.seedRoutes);
   }
   await page.goto(appUrl(options));
-  await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+  await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
 }
 
 /** The same app with no session seeded: what a rider sees the first time they open it. */
@@ -173,6 +177,21 @@ export async function openRideSettings(page: Page): Promise<Locator> {
 export async function closeRideSettings(page: Page, panel: Locator): Promise<void> {
   await panel.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(panel).toBeHidden();
+}
+
+/**
+ * The profile panel over whichever list is open, reached from the header. It carries the
+ * same device rows as the ride settings panel, so deviceRow and pairDevice work on it too.
+ *
+ * Exact, because role names otherwise match on substring: openRideSettings asks for
+ * "Settings" and would happily take a panel named "Rider profile settings" one rename
+ * from now. Both ends of the pair are pinned so neither can drift onto the other.
+ */
+export async function openRiderProfile(page: Page): Promise<Locator> {
+  await page.getByRole('button', { name: 'Rider profile', exact: true }).click();
+  const panel = page.getByRole('complementary', { name: 'Rider profile', exact: true });
+  await expect(panel).toBeVisible();
+  return panel;
 }
 
 /**

@@ -2,8 +2,19 @@ export const GRAVITY_MS2 = 9.81;
 export const AIR_DENSITY_KGM3 = 1.225;
 export const DRIVETRAIN_EFFICIENCY = 0.97;
 
-/** Terminal speed on a long descent is otherwise unbounded by anything sensible. */
-export const MAX_SPEED_MS = 80 / 3.6;
+/**
+ * The upper bracket of the bisection below, not a speed limit.
+ *
+ * Nothing needs clamping: drag rises with the cube of speed, so a descent has a terminal
+ * velocity of its own and the solver finds it. This only has to sit above any answer the
+ * physics can produce. The steepest grade the app will ride is MAX_GRADE_PERCENT (30),
+ * where a coasting rider settles near 125 km/h, so 200 leaves room for a lighter CdA than
+ * the defaults without ever being the number returned.
+ *
+ * It used to be 80 km/h and was returned directly, which made it a cap: every descent
+ * steeper than about -12 % rode at exactly 80 rather than at its own terminal speed.
+ */
+export const SPEED_SEARCH_CEILING_MS = 200 / 3.6;
 
 /** Bisection iterations. 60 halvings of a 22 m/s bracket is far past double precision. */
 const BISECTION_ITERATIONS = 60;
@@ -73,10 +84,11 @@ export function speedFromPower(
   const turningPointMs =
     constantN < 0 && dragCoefficient > 0 ? Math.sqrt(-constantN / (3 * dragCoefficient)) : 0;
 
-  if (powerForSpeed(MAX_SPEED_MS, gradePercent, rider) <= power) return MAX_SPEED_MS;
+  if (powerForSpeed(SPEED_SEARCH_CEILING_MS, gradePercent, rider) <= power)
+    return SPEED_SEARCH_CEILING_MS;
 
   let low = turningPointMs;
-  let high = MAX_SPEED_MS;
+  let high = SPEED_SEARCH_CEILING_MS;
   for (let i = 0; i < BISECTION_ITERATIONS; i += 1) {
     const mid = (low + high) / 2;
     if (powerForSpeed(mid, gradePercent, rider) <= power) low = mid;

@@ -18,7 +18,7 @@ import {
 } from './engine';
 import { ManualTickSource } from './tick';
 import type { EngineTrainer } from './types';
-import { climbRoute, flatRoute } from '../../test/fixtures';
+import { climbRoute, diamondLoopRoute, flatRoute } from '../../test/fixtures';
 
 /** A trainer that records what it was told and lets a test push data at the engine. */
 class TestTrainer implements EngineTrainer {
@@ -325,7 +325,7 @@ describe('RideEngine', () => {
       expect(engine.getSnapshot().elapsedS).toBe(1);
     });
 
-    it('ends on demand without claiming the route was finished', () => {
+    it('ends on demand, short of the route end', () => {
       const { engine, trainer, step } = harness(flatRoute());
       trainer.emit({ powerW: 200 });
       engine.start();
@@ -333,7 +333,7 @@ describe('RideEngine', () => {
       engine.end();
 
       expect(engine.getSnapshot().state).toBe('finished');
-      expect(engine.getSnapshot().finished).toBe(false);
+      expect(engine.getSnapshot().distanceM).toBeLessThan(flatRoute().totalDistanceM);
     });
 
     it('finishes at the route end and stops moving', () => {
@@ -345,7 +345,6 @@ describe('RideEngine', () => {
 
       const snapshot = engine.getSnapshot();
       expect(snapshot.state).toBe('finished');
-      expect(snapshot.finished).toBe(true);
       expect(snapshot.distanceM).toBe(route.totalDistanceM);
 
       const last = samples[samples.length - 1] as RideSample;
@@ -356,6 +355,80 @@ describe('RideEngine', () => {
       const elapsedAtFinish = snapshot.elapsedS;
       step(10);
       expect(engine.getSnapshot().elapsedS).toBe(elapsedAtFinish);
+    });
+  });
+
+  /**
+   * SPEC.md > A loop can be ridden round again. Everything here is about one thing:
+   * distance ridden and position on the route stop being the same number.
+   */
+  describe('a route that comes back to where it started', () => {
+    /** Rides until the predicate holds, with a cap so a failure is a failed assertion
+     * rather than a hung suite. The diamond fixture is 17 km, so a lap is ~1600 ticks. */
+    function rideUntil(step: (s?: number) => void, done: () => boolean, maxTicks = 4000): void {
+      for (let i = 0; i < maxTicks && !done(); i += 1) step(1);
+    }
+
+    it('rolls through the start line onto the next lap instead of finishing', () => {
+      const route = diamondLoopRoute();
+      const { engine, trainer, step } = harness(route);
+      trainer.emit({ powerW: 300 });
+      engine.start();
+      rideUntil(step, () => engine.getSnapshot().distanceM > route.totalDistanceM + 500);
+
+      const snapshot = engine.getSnapshot();
+      expect(snapshot.state).toBe('running');
+      // Distance ridden kept accumulating; position on the route went back to the start.
+      expect(snapshot.distanceM).toBeGreaterThan(route.totalDistanceM);
+      expect(snapshot.routePositionM).toBeCloseTo(snapshot.distanceM - route.totalDistanceM, 6);
+      expect(snapshot.routePositionM).toBeLessThan(route.totalDistanceM);
+    });
+
+    it('puts the rider back near the start of the route on the second lap', () => {
+      const route = diamondLoopRoute();
+      const { engine, trainer, samples, step } = harness(route);
+      trainer.emit({ powerW: 300 });
+      engine.start();
+      // The first sample is on the start line; ride round to roughly the same place again.
+      const first = samples[0] as RideSample;
+      rideUntil(step, () => engine.getSnapshot().distanceM > route.totalDistanceM + 50);
+
+      const snapshot = engine.getSnapshot();
+      // Within a tick's travel of where the ride began: the coordinates repeat, which is
+      // exactly what a lapped ride looks like on a map and in the exported track.
+      expect(snapshot.lat).toBeCloseTo(first.lat ?? 0, 2);
+      expect(snapshot.lon).toBeCloseTo(first.lon ?? 0, 2);
+
+      // The samples still carry distance ridden, not position: the export is unchanged.
+      const last = samples[samples.length - 1] as RideSample;
+      expect(last.distanceM).toBeGreaterThan(route.totalDistanceM);
+    });
+
+    it('ends only when the rider ends it', () => {
+      const route = diamondLoopRoute();
+      const { engine, trainer, step } = harness(route);
+      trainer.emit({ powerW: 300 });
+      engine.start();
+      rideUntil(step, () => engine.getSnapshot().distanceM > route.totalDistanceM + 500);
+
+      // Several laps in and still going: only end() stops it.
+      expect(engine.getSnapshot().state).toBe('running');
+      engine.end();
+      expect(engine.getSnapshot().state).toBe('finished');
+    });
+
+    it('leaves a point-to-point route finishing exactly as it did', () => {
+      const route = flatRoute();
+      const { engine, trainer, step } = harness(route);
+      trainer.emit({ powerW: 300 });
+      engine.start();
+      for (let i = 0; i < 200; i += 1) step(1);
+
+      const snapshot = engine.getSnapshot();
+      expect(snapshot.state).toBe('finished');
+      expect(snapshot.distanceM).toBe(route.totalDistanceM);
+      // Position and distance are the same number where the route does not lap.
+      expect(snapshot.routePositionM).toBe(snapshot.distanceM);
     });
   });
 
@@ -591,12 +664,10 @@ describe('RideEngine with no route', () => {
     for (let i = 0; i < 2400; i += 1) step(1);
 
     expect(engine.getSnapshot().state).toBe('running');
-    expect(engine.getSnapshot().finished).toBe(false);
     expect(engine.getSnapshot().distanceM).toBeGreaterThan(25_000);
 
     engine.end();
     expect(engine.getSnapshot().state).toBe('finished');
-    expect(engine.getSnapshot().finished).toBe(false);
     expect(samples[samples.length - 1]?.t).toBe(2400);
   });
 
@@ -797,7 +868,6 @@ steps:
     step(1);
 
     expect(engine.getSnapshot().state).toBe('finished');
-    expect(engine.getSnapshot().finished).toBe(true);
   });
 
   it('finishes when the plan runs out, as a route does at its end', () => {
@@ -808,7 +878,6 @@ steps:
 
     const snapshot = engine.getSnapshot();
     expect(snapshot.state).toBe('finished');
-    expect(snapshot.finished).toBe(true);
     expect(snapshot.elapsedS).toBeCloseTo(30, 6);
     expect(samples[samples.length - 1]?.t).toBeCloseTo(30, 6);
   });

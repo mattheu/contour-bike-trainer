@@ -2,7 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { expect, test, type Page } from '@playwright/test';
 import {
   FIXTURE_ROUTE,
-  ROLLING_ROUTE_NAME,
+  RIDE_ROUTE_NAME,
   openApp,
   openRoute,
   readElapsedSeconds,
@@ -60,12 +60,12 @@ test.describe('deleting a ride', () => {
     await page.getByRole('button', { name: 'Done' }).click();
 
     await nav(page, 'Routes').click();
-    await rideAgain(page, ROLLING_ROUTE_NAME);
+    await rideAgain(page, RIDE_ROUTE_NAME);
     await endRide(page);
     await page.getByRole('button', { name: 'Done' }).click();
 
     await expect(rideRow(page, FIXTURE_ROUTE.name)).toHaveCount(1);
-    await expect(rideRow(page, ROLLING_ROUTE_NAME)).toHaveCount(1);
+    await expect(rideRow(page, RIDE_ROUTE_NAME)).toHaveCount(1);
 
     // First press arms the row rather than deleting it, and says why it is asking.
     await page.getByRole('button', { name: `Delete ${FIXTURE_ROUTE.name}` }).click();
@@ -79,7 +79,7 @@ test.describe('deleting a ride', () => {
 
     // Arming the other row moves the question rather than arming two.
     await page.getByRole('button', { name: `Delete ${FIXTURE_ROUTE.name}` }).click();
-    await page.getByRole('button', { name: `Delete ${ROLLING_ROUTE_NAME}` }).click();
+    await page.getByRole('button', { name: `Delete ${RIDE_ROUTE_NAME}` }).click();
     await expect(page.getByText("Sure? Can't be undone")).toHaveCount(1);
     await expect(page.getByRole('button', { name: `Delete ${FIXTURE_ROUTE.name}` })).toHaveCount(1);
 
@@ -90,25 +90,25 @@ test.describe('deleting a ride', () => {
 
     await expect(page.getByText(`${FIXTURE_ROUTE.name} deleted.`)).toBeVisible();
     await expect(rideRow(page, FIXTURE_ROUTE.name)).toHaveCount(0);
-    await expect(rideRow(page, ROLLING_ROUTE_NAME)).toHaveCount(1);
+    await expect(rideRow(page, RIDE_ROUTE_NAME)).toHaveCount(1);
 
     // Storage, not the rendered list: leaving the screen and coming back re-reads both
     // repositories, so a ride that only vanished from React state would be back here.
     await nav(page, 'Routes').click();
     await nav(page, 'Rides').click();
-    await expect(rideRow(page, ROLLING_ROUTE_NAME)).toHaveCount(1);
+    await expect(rideRow(page, RIDE_ROUTE_NAME)).toHaveCount(1);
     await expect(rideRow(page, FIXTURE_ROUTE.name)).toHaveCount(0);
 
     // And from the summary of the survivor, which is where you decide a ride was a
     // mistake. Reached from the history, so it is a deletion and says so.
-    await rideRow(page, ROLLING_ROUTE_NAME).click();
+    await rideRow(page, RIDE_ROUTE_NAME).click();
     await page.getByRole('button', { name: 'Delete ride' }).click();
     await expect(page.getByText("Sure? Can't be undone")).toBeVisible();
     await page.getByRole('button', { name: 'Delete', exact: true }).click();
 
     // Back on the history, which is now empty.
     await expect(page.getByText('No rides match these filters')).toBeVisible();
-    await expect(rideRow(page, ROLLING_ROUTE_NAME)).toHaveCount(0);
+    await expect(rideRow(page, RIDE_ROUTE_NAME)).toHaveCount(0);
   });
 
   test('discards the ride just finished and goes back to the routes', async ({ page }) => {
@@ -152,9 +152,9 @@ test.describe('built-in routes and workouts', () => {
     await openApp(page);
 
     // The bundled route keeps everything else a row offers; only Remove is absent.
-    await expect(page.getByRole('button', { name: `Remove ${ROLLING_ROUTE_NAME}` })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: `Remove ${RIDE_ROUTE_NAME}` })).toHaveCount(0);
     await expect(
-      page.getByRole('button', { name: `Download ${ROLLING_ROUTE_NAME} as GPX` }),
+      page.getByRole('button', { name: `Download ${RIDE_ROUTE_NAME} as GPX` }),
     ).toHaveCount(1);
 
     // A starter workout, same rule: its row keeps the controls a starter is for — View,
@@ -185,7 +185,7 @@ test.describe('built-in routes and workouts', () => {
     // Storage, not React state: the next boot reseeds, and seeding must not resurrect a
     // route no manifest entry claims.
     await page.reload();
-    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
     await expect(page.getByRole('link', { name: IMPORTED_ROUTE_NAME })).toHaveCount(0);
   });
 });

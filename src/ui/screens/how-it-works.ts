@@ -174,15 +174,18 @@ export const COLUMNS: Column[] = [
       },
       {
         /*
-         * The real order, which matters and is not obvious: there is no connect screen,
-         * so a route or workout has to be open before the panel that pairs even exists.
-         * e2e/connect.spec.ts drives exactly this sequence.
+         * The short path, which is new: devices moved into the rider profile panel, so
+         * pairing no longer waits on a route being open. The ride settings panel still
+         * carries the same rows for pairing mid-session — deliberately not mentioned,
+         * because a rider meeting the app needs one way in, not both. The strap is not
+         * a fourth step for the same reason: the panel pairs it with the identical row,
+         * and the entry above already says it is optional.
          */
         label: 'Connect',
         steps: [
           'Power the trainer on and turn the pedals to wake it.',
-          'Choose a route or workout to open the ride.',
-          'Press Settings, then Connect beside each device.',
+          'Open Rider profile and press Connect.',
+          'Pick your trainer from the browser list.',
         ],
       },
     ],

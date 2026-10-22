@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import type { Climb } from '../../route/climbs';
 import { detectClimbs } from '../../route/climbs';
+import { lapLabel, lapStartM } from '../../route/loop';
 import { WINDOW_WIDE_M, buildProfile, projectWindow } from '../../route/profile';
 import type { Route } from '../../route/types';
 import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
@@ -17,8 +18,10 @@ import {
   type RouteMapHandle,
   chartStackHeights,
 } from '../charts';
+import type { DevicesView } from '../components/Devices';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
+import { LoopTag } from '../components/LoopTag';
 import { RideHeader } from '../components/RideHeader';
 import { Segmented } from '../components/Segmented';
 import { Stat } from '../components/Stat';
@@ -36,7 +39,7 @@ import {
   readingTone,
 } from './ride-view';
 import { powerSamplesFrom } from './summary-view';
-import { RideSettings, type DevicesView, type Targets } from './RideSettings';
+import { RideSettings, type Targets } from './RideSettings';
 import { useElementHeight, useElementWidth } from './use-element-width';
 
 type ProfileZoom = 'route' | 'window';
@@ -117,7 +120,25 @@ export function Ride({
   const profile = useMemo(() => buildProfile(route), [route]);
   const climbs = useMemo(() => detectClimbs(route), [route]);
 
-  const { distanceM } = snapshot;
+  /**
+   * Where the rider is on the route, which is what every chart on this screen draws and
+   * what the distance reading now counts: on a loop it wraps at the route's length, so
+   * the ridden fill reaches the end and starts again rather than the chart running out.
+   * The same number as distanceM on a point-to-point route.
+   */
+  const { routePositionM } = snapshot;
+  /**
+   * Which lap, and the distance that lap began at. One label does both jobs — `Loop`
+   * until the first is complete, `Lap 2` after — so the tag and the counter never
+   * compete for the same slot. Null on a route that does not come back to its start.
+   */
+  const lap =
+    snapshot.routeLoops && snapshot.routeTotalDistanceM !== null
+      ? {
+          label: lapLabel(snapshot.distanceM, snapshot.routeTotalDistanceM),
+          startM: lapStartM(snapshot.distanceM, snapshot.routeTotalDistanceM),
+        }
+      : null;
 
   // design/DESIGN.md: a fault shows in the data too. The trainer's readings go stale
   // when it drops; heart rate follows the strap, which can fail on its own.
@@ -128,21 +149,28 @@ export function Ride({
   // default — keeps a null window and so a stable geometry for the whole ride.
   const window = useMemo(
     () =>
-      profileZoom === 'route' ? null : projectWindow(route, profile, distanceM, WINDOW_WIDE_M),
-    [profileZoom, route, profile, distanceM],
+      profileZoom === 'route' ? null : projectWindow(route, profile, routePositionM, WINDOW_WIDE_M),
+    [profileZoom, route, profile, routePositionM],
   );
 
   // The recorder's own 1 Hz series, published through the store. Mapped by the same
   // tested function the summary uses, so the strip reads the same shape either side of
   // the finish rather than one rebuilt from snapshots here.
-  const samples = useMemo(() => powerSamplesFrom(snapshot.samples), [snapshot.samples]);
+  //
+  // Offset to the current lap, because the strip shares the profile's x-axis and that
+  // axis is the route rather than the ride: without it a second lap's samples would sit
+  // past the right-hand edge and the strip would stop growing at the start line.
+  const samples = useMemo(
+    () => powerSamplesFrom(snapshot.samples, lap?.startM ?? 0),
+    [snapshot.samples, lap?.startM],
+  );
 
   // The one place the charts are told the time has moved. They mutate their own SVG
   // through these handles; nothing here puts a chart's geometry into React state.
   useEffect(() => {
-    profileRef.current?.update(distanceM);
-    mapRef.current?.update(distanceM);
-    stripRef.current?.update(distanceM);
+    profileRef.current?.update(routePositionM);
+    mapRef.current?.update(routePositionM);
+    stripRef.current?.update(routePositionM);
   });
 
   /**
@@ -219,6 +247,7 @@ export function Ride({
       <div className="px-[64px] pt-[36px]">
         <RideHeader
           title={snapshot.routeName ?? 'Free ride'}
+          tag={lap === null ? undefined : <LoopTag label={lap.label} />}
           pauseLabel={primaryControlLabel(snapshot.state, snapshot.elapsedS)}
           onPause={onPauseToggle}
           onEnd={onEnd}
@@ -271,10 +300,14 @@ export function Ride({
           <Stat testId="ride-elapsed" label="Elapsed" value={duration(snapshot.elapsedS)} />
         </Secondary>
         <Secondary divided>
+          {/* Position on the route over the route's length, which on a loop is the
+              lap's progress rather than the ride's: "distance of total" has no meaning
+              when the total is however long you choose to keep going. The lap it belongs
+              to is named once, in the header. */}
           <Stat
             testId="ride-distance"
             label="Distance"
-            value={distance(kilometres(snapshot.distanceM))}
+            value={distance(kilometres(snapshot.routePositionM))}
             total={distance(kilometres(snapshot.routeTotalDistanceM))}
             unit="km"
           />

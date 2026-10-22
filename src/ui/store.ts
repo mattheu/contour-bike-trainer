@@ -74,7 +74,18 @@ export interface RideSnapshot {
   elapsedS: number;
   /** Wall-clock time spent paused. elapsedS + pausedS is the time on the bike. */
   pausedS: number;
+  /** How far the rider has ridden. On a loop it keeps accumulating past the route's
+   * own length, because that is what a second lap is. */
   distanceM: number;
+  /**
+   * Where that puts them on the route, which on a loop is distance modulo the route's
+   * length. The same number as distanceM on a point-to-point route and on a ride with no
+   * route; different the moment a loop rolls through its start line.
+   *
+   * The charts and the distance reading take this one, because all of them are asking
+   * where the rider is rather than how far they have gone.
+   */
+  routePositionM: number;
   ascentM: number;
   /** The real route grade, display-smoothed. The engine writes the raw value to the
    * trainer; a 30 m lookahead twitches too much to read as a number. */
@@ -93,6 +104,13 @@ export interface RideSnapshot {
   routeGeometry: RouteGeometry | null;
   routeTotalDistanceM: number | null;
   routeTotalAscentM: number | null;
+  /**
+   * Whether the route being ridden comes back to where it started, from the one geometry
+   * check in src/route/loop.ts. Published with the geometry at ride start rather than
+   * re-derived per render: the screen's lap counter and the engine's decision not to stop
+   * at the start line have to be the same answer.
+   */
+  routeLoops: boolean;
 
   trainerDifficulty: number;
   targetPowerW: number | null;
@@ -126,6 +144,7 @@ const INITIAL: RideSnapshot = {
   elapsedS: 0,
   pausedS: 0,
   distanceM: 0,
+  routePositionM: 0,
   ascentM: 0,
   gradePercent: null,
   avgPowerW: null,
@@ -135,6 +154,7 @@ const INITIAL: RideSnapshot = {
   routeGeometry: null,
   routeTotalDistanceM: null,
   routeTotalAscentM: null,
+  routeLoops: false,
 
   trainerDifficulty: 50,
   targetPowerW: null,

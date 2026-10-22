@@ -3,6 +3,8 @@ import type { Ride, Route as StoredRoute } from '../../storage/types';
 import {
   ROUTE_DELETE_WORDING,
   canRemoveRoute,
+  descriptionLine,
+  labelRow,
   rideCounts,
   riddenLabel,
   sortRoutes,
@@ -23,7 +25,6 @@ function ride(routeId: string | null, id: string): Ride {
     ascentM: 10,
     avgPowerW: 200,
     avgHeartRateBpm: null,
-    finished: true,
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,
@@ -72,6 +73,55 @@ describe('sortRoutes', () => {
   });
 });
 
+describe('labelRow', () => {
+  it('reads kind then region, which is the order the row draws them in', () => {
+    expect(labelRow('loop', 'Surrey, UK')).toEqual(['Loop', 'Surrey, UK']);
+    expect(labelRow('point_to_point', 'Oisans, France')).toEqual([
+      'Point to point',
+      'Oisans, France',
+    ]);
+  });
+
+  it('names a point-to-point route as plainly as a loop', () => {
+    // Both kinds get a word and a mark. Marking loops alone made the other kind read as
+    // a route about which nothing was known.
+    expect(labelRow('point_to_point', undefined)).toEqual(['Point to point']);
+  });
+
+  it('leaves the kind out until the row knows it', () => {
+    // Geometry loads per row and the sparkline comes with it; until then the row says
+    // where the route is and nothing about its shape.
+    expect(labelRow(null, 'Mallorca, Spain')).toEqual(['Mallorca, Spain']);
+  });
+
+  it('gives no label row at all to a route with neither', () => {
+    expect(labelRow(null, undefined)).toEqual([]);
+    expect(labelRow(null, '   ')).toEqual([]);
+  });
+});
+
+describe('descriptionLine', () => {
+  it('is the route’s own description', () => {
+    const described = { ...route('a', 'Box Hill'), description: 'Zig Zag Road, three times.' };
+    expect(descriptionLine(described)).toBe('Zig Zag Road, three times.');
+  });
+
+  it('is null where a route has none, so the row closes up instead of leaving a gap', () => {
+    // The common case for an imported GPX: no <desc> in the file, no line on the row.
+    expect(descriptionLine(route('a', 'Imported'))).toBeNull();
+  });
+
+  it('treats a blank description as none, not as an empty line', () => {
+    expect(descriptionLine({ ...route('a', 'Blank'), description: '   \n ' })).toBeNull();
+  });
+
+  it('trims a description that is only padded', () => {
+    expect(descriptionLine({ ...route('a', 'Padded'), description: '  Over the moor.  ' })).toBe(
+      'Over the moor.',
+    );
+  });
+});
+
 describe('ROUTE_DELETE_WORDING', () => {
   it('does not borrow the rides list’s claim that this cannot be undone', () => {
     // A route is metadata over a GPX that is still in the build. The rides wording is
@@ -94,12 +144,12 @@ describe('ROUTE_DELETE_WORDING', () => {
 });
 
 describe('canRemoveRoute', () => {
-  const builtIn: ReadonlySet<string> = new Set(['test-rolling', 'alpe-dhuez']);
+  const builtIn: ReadonlySet<string> = new Set(['greenhow-hill', 'alpe-dhuez']);
 
   it('offers no Remove on a route the build supplies', () => {
     // Absent, not disabled. Seeding writes a built-in route back on the next boot, so a
     // control here would be a question with one honest answer.
-    expect(canRemoveRoute('test-rolling', builtIn)).toBe(false);
+    expect(canRemoveRoute('greenhow-hill', builtIn)).toBe(false);
   });
 
   it('offers Remove on a route the rider imported', () => {
@@ -108,6 +158,6 @@ describe('canRemoveRoute', () => {
 
   it('offers Remove once a route has left the manifest', () => {
     // The way out for a stale record: drop the entry and the id stops being built in.
-    expect(canRemoveRoute('test-rolling', new Set(['alpe-dhuez']))).toBe(true);
+    expect(canRemoveRoute('greenhow-hill', new Set(['alpe-dhuez']))).toBe(true);
   });
 });

@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { MAX_GRADE_PERCENT } from '../route/grade';
 import {
   DEFAULT_RIDER,
-  MAX_SPEED_MS,
+  SPEED_SEARCH_CEILING_MS,
   powerForSpeed,
   speedFromPower,
   speedFromPowerKmh,
@@ -35,22 +36,37 @@ describe('speedFromPower', () => {
 
   it('coasts to the gravity and drag balance at zero power on a steep descent', () => {
     // At -10 %: gravity gives 824.04 * (0.004*cos - sin) = -78.71 N, drag is
-    // 0.196 v^2, so v = sqrt(78.71 / 0.196) = 20.04 m/s = 72.1 km/h. Below the
-    // cap, and a genuine balance, so the residual power required there is zero.
+    // 0.196 v^2, so v = sqrt(78.71 / 0.196) = 20.04 m/s = 72.1 km/h. A genuine
+    // balance, so the residual power required there is zero.
     const speed = speedFromPower(0, -10);
-    expect(speed).toBeLessThan(MAX_SPEED_MS);
+    expect(speed).toBeLessThan(SPEED_SEARCH_CEILING_MS);
     expect(speedFromPowerKmh(0, -10)).toBeCloseTo(72.1, 1);
     expect(powerForSpeed(speed, -10)).toBeCloseTo(0, 6);
   });
 
-  it('caps a very steep descent at 80 km/h', () => {
-    expect(speedFromPowerKmh(0, -14)).toBe(80);
-    expect(speedFromPowerKmh(0, -20)).toBe(80);
-    expect(speedFromPowerKmh(400, -14)).toBe(80);
+  it('lets a steep descent run to its own terminal speed, not to a limit', () => {
+    // Each is the gravity and drag balance for that grade, found rather than clamped:
+    // steeper is faster, and the residual power at the answer is zero.
+    const steep = speedFromPowerKmh(0, -20);
+    expect(steep).toBeGreaterThan(speedFromPowerKmh(0, -14));
+    expect(steep).toBeGreaterThan(80);
+    expect(powerForSpeed(steep / 3.6, -20)).toBeCloseTo(0, 6);
+    // Pedalling down it is faster still, which a clamp made impossible.
+    expect(speedFromPowerKmh(400, -14)).toBeGreaterThan(speedFromPowerKmh(0, -14));
   });
 
-  it('caps absurd power on the flat at 80 km/h too', () => {
-    expect(speedFromPowerKmh(5000, 0)).toBe(80);
+  it('never returns the search bracket itself, even at the steepest grade ridden', () => {
+    expect(speedFromPower(0, -MAX_GRADE_PERCENT)).toBeLessThan(SPEED_SEARCH_CEILING_MS);
+    expect(speedFromPower(2000, -MAX_GRADE_PERCENT)).toBeLessThan(SPEED_SEARCH_CEILING_MS);
+  });
+
+  it('answers absurd power on the flat with the speed it actually implies', () => {
+    // 5 kW against drag alone, not a clamp: still far under the search bracket, and the
+    // residual power at the answer is nought.
+    const kmh = speedFromPowerKmh(5000, 0);
+    expect(kmh).toBeGreaterThan(80);
+    expect(kmh).toBeLessThan(200);
+    expect(powerForSpeed(kmh / 3.6, 0)).toBeCloseTo(5000, 3);
   });
 
   it('grinds up a steep climb at a plausible speed', () => {

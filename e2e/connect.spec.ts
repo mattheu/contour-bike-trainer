@@ -1,10 +1,11 @@
 import { expect, test } from '@playwright/test';
 import {
-  ROLLING_ROUTE_NAME,
+  RIDE_ROUTE_NAME,
   closeRideSettings,
   deviceRow,
   openApp,
   openRideSettings,
+  openRiderProfile,
   openRoute,
   pairDevice,
 } from './support/app';
@@ -23,7 +24,7 @@ test.describe('connecting from the ride settings panel', () => {
     await openApp(page, { fake: 'constant', memoryStorage: true });
 
     // The route is chosen first now, and the ride is armed before anything is paired.
-    await openRoute(page, ROLLING_ROUTE_NAME);
+    await openRoute(page, RIDE_ROUTE_NAME);
     const panel = await openRideSettings(page);
 
     await expect(deviceRow(panel, 'trainer')).toContainText('Not connected');
@@ -59,5 +60,28 @@ test.describe('connecting from the ride settings panel', () => {
     // from inside the ride rather than before it.
     await expect(page.getByTestId('ride-power')).toContainText(/\d/);
     await expect(page.getByTestId('ride-heart-rate')).toContainText(/\d/);
+  });
+});
+
+/**
+ * The same rows, reached before anything has been chosen to ride. What matters is that
+ * there is one connection behind both panels: pairing from the profile and then opening
+ * a ride must not ask the rider to pair again.
+ */
+test.describe('connecting from the rider profile panel', () => {
+  test('pairs from a list, and the ride inherits the connection', async ({ page }) => {
+    await openApp(page, { fake: 'constant', memoryStorage: true });
+
+    const profile = await openRiderProfile(page);
+    await expect(deviceRow(profile, 'trainer')).toContainText('Not connected');
+    await pairDevice(profile, 'trainer');
+
+    await profile.getByRole('button', { name: 'Close', exact: true }).click();
+    await expect(profile).toBeHidden();
+
+    // The connection is held outside any one ride, so arming one must not drop it.
+    await openRoute(page, RIDE_ROUTE_NAME);
+    const settings = await openRideSettings(page);
+    await expect(deviceRow(settings, 'trainer')).toContainText(/Connected · \d+ W/);
   });
 });

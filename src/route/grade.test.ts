@@ -81,6 +81,45 @@ describe('gradeAt', () => {
     expect(gradeAt(climbRoute(), -50)).toBeCloseTo(10, 2);
     expect(gradeAt(climbRoute(), 50_000)).toBe(0);
   });
+
+  /**
+   * A loop's last metres are not the end of the road, they are the approach to the next
+   * lap — so the lookahead wraps rather than shrinking. Without it the trainer is
+   * released to flat for the length of the window every time round.
+   */
+  describe('on a loop', () => {
+    /** Closed: last point is first. Climbs 10 % out of the start for 200 m and runs flat
+     * for the last 200 m into it, so the window either side of the line is unambiguous. */
+    const circuit = (): Route => ({
+      points: [
+        { lat: 51.5, lon: -0.1, eleM: 100, distM: 0 },
+        { lat: 51.55, lon: -0.1, eleM: 120, distM: 200 },
+        { lat: 51.55, lon: -0.15, eleM: 100, distM: 800 },
+        { lat: 51.5, lon: -0.1, eleM: 100, distM: 1000 },
+      ],
+      totalDistanceM: 1000,
+      totalAscentM: 20,
+    });
+
+    it('reads the road past the start line rather than running out of route', () => {
+      // 10 m of flat into the line, then 30 m of the 10 % climb out of it.
+      expect(gradeAt(circuit(), 990, 40)).toBeCloseTo(7.5, 6);
+    });
+
+    it('reads the lap ahead standing on the line, not zero', () => {
+      expect(gradeAt(circuit(), 1000, 40)).toBeCloseTo(10, 6);
+      expect(gradeAt(circuit(), 0, 40)).toBeCloseTo(10, 6);
+    });
+
+    it('wraps a distance already past the route, which is a second lap', () => {
+      expect(gradeAt(circuit(), 1100, 40)).toBeCloseTo(10, 6);
+    });
+
+    it('does not wrap a window wider than the route itself', () => {
+      // 2 km of lookahead round a 1 km circuit would read the same ground twice.
+      expect(gradeAt(circuit(), 990, 2000)).toBe(0);
+    });
+  });
 });
 
 describe('trainerGrade', () => {

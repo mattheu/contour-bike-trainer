@@ -19,7 +19,6 @@ function ride(overrides: Partial<Ride> = {}): Ride {
     ascentM: 42,
     avgPowerW: 216,
     avgHeartRateBpm: 142,
-    finished: true,
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,

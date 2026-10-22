@@ -1,11 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import {
-  ROLLING_ROUTE_NAME,
-  openApp,
-  openRoute,
-  readElapsedSeconds,
-  startRide,
-} from './support/app';
+import { RIDE_ROUTE_NAME, openApp, openRoute, readElapsedSeconds, startRide } from './support/app';
 
 /**
  * The routing itself (ADR-0018), which is the one thing the rest of the suite cannot
@@ -24,8 +18,8 @@ function nav(page: Page, section: 'Routes' | 'Workouts' | 'Rides') {
   return page.getByRole('group', { name: 'Section' }).getByRole('button', { name: section });
 }
 
-/** The rolling route's name as its label: a slug of the name, never an id. */
-const ROLLING_LABEL = '#/ride?route=test-route-1-rolling';
+/** The ridden route's name as its label: a slug of the name, never an id. */
+const RIDE_LABEL = '#/ride?route=rosedale-chimney';
 
 test.describe('the hash', () => {
   test('names each list, survives a reload, and goes back and forward between them', async ({
@@ -51,7 +45,7 @@ test.describe('the hash', () => {
 
     await page.goBack();
     await expect(page).toHaveURL(/#\/routes$/);
-    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
 
     await page.goForward();
     await expect(page).toHaveURL(/#\/workouts$/);
@@ -93,7 +87,7 @@ test.describe('the hash', () => {
       window.location.hash = '#/nonsense';
     });
     await expect(page).toHaveURL(/#\/routes$/);
-    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
 
     // And cold, which is the bookmark someone saved from a build that had such a screen.
     await page.goto(`${COLD}#/workouts/does-not-exist`);
@@ -108,19 +102,19 @@ test.describe('the hash', () => {
     // Nothing resolves the label, so nothing starts.
     await page.goto(`${COLD}#/ride?route=greenhow-hill`);
     await expect(page).toHaveURL(/#\/routes$/);
-    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
   });
 
   test('labels a ride with what it is, and reloading it does not restart it', async ({ page }) => {
     await openApp(page, { fake: 'constant', memoryStorage: true });
-    await openRoute(page, ROLLING_ROUTE_NAME);
-    await expect(page).toHaveURL(new RegExp(`${ROLLING_LABEL.replace('?', '\\?')}$`));
+    await openRoute(page, RIDE_ROUTE_NAME);
+    await expect(page).toHaveURL(new RegExp(`${RIDE_LABEL.replace('?', '\\?')}$`));
 
     // The ride is armed, not running, so there is nothing to lose and nothing to confirm.
     // What comes back is the routes list, not a ride restarted from zero.
     await page.reload();
     await expect(page).toHaveURL(/#\/routes$/);
-    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
   });
 });
 
@@ -132,7 +126,7 @@ test.describe('back out of a ride', () => {
   /** A ride with samples in it, which is what makes it worth asking about. */
   async function rideUnderway(page: Page): Promise<void> {
     await openApp(page, { fake: 'constant', memoryStorage: true });
-    await startRide(page, ROLLING_ROUTE_NAME);
+    await startRide(page, RIDE_ROUTE_NAME);
     // rideAtRisk is false until the recorder has taken a sample: a dialog over nothing
     // teaches the rider to dismiss it.
     await expect.poll(() => readElapsedSeconds(page)).toBeGreaterThanOrEqual(2);
@@ -153,7 +147,7 @@ test.describe('back out of a ride', () => {
     await expect.poll(() => asked.length).toBe(1);
     expect(asked[0]).toContain('Leave this ride?');
     // Where they were: the ride's own URL, pushed back on, and the ride still running.
-    await expect(page).toHaveURL(new RegExp(`${ROLLING_LABEL.replace('?', '\\?')}$`));
+    await expect(page).toHaveURL(new RegExp(`${RIDE_LABEL.replace('?', '\\?')}$`));
     await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
   });
 
@@ -166,6 +160,6 @@ test.describe('back out of a ride', () => {
     });
 
     await expect(page).toHaveURL(/#\/routes$/);
-    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
   });
 });

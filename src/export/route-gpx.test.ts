@@ -39,6 +39,32 @@ describe('buildRouteGpx', () => {
     expect(tracks[1]?.route.points).toHaveLength(climb.points.length);
   });
 
+  it('carries a description back out, so a route survives the round trip whole', () => {
+    // The asymmetry this closes: a route split out of a multi-track file is re-emitted
+    // rather than stored verbatim, so without this its description lived on the record and
+    // vanished the moment it was downloaded.
+    const gpx = buildRouteGpx([
+      { name: 'Flat', description: 'A level kilometre.', points: flatRoute().points },
+    ]);
+
+    expect(gpx).toContain('<desc>A level kilometre.</desc>');
+    // After <name>, which is the order the GPX 1.1 schema requires.
+    expect(gpx.indexOf('<desc>')).toBeGreaterThan(gpx.indexOf('<name>'));
+    expect(parseGpxTracks(gpx).tracks[0]?.description).toBe('A level kilometre.');
+  });
+
+  it('writes no description element at all when there is none', () => {
+    // Absent must stay absent: an empty <desc> reads back as a description that is the
+    // empty string, which is not the same as having none.
+    const gpx = buildRouteGpx([
+      { name: 'Flat', points: flatRoute().points },
+      { name: 'Blank', description: '   ', points: flatRoute().points },
+    ]);
+
+    expect(gpx).not.toContain('<desc>');
+    expect(parseGpxTracks(gpx).tracks.map((track) => track.description)).toEqual([null, null]);
+  });
+
   it('escapes a name rather than letting it break the document', () => {
     const gpx = buildRouteGpx([{ name: 'Fred & <Ginger>', points: flatRoute().points }]);
 

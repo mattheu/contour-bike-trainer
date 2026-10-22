@@ -5,22 +5,20 @@
 The **Routes** tab lists what you can ride. Each row shows a thumbnail of the route's profile, its
 name, distance, elevation gain, and how many times you have ridden it.
 
-Three real climbs ship with the app:
+Six real routes ship with the app — no synthetic ones, because an app about riding real roads
+should not open on a test fixture:
 
-- **Greenhow Hill**, Yorkshire Dales. 67 km, 1,104 m — the long one, and the only route here where
-  the climbing is spread rather than stacked.
-- **Sa Calobra**, Mallorca. 13 km, 702 m — relentlessly consistent, which makes it the honest test
+- **Greenhow Hill**, Yorkshire Dales, UK. 67 km, 1,104 m — the long one, and the only route here
+  where the climbing is spread rather than stacked.
+- **Settle to Grassington**, Yorkshire Dales, UK. 32 km, 552 m across the limestone, climbing out
+  of both dales and dropping to −17 % on the way over.
+- **Rosedale Chimney**, North York Moors, UK. 19 km, 346 m — a moor loop over one of the steepest
+  surfaced roads in England, ramping past 21 %.
+- **Box Hill**, Surrey, UK. 16 km, 236 m — the Olympic circuit, and a true loop.
+- **Sa Calobra**, Mallorca, Spain. 13 km, 702 m — relentlessly consistent, which makes it the honest test
   of whether you can hold a number.
-- **Alpe d'Huez**, Oisans. 16 km, 1,259 m — trimmed to finish at the top rather than running on
-  through the village.
-
-Two synthetic routes ship alongside them, named as what they are:
-
-- **Test Route 1 — Rolling.** 20 km, about 250 m of climbing, continuous gentle undulation with
-  nothing sustained.
-- **Test Route 2 — Mixed.** 30 km, about 700 m of climbing: a flat start, a 5 km climb that ramps
-  to 12 %, a fast descent, then rolling terrain to the finish. This is the one that makes the
-  difficulty slider obvious.
+- **Alpe d'Huez**, Oisans, France. 16 km, 1,259 m — trimmed to finish at the top rather than
+  running on through the village.
 
 Clicking a row starts the ride immediately. There is no confirmation step — the row _is_ the
 button.
@@ -74,9 +72,17 @@ reading that is no longer live, not a reading of nought.
 
 ## Finishing
 
-Reaching the end of the route ends the ride on its own — there is no lap two. Pressing **End
-ride** stops it wherever you are; a ride ended that way is marked _ended early_ on its summary,
-so a half-ridden route is never mistaken for a completed one.
+Reaching the end of a point-to-point route ends the ride on its own. **A loop does not stop you at
+the start line**: it rolls through onto the next lap, and keeps going until you end it. Three of the
+six — Greenhow Hill, Rosedale Chimney and Box Hill — start and finish in the same place, and the
+app works that out from the route itself rather than being told, so a loop you import laps too.
+
+A loop is marked **LOOP** beside its name, and once you come round it reads **LAP 2**. The profile
+and the map show the lap you are on, filling again each time; the distance beside them is your
+progress round this lap, and your total is the Distance reading. Pressing **End
+ride** stops it wherever you are. The summary shows how far you got against the route's length —
+`12.4 / 15.7 km` — so a half-ridden route is never mistaken for a completed one, and stopping a
+hundred metres from the top does not read the same as abandoning after two minutes.
 
 Either way you land on the ride summary: time, distance, climbing, average power and average
 heart rate, with the full profile and the ride's power laid under it. **Download TCX** is

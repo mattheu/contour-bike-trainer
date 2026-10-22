@@ -32,8 +32,10 @@ different things and the screen never conflates them.
 Speed is calculated rather than measured. Contour takes the power you are producing, the real
 gradient of the route, your weight and the bike's, and solves the standard cycling power equation
 for how fast that would actually move you. 200 W on the flat gives about 34 km/h. On a descent
-with no power at all you still roll, at whatever gravity and air resistance settle on, capped at
-80 km/h.
+with no power at all you still roll, at whatever gravity and air resistance settle on — about
+72 km/h on a 10 % descent, and faster on anything steeper. There is no speed limit: drag rises
+with the cube of speed, so every gradient has a terminal velocity of its own and that is what you
+get.
 
 The gradient shown is always **the real gradient of the route**, never the one the trainer has
 been asked to reproduce. See _Trainer difficulty_ below.

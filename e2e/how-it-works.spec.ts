@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { ROLLING_ROUTE_NAME, openApp, openFreshInstall } from './support/app';
+import { RIDE_ROUTE_NAME, openApp, openFreshInstall } from './support/app';
 
 /**
  * The one screen reachable before signing in, so this spec seeds no session either — the
@@ -58,6 +58,6 @@ test.describe('how it works', () => {
     await expect(page.getByRole('link', { name: 'Start' })).toHaveCount(0);
 
     await page.getByRole('link', { name: 'Back' }).click();
-    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
   });
 });

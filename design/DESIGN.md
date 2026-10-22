@@ -135,6 +135,7 @@ The reference sequence is the interval change in `mockups/animation-guide.html`:
 - Workouts library: no import in version 1. Columns are plan thumbnail, name, length and load (Training Stress Score, computed from the plan and FTP). Filters are length and load. There is no intensity column.
 - Phones: portrait shows the three primaries in one row, three secondaries, then Profile | Map (one at a time) over the power strip. Landscape shows primaries and secondaries on top, profile and strip below.
 - Lists: Rides, Routes and Workouts share one header with the segmented nav and one accent import button.
+- Routes: each row is profile thumbnail, name, a micro label row, a one-line description, distance, gain and times ridden. The label row carries the route kind as a 14 px glyph and word — a closed ring for Loop, an open line with a start dot and end tick for Point to point — then the region, all in muted tracked caps. No filled chips. The description is one line of ink body text (14 px) clipped with an ellipsis, so it reads apart from the muted label row above it; the full text appears on the route's start sheet. A loop can be ridden continuously; a point-to-point ride ends at the finish.
 
 ## Map basemap (future phase)
 
