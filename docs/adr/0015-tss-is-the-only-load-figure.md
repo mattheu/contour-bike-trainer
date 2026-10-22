@@ -35,6 +35,14 @@ what makes "was that harder than last Tuesday" a single comparable number across
 
 The workout's own `ftp:` key is used when it has one; the rider profile's FTP otherwise.
 
+## Amended 2026-10-22: where a ride's TSS lives
+
+The decision above stands. What it did not say is where the ride half of it is kept, and the answer turns out to matter: **a ride stores its TSS, computed at save.**
+
+TSS needs the full sample series, and samples are deliberately split out of the records the rides list loads. So a figure not stored at save can only be recovered by walking the samples of every ride, which is the cost this separation exists to avoid. The rule, which the ghost's lap splits follow for the same reason: _store the expensive derivation, derive the cheap one from it._
+
+This is the thing that redeems the justification above. "Was that harder than last Tuesday" was named as why TSS earns its place, and the ride side of it had never been built — so the claim sat unredeemed for a time. Storing it is what makes it available; displaying it is a separate decision, and the honest place is beside the planned figure a workout already shows, because a lone number on one ride is only meaningful in an aggregate this app has deliberately declined to build.
+
 ## Consequences
 
 - A percentage-based workout's TSS changes when the rider's FTP changes. That is correct — the
