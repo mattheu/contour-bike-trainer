@@ -29,7 +29,6 @@ function ride(overrides: Partial<Ride> = {}): Ride {
     ascentM: 42,
     avgPowerW: 216.5,
     avgHeartRateBpm: 142.4,
-    finished: true,
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,
@@ -359,8 +358,12 @@ describe('validateRecord', () => {
     );
   });
 
-  it('rejects a ride that does not say whether it finished', () => {
-    expect(reasonFor({ ride: { ...ride(), finished: 'yes' }, samples: [] })).toContain('finished');
+  /** The field is gone, so a file written while it existed must still come in — and its
+   * value goes nowhere, because nothing reads it any more. */
+  it('accepts an archive that still carries the old finished flag, and drops it', () => {
+    const result = validateRecord({ ride: { ...ride(), finished: true }, samples: [] });
+    expect('record' in result).toBe(true);
+    expect('record' in result && 'finished' in result.record.ride).toBe(false);
   });
 
   it('rejects a routeId or routeName that is neither text nor null', () => {

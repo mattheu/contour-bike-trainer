@@ -38,17 +38,22 @@ interface RawTrackPoint {
 
 interface RawTrack {
   name?: unknown;
+  desc?: unknown;
   trkseg?: { trkpt?: RawTrackPoint[] }[];
 }
 
 interface RawRoute {
   name?: unknown;
+  desc?: unknown;
   rtept?: RawTrackPoint[];
 }
 
 /** Everything under the gpx root is optional in the schema, so read it defensively. */
 interface RawGpx {
   gpx?: {
+    /** Read for its <desc> only, and never <wpt>: a waypoint's description is a note
+     * about a place on the way, not a description of the route. */
+    metadata?: { desc?: unknown };
     trk?: RawTrack[];
     rte?: RawRoute[];
   };
@@ -115,9 +120,10 @@ function readRoot(xml: string): NonNullable<RawGpx['gpx']> {
   return document.gpx;
 }
 
-/** A <name> only where it is text. A name carrying attributes parses as an object, and
- * an empty one as a blank string; neither is something to show in a list. */
-function trackName(value: unknown): string | null {
+/** A <name> or <desc> only where it is text. One carrying attributes parses as an object,
+ * and an empty or self-closing one as a blank string; neither is something to show in a
+ * list, and neither should be stored as an empty string. */
+function textValue(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed === '' ? null : trimmed;
@@ -129,6 +135,9 @@ export interface GpxTrack {
   index: number;
   /** Its <name>, where it has one. The rider's own label for the route. */
   name: string | null;
+  /** Its <desc>, where it has one, falling back to the document's. See parseGpxTracks
+   * for which of those wins and when. */
+  description: string | null;
   route: Route;
 }
 
@@ -156,6 +165,11 @@ export interface GpxTracks {
  * Partial by design, the way splitWorkoutDocuments is: one unreadable track is named and
  * counted rather than costing the other four. A document that is not GPX at all still
  * throws, because then there is nothing to be partial about.
+ *
+ * Descriptions come from <desc> on the <trk> or <rte> first, and from <metadata> only as
+ * a fallback — the per-track one describes the thing being read, the document one
+ * describes the file. <wpt> is never read: a waypoint's <desc> is a turn note about a
+ * place on the route, and taking one would describe Alpe d'Huez as where to park.
  */
 export function parseGpxTracks(xml: string): GpxTracks {
   const root = readRoot(xml);
@@ -163,16 +177,18 @@ export function parseGpxTracks(xml: string): GpxTracks {
   // Tracks win over routes for the same reason they do in parseGpx, and the fallback is
   // whole-document: a file mixing one <trk> with one <rte> is a recorded ride plus its
   // plan, not two routes.
-  const sources: { name: string | null; points: RawTrackPoint[] }[] = (root.trk ?? []).map(
-    (track) => ({
-      name: trackName(track.name),
-      points: (track.trkseg ?? []).flatMap((segment) => segment.trkpt ?? []),
-    }),
-  );
+  const sources: { name: string | null; description: string | null; points: RawTrackPoint[] }[] = (
+    root.trk ?? []
+  ).map((track) => ({
+    name: textValue(track.name),
+    description: textValue(track.desc),
+    points: (track.trkseg ?? []).flatMap((segment) => segment.trkpt ?? []),
+  }));
   if (sources.length === 0) {
     sources.push(
       ...(root.rte ?? []).map((route) => ({
-        name: trackName(route.name),
+        name: textValue(route.name),
+        description: textValue(route.desc),
         points: route.rtept ?? [],
       })),
     );
@@ -184,13 +200,24 @@ export function parseGpxTracks(xml: string): GpxTracks {
     );
   }
 
+  // <metadata><desc> describes the document, which is the route only when the document is
+  // one route. A file of five tracks splits into five records, and stamping the file's own
+  // sentence onto each would describe four of them wrongly, so there it is dropped rather
+  // than copied — a track in such a file is described by its own <desc> or by nothing.
+  const documentDescription = sources.length === 1 ? textValue(root.metadata?.desc) : null;
+
   const tracks: GpxTrack[] = [];
   const skipped: GpxTrackSkipped[] = [];
 
   for (const [position, source] of sources.entries()) {
     const index = position + 1;
     try {
-      tracks.push({ index, name: source.name, route: measure(source.points) });
+      tracks.push({
+        index,
+        name: source.name,
+        description: source.description ?? documentDescription,
+        route: measure(source.points),
+      });
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       skipped.push({ index, name: source.name, reason });

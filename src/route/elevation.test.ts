@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
+import staircaseGpx from '../../test/fixtures/staircase-24km.gpx?raw';
 import { DESPIKE_THRESHOLD_M, DESPIKE_WINDOW, despikeElevations } from './elevation';
+import { parseGpx } from './gpx';
 
 describe('despikeElevations', () => {
+  /**
+   * The rule the window and threshold are tuned under: a correction must leave known-good
+   * data unchanged. This fixture climbs 10 m a point by construction, so its ascent is 360 m
+   * and not a matter of opinion — which no real route's is. Retune against this.
+   */
+  it('returns a series with a known answer exactly as it was given', () => {
+    const climbed = parseGpx(staircaseGpx).totalAscentM;
+    expect(climbed).toBeCloseTo(360, 6);
+  });
+
   it('leaves a clean series exactly as it was', () => {
     // The rule the thresholds were tuned under: a correction must not touch good data.
     const climb = Array.from({ length: 60 }, (_, i) => 100 + i * 1.5);

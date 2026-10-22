@@ -1,3 +1,4 @@
+import { KIND_LABEL, type RouteKind } from '../../route/loop';
 import type { Ride, Route as StoredRoute } from '../../storage/types';
 
 /**
@@ -23,6 +24,37 @@ export function riddenLabel(count: number): string {
 /** Alphabetical: the bundled set is small and has no meaningful intrinsic order. */
 export function sortRoutes(routes: readonly StoredRoute[]): StoredRoute[] {
   return [...routes].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * The words of a row's micro label row, in order: what kind of route it is, then where it
+ * is. Either can be missing — the kind until the row's geometry has loaded, the region on
+ * an imported GPX that named no place — and a route with neither gets no label row at all
+ * rather than an empty line holding space open.
+ *
+ * Words only. The kind's glyph belongs to the kind and is drawn from it, not from this.
+ */
+export function labelRow(kind: RouteKind | null, region: string | undefined): string[] {
+  const words: string[] = [];
+  if (kind !== null) words.push(KIND_LABEL[kind]);
+  if (region !== undefined && region.trim() !== '') words.push(region);
+  return words;
+}
+
+/**
+ * The one line of description a row shows, or null where the route has none.
+ *
+ * Null rather than an empty string, because the row has to be able to leave the line out:
+ * an imported GPX often carries no <desc>, and a blank 14 px line under the name reads as
+ * a description that failed to load. The import already stores absent rather than empty
+ * (src/route/import.ts), and this holds the same line for records written any other way.
+ *
+ * The list clips it to the column. The full text belongs to the route's start sheet, which
+ * is where there is room for it — see Routes in design/DESIGN.md.
+ */
+export function descriptionLine(route: StoredRoute): string | null {
+  const text = route.description?.trim() ?? '';
+  return text === '' ? null : text;
 }
 
 /**

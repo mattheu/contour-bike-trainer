@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
-  ROLLING_ROUTE_NAME,
+  RIDE_ROUTE_NAME,
   openApp,
   openRideSettings,
   readElapsedSeconds,
@@ -10,7 +10,7 @@ import {
 test.describe('the ride settings panel', () => {
   test('changes trainer difficulty mid-ride without stopping the ride', async ({ page }) => {
     await openApp(page, { fake: 'constant', memoryStorage: true });
-    await startRide(page, ROLLING_ROUTE_NAME);
+    await startRide(page, RIDE_ROUTE_NAME);
     await expect
       .poll(() => readElapsedSeconds(page), { timeout: 20_000 })
       .toBeGreaterThanOrEqual(2);
@@ -45,7 +45,7 @@ test.describe('the ride settings panel', () => {
    */
   test('persists the three targets across a reload', async ({ page }) => {
     await openApp(page, { fake: 'constant' });
-    await startRide(page, ROLLING_ROUTE_NAME);
+    await startRide(page, RIDE_ROUTE_NAME);
 
     const panel = await openRideSettings(page);
     await expect(panel.getByLabel('Power W')).toHaveValue('');
@@ -54,8 +54,8 @@ test.describe('the ride settings panel', () => {
     await panel.getByLabel('Heart bpm').fill('155');
 
     await page.reload();
-    await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
-    await startRide(page, ROLLING_ROUTE_NAME);
+    await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
+    await startRide(page, RIDE_ROUTE_NAME);
 
     const reloaded = await openRideSettings(page);
     await expect(reloaded.getByLabel('Power W')).toHaveValue('240');

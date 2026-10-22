@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="contour test fixture" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>Fixture: staircase</name></metadata>
+  <trk>
+    <name>Fixture: staircase</name>
+    <trkseg>
+      <trkpt lat="54.00000" lon="-2.00000"><ele>100.00</ele></trkpt>
+      <trkpt lat="54.00000" lon="-1.98980"><ele>110.00</ele></trkpt>
+      <trkpt lat="54.00000" lon="-1.97960"><ele>120.00</ele></trkpt>
+      <trkpt lat="54.00000" lon="-1.96940"><ele>130.00</ele></trkpt>
+      <trkpt lat="54.00600" lon="-1.96940"><ele>140.00</ele></trkpt>
+      <trkpt lat="54.01200" lon="-1.96940"><ele>150.00</ele></trkpt>
+      <trkpt lat="54.01800" lon="-1.96940"><ele>160.00</ele></trkpt>
+      <trkpt lat="54.01800" lon="-1.95920"><ele>170.00</ele></trkpt>
+      <trkpt lat="54.01800" lon="-1.94900"><ele>180.00</ele></trkpt>
+      <trkpt lat="54.01800" lon="-1.93880"><ele>190.00</ele></trkpt>
+      <trkpt lat="54.02400" lon="-1.93880"><ele>200.00</ele></trkpt>
+      <trkpt lat="54.03000" lon="-1.93880"><ele>210.00</ele></trkpt>
+      <trkpt lat="54.03600" lon="-1.93880"><ele>220.00</ele></trkpt>
+      <trkpt lat="54.03600" lon="-1.92860"><ele>230.00</ele></trkpt>
+      <trkpt lat="54.03600" lon="-1.91840"><ele>240.00</ele></trkpt>
+      <trkpt lat="54.03600" lon="-1.90820"><ele>250.00</ele></trkpt>
+      <trkpt lat="54.04200" lon="-1.90820"><ele>260.00</ele></trkpt>
+      <trkpt lat="54.04800" lon="-1.90820"><ele>270.00</ele></trkpt>
+      <trkpt lat="54.05400" lon="-1.90820"><ele>280.00</ele></trkpt>
+      <trkpt lat="54.05400" lon="-1.89800"><ele>290.00</ele></trkpt>
+      <trkpt lat="54.05400" lon="-1.88780"><ele>300.00</ele></trkpt>
+      <trkpt lat="54.05400" lon="-1.87760"><ele>310.00</ele></trkpt>
+      <trkpt lat="54.06000" lon="-1.87760"><ele>320.00</ele></trkpt>
+      <trkpt lat="54.06600" lon="-1.87760"><ele>330.00</ele></trkpt>
+      <trkpt lat="54.07200" lon="-1.87760"><ele>340.00</ele></trkpt>
+      <trkpt lat="54.07200" lon="-1.86740"><ele>350.00</ele></trkpt>
+      <trkpt lat="54.07200" lon="-1.85720"><ele>360.00</ele></trkpt>
+      <trkpt lat="54.07200" lon="-1.84700"><ele>370.00</ele></trkpt>
+      <trkpt lat="54.07800" lon="-1.84700"><ele>380.00</ele></trkpt>
+      <trkpt lat="54.08400" lon="-1.84700"><ele>390.00</ele></trkpt>
+      <trkpt lat="54.09000" lon="-1.84700"><ele>400.00</ele></trkpt>
+      <trkpt lat="54.09000" lon="-1.83680"><ele>410.00</ele></trkpt>
+      <trkpt lat="54.09000" lon="-1.82660"><ele>420.00</ele></trkpt>
+      <trkpt lat="54.09000" lon="-1.81640"><ele>430.00</ele></trkpt>
+      <trkpt lat="54.09600" lon="-1.81640"><ele>440.00</ele></trkpt>
+      <trkpt lat="54.10200" lon="-1.81640"><ele>450.00</ele></trkpt>
+      <trkpt lat="54.10800" lon="-1.81640"><ele>460.00</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

@@ -31,7 +31,6 @@ function ride(patch: Partial<Ride>): Ride {
     ascentM: 512,
     avgPowerW: 243,
     avgHeartRateBpm: 148,
-    finished: true,
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,

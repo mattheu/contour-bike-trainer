@@ -21,11 +21,17 @@ export const DESPIKE_WINDOW = 15;
 /**
  * How far a point may sit from its neighbours' median before it is treated as an error.
  *
- * Tuned against the bundled routes under one rule: a correction must leave known-good data
- * unchanged. The two generated routes have a true ascent we know exactly (250 m and 699 m),
- * so any setting that moves them is wrong whatever it does elsewhere. This window and
- * threshold leave both at their exact values while taking the Alpe's worst gradient spikes
- * from -30 % to -13 %.
+ * Tuned under one rule: a correction must leave known-good data unchanged. Any setting that
+ * moves a series we know the true answer for is wrong whatever it does elsewhere. This
+ * window and threshold take the Alpe's worst gradient spikes from -30 % to -13 % while
+ * leaving a clean series exactly as read.
+ *
+ * The evidence used to be the two generated routes, whose ascent was known exactly because
+ * a script wrote them. They were dropped when the app moved to shipping real places only,
+ * so the rule is now held by `test/fixtures/staircase-24km.gpx` — 360 m of ascent by
+ * construction, 10 m a point — and the test beside this file asserts the despiker returns
+ * it untouched. Retune against that, not against a real route: nobody can say what Alpe
+ * d'Huez's true ascent is, which is the whole reason this filter is a judgement call.
  *
  * WHAT THIS DOES NOT FIX: small persistent jitter. A real file's elevation wobbles by a
  * decimetre or so per point, which no median can see because no single point is an outlier.

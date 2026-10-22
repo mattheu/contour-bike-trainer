@@ -33,8 +33,6 @@ export interface RideRecorderOptions {
 export interface RideSummary {
   /** Wall-clock time spent paused, which the engine owns and the samples cannot show. */
   pausedS: number;
-  /** True only when the route ran out under the rider. */
-  finished: boolean;
   /**
    * The workout scale as the ride ended, which is the one setting not frozen at the
    * start: the control exists to be reached for in the third minute of an interval, so
@@ -145,7 +143,6 @@ export class RideRecorder {
       ascentM: this.ascentM,
       avgPowerW: this.avgPowerW,
       avgHeartRateBpm: this.avgHeartRateBpm,
-      finished: summary.finished,
       settings: {
         ...this.options.settings,
         workoutScalePct:

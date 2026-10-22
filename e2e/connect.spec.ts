@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import {
-  ROLLING_ROUTE_NAME,
+  RIDE_ROUTE_NAME,
   closeRideSettings,
   deviceRow,
   openApp,
@@ -23,7 +23,7 @@ test.describe('connecting from the ride settings panel', () => {
     await openApp(page, { fake: 'constant', memoryStorage: true });
 
     // The route is chosen first now, and the ride is armed before anything is paired.
-    await openRoute(page, ROLLING_ROUTE_NAME);
+    await openRoute(page, RIDE_ROUTE_NAME);
     const panel = await openRideSettings(page);
 
     await expect(deviceRow(panel, 'trainer')).toContainText('Not connected');

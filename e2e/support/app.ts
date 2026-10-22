@@ -40,7 +40,10 @@ export const FIXTURE_ROUTE: SeedRoute = {
 };
 
 /** A bundled route, for the specs that need one long enough not to end mid-test. */
-export const ROLLING_ROUTE_NAME = 'Test Route 1 — Rolling';
+export const RIDE_ROUTE_NAME = 'Rosedale Chimney';
+
+/** A second one, for the specs that check the list has more than a single route on it. */
+export const OTHER_ROUTE_NAME = 'Greenhow Hill';
 
 export interface OpenOptions {
   fake?: FakeScript;
@@ -97,7 +100,7 @@ export async function openApp(page: Page, options: OpenOptions = {}): Promise<vo
     }, options.seedRoutes);
   }
   await page.goto(appUrl(options));
-  await expect(page.getByRole('link', { name: ROLLING_ROUTE_NAME })).toBeVisible();
+  await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
 }
 
 /** The same app with no session seeded: what a rider sees the first time they open it. */

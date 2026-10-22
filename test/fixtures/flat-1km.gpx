@@ -3,6 +3,7 @@
   <metadata><name>Fixture: flat 1 km</name></metadata>
   <trk>
     <name>Fixture: flat 1 km</name>
+    <desc>A level kilometre at 100 m, for tests that need no gradient.</desc>
     <trkseg>
       <trkpt lat="51.5000000" lon="-1.5000000"><ele>100.00</ele></trkpt>
       <trkpt lat="51.5008993" lon="-1.5000000"><ele>100.00</ele></trkpt>

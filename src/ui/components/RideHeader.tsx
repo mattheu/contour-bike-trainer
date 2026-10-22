@@ -11,6 +11,11 @@ interface RideHeaderProps {
   title: string;
   /** The route behind a workout, drawn after a hairline separator. */
   subtitle?: string;
+  /**
+   * A mark on the title line rather than more prose on it: the loop tag and its lap
+   * counter. No separator, because it carries its own shape — see LoopTag.
+   */
+  tag?: ReactNode;
   /** What the one accent control reads now: Start, Pause or Resume. See ride-view. */
   pauseLabel: string;
   /**
@@ -26,6 +31,7 @@ interface RideHeaderProps {
 export function RideHeader({
   title,
   subtitle,
+  tag,
   pauseLabel,
   actions,
   onPause,
@@ -37,6 +43,7 @@ export function RideHeader({
       <div className="flex items-center gap-[18px]">
         <Logo />
         <div className={LABEL}>{title}</div>
+        {tag}
         {subtitle !== undefined && (
           <>
             <div className={`${LABEL} text-hairline`}>·</div>

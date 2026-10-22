@@ -36,6 +36,23 @@ describe('powerSamplesFrom', () => {
     ).toEqual([{ distM: 8, watts: 210 }]);
   });
 
+  it('offsets to the lap a strip is drawn for, dropping the laps before it', () => {
+    // A 1 km circuit on its second lap: the axis is the route, the samples are the ride.
+    expect(
+      powerSamplesFrom(
+        [
+          sample({ distanceM: 400, powerW: 180 }),
+          sample({ distanceM: 1000, powerW: 200 }),
+          sample({ distanceM: 1250, powerW: 240 }),
+        ],
+        1000,
+      ),
+    ).toEqual([
+      { distM: 0, watts: 200 },
+      { distM: 250, watts: 240 },
+    ]);
+  });
+
   it('survives an empty ride', () => {
     expect(powerSamplesFrom([])).toEqual([]);
   });
@@ -56,7 +73,6 @@ function ride(patch: Partial<Ride> = {}, settings: Partial<Ride['settings']> = {
     ascentM: 0,
     avgPowerW: 210,
     avgHeartRateBpm: 150,
-    finished: true,
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,

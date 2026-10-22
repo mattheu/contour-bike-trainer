@@ -7,8 +7,7 @@ on:
     branches: [main]
 
 env:
-  # Pinned rather than floating: scripts/generate-routes.ts is run by node directly and
-  # needs native TypeScript stripping (>= 22.18), and vitest 5 supports 22/24/26 but not 25.
+  # Pinned rather than floating: vitest 5 supports 22, 24 and 26 but not 25.
   NODE_VERSION: '24.15.0'
 
 jobs:

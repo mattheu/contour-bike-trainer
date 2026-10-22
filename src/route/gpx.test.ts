@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { haversineM, parseGpx, parseGpxTracks } from './gpx';
-import { FIXTURE_LENGTH_M, climbRoute, flatGpxText, flatRoute } from '../../test/fixtures';
+import {
+  FIXTURE_LENGTH_M,
+  FLAT_FIXTURE_DESCRIPTION,
+  climbRoute,
+  flatGpxText,
+  flatRoute,
+} from '../../test/fixtures';
+
+/**
+ * The one place a unit test reads a rideable route, and the only reason is the trap it
+ * guards: ADR-0011 keeps unit tests on fixtures because nobody can verify a 30 km
+ * profile by hand, and nothing here asserts a figure off this file. It asserts which
+ * element the parser read, and the evidence for that — seven French turn-by-turn notes
+ * on <wpt>, and an empty <desc> on <metadata> — exists only in a real export.
+ */
+import alpeDhuezGpx from '../../routes/alpe-dhuez.gpx?raw';
 
 function gpxWith(body: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -234,5 +249,121 @@ describe('parseGpxTracks', () => {
 
     expect(read).toHaveLength(1);
     expect(read[0]?.route.totalDistanceM).toBeCloseTo(flatRoute().totalDistanceM, 6);
+  });
+});
+
+describe('parseGpxTracks descriptions', () => {
+  const POINTS =
+    '<trkpt lat="51.5" lon="-1.5"><ele>100</ele></trkpt>' +
+    '<trkpt lat="51.51" lon="-1.5"><ele>110</ele></trkpt>';
+  const FAR =
+    '<trkpt lat="46.5" lon="-1.5"><ele>50</ele></trkpt>' +
+    '<trkpt lat="46.51" lon="-1.5"><ele>60</ele></trkpt>';
+
+  function document(body: string): string {
+    return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" xmlns="http://www.topografix.com/GPX/1/1">${body}</gpx>`;
+  }
+
+  it('reads a track\u2019s own <desc>', () => {
+    const { tracks } = parseGpxTracks(
+      document(
+        `<trk><name>One</name><desc>Up the hill and back.</desc><trkseg>${POINTS}</trkseg></trk>`,
+      ),
+    );
+
+    expect(tracks[0]?.description).toBe('Up the hill and back.');
+  });
+
+  it('reads a route\u2019s <desc> as it reads a track\u2019s', () => {
+    const { tracks } = parseGpxTracks(
+      document(
+        '<rte><name>Planned</name><desc>A plan, not a ride.</desc>' +
+          '<rtept lat="51.5" lon="-1.5"><ele>100</ele></rtept>' +
+          '<rtept lat="51.51" lon="-1.5"><ele>110</ele></rtept></rte>',
+      ),
+    );
+
+    expect(tracks[0]?.description).toBe('A plan, not a ride.');
+  });
+
+  it('falls back to the document\u2019s <desc> when the one track has none', () => {
+    const { tracks } = parseGpxTracks(
+      document(
+        `<metadata><desc>What this file is.</desc></metadata><trk><trkseg>${POINTS}</trkseg></trk>`,
+      ),
+    );
+
+    expect(tracks[0]?.description).toBe('What this file is.');
+  });
+
+  it('prefers the track\u2019s <desc> to the document\u2019s, being the more specific', () => {
+    const { tracks } = parseGpxTracks(
+      document(
+        '<metadata><desc>A folder of climbs.</desc></metadata>' +
+          `<trk><desc>This one climb.</desc><trkseg>${POINTS}</trkseg></trk>`,
+      ),
+    );
+
+    expect(tracks[0]?.description).toBe('This one climb.');
+  });
+
+  it('drops the document\u2019s <desc> when the file is several routes', () => {
+    // It describes the collection, so copying it onto each would describe all but one of
+    // them wrongly. The track that has its own keeps it.
+    const { tracks } = parseGpxTracks(
+      document(
+        '<metadata><desc>Five Dales climbs.</desc></metadata>' +
+          `<trk><name>One</name><desc>The first.</desc><trkseg>${POINTS}</trkseg></trk>` +
+          `<trk><name>Two</name><trkseg>${FAR}</trkseg></trk>`,
+      ),
+    );
+
+    expect(tracks.map((track) => track.description)).toEqual(['The first.', null]);
+  });
+
+  it('carries a track with no <desc> anywhere rather than inventing one', () => {
+    const { tracks } = parseGpxTracks(document(`<trk><trkseg>${POINTS}</trkseg></trk>`));
+
+    expect(tracks[0]?.description).toBeNull();
+  });
+
+  it('reads an empty or whitespace-only <desc> as absent, not as an empty string', () => {
+    const empty = parseGpxTracks(document(`<trk><desc></desc><trkseg>${POINTS}</trkseg></trk>`));
+    const selfClosing = parseGpxTracks(document(`<trk><desc/><trkseg>${POINTS}</trkseg></trk>`));
+    const blank = parseGpxTracks(
+      document(`<trk><desc>   \n  </desc><trkseg>${POINTS}</trkseg></trk>`),
+    );
+
+    expect(empty.tracks[0]?.description).toBeNull();
+    expect(selfClosing.tracks[0]?.description).toBeNull();
+    expect(blank.tracks[0]?.description).toBeNull();
+  });
+
+  it('trims the whitespace a pretty-printed <desc> is wrapped in', () => {
+    const { tracks } = parseGpxTracks(
+      document(`<trk><desc>\n      Up the hill.\n    </desc><trkseg>${POINTS}</trkseg></trk>`),
+    );
+
+    expect(tracks[0]?.description).toBe('Up the hill.');
+  });
+
+  it('reads the <desc> on the flat fixture\u2019s track', () => {
+    const { tracks } = parseGpxTracks(flatGpxText);
+
+    expect(tracks[0]?.description).toBe(FLAT_FIXTURE_DESCRIPTION);
+  });
+
+  it('never takes a waypoint\u2019s <desc>, which describes a place and not the route', () => {
+    // alpe-dhuez.gpx carries seven of them, the first being where to park. Reading one
+    // would describe the 21 hairpins as a car park in Bourg d'Oisans.
+    expect(alpeDhuezGpx).toContain('<desc>Garez-vous');
+    expect(alpeDhuezGpx).toContain('<wpt');
+
+    const { tracks } = parseGpxTracks(alpeDhuezGpx);
+
+    expect(tracks).toHaveLength(1);
+    // Its <metadata><desc/> is empty, so there is nothing to fall back to either.
+    expect(tracks[0]?.description).toBeNull();
   });
 });

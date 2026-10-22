@@ -142,7 +142,14 @@ export interface Ride extends StoredRecord {
   ascentM: number;
   avgPowerW: number | null;
   avgHeartRateBpm: number | null;
-  finished: boolean; // reached the route end
+  /**
+   * No `finished` flag. It recorded whether the route ran out under the rider, and the
+   * only thing that ever read it was a `· ended early` label on the summary — a binary
+   * standing in for a comparison the screen never showed. The summary draws distance
+   * against the route's own length instead, which says how far short rather than only
+   * that it was short, and a loop has no completion for a flag to get wrong. An archive
+   * written while the field existed still imports; the value is simply dropped.
+   */
   settings: RideSettings;
 }
 

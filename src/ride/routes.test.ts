@@ -31,9 +31,20 @@ describe('bundledRoutes', () => {
 
   it('uses the id declared in the manifest rather than minting one', () => {
     // Rides reference this id. Minting one at runtime orphans every ride on reseed.
-    expect(bundledRoute('test-rolling')?.name).toMatch(/Rolling/);
-    expect(bundledRoute('test-mixed')?.name).toMatch(/Mixed/);
+    expect(bundledRoute('greenhow-hill')?.name).toBe('Greenhow Hill');
+    expect(bundledRoute('sa-calobra')?.name).toBe('Sa Calobra');
     expect(bundledRoute('no-such-route')).toBeUndefined();
+  });
+
+  it('states figures that agree with what the parser reads out of each file', () => {
+    // The route list shows the manifest's distance and ascent, never the file's. So a
+    // route replaced without its entry being corrected reads as something it is not, on
+    // the one screen where the rider is choosing between them.
+    for (const route of bundledRoutes()) {
+      const parsed = parseGpx(route.gpx);
+      expect(route.totalDistanceM).toBe(Math.round(parsed.totalDistanceM));
+      expect(route.totalAscentM).toBe(Math.round(parsed.totalAscentM));
+    }
   });
 });
 
@@ -92,7 +103,7 @@ describe('storedRouteGeometry', () => {
 describe('builtInRouteIds', () => {
   it('is exactly what routes/manifest.json declares', () => {
     const ids = builtInRouteIds();
-    expect(ids.has('test-rolling')).toBe(true);
+    expect(ids.has('greenhow-hill')).toBe(true);
     expect(ids.size).toBe(bundledRoutes().length);
   });
 
@@ -147,13 +158,13 @@ describe('seedRoutes', () => {
     const repo = repository();
     await seedRoutes(repo);
 
-    const rolling = await repo.get('test-rolling');
-    expect(rolling).toMatchObject({
-      id: 'test-rolling',
-      file: 'test-rolling.gpx',
-      region: 'Synthetic',
+    const greenhow = await repo.get('greenhow-hill');
+    expect(greenhow).toMatchObject({
+      id: 'greenhow-hill',
+      file: 'greenhow-hill.gpx',
+      region: 'Yorkshire Dales, UK',
     });
-    expect(rolling?.totalDistanceM).toBeGreaterThan(0);
+    expect(greenhow?.totalDistanceM).toBeGreaterThan(0);
   });
 
   it('writes the GPX onto the record, which is what makes it rideable', async () => {
@@ -168,7 +179,7 @@ describe('seedRoutes', () => {
   it('is idempotent: running twice neither duplicates nor rewrites', async () => {
     const repo = repository();
     await seedRoutes(repo);
-    const first = await repo.get('test-rolling');
+    const first = await repo.get('greenhow-hill');
 
     const second = await seedRoutes(repo);
 
@@ -180,7 +191,7 @@ describe('seedRoutes', () => {
         .sort(),
     );
     // updatedAt is untouched, so a later sync layer does not read a reseed as an edit.
-    expect((await repo.get('test-rolling'))?.updatedAt).toBe(first?.updatedAt);
+    expect((await repo.get('greenhow-hill'))?.updatedAt).toBe(first?.updatedAt);
   });
 
   it('reaches an install that has already booted when the manifest changes', async () => {

@@ -1,3 +1,4 @@
+import { isLoop, lapPositionM } from './loop';
 import { elevationAt } from './position';
 import type { Route } from './types';
 
@@ -36,18 +37,39 @@ export function trainerGrade(routeGradePercent: number, difficultyPercent: numbe
 }
 
 /**
- * Grade at a distance: rise over run across a forward window, as a percentage.
+ * Grade at a position on the route: rise over run across a forward window, as a
+ * percentage.
  *
  * The window shrinks against the end of the route rather than reading past it,
  * so the last few metres report the real final gradient instead of zero.
+ *
+ * On a loop it does not shrink, it wraps: the road ahead of the last thirty metres is
+ * the first thirty, and a rider rolling through the start line onto another lap must not
+ * feel the trainer released to flat for the length of the lookahead. Detected from the
+ * geometry here rather than passed in, so no caller can forget it and the chart's
+ * gradient bubble and the resistance under the wheels cannot disagree.
  */
 export function gradeAt(route: Route, distM: number, lookaheadM = DEFAULT_LOOKAHEAD_M): number {
   if (!Number.isFinite(lookaheadM) || lookaheadM <= 0) {
     throw new Error(`Grade lookahead must be a positive distance, got ${lookaheadM}`);
   }
 
-  const start = Math.max(0, Math.min(distM, route.totalDistanceM));
-  const end = Math.min(start + lookaheadM, route.totalDistanceM);
+  const length = route.totalDistanceM;
+  // A window wider than the route itself would read the same ground twice and average a
+  // gradient out of it, so a route that short is treated as the line it is.
+  const wraps = lookaheadM < length && isLoop(route);
+  const start = wraps ? lapPositionM(distM, length) : Math.max(0, Math.min(distM, length));
+  const overshoot = start + lookaheadM - length;
+
+  if (wraps && overshoot > 0) {
+    const rise =
+      elevationAt(route, length) -
+      elevationAt(route, start) +
+      (elevationAt(route, overshoot) - elevationAt(route, 0));
+    return clampGrade((rise / lookaheadM) * 100);
+  }
+
+  const end = Math.min(start + lookaheadM, length);
   const run = end - start;
 
   // Standing at the finish line there is no route left to measure a gradient over.

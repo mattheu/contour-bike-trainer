@@ -40,7 +40,7 @@ function recorder(): RideRecorder {
 
 describe('RideRecorder', () => {
   it('builds an empty ride without inventing figures', () => {
-    const { ride, samples } = recorder().build({ pausedS: 0, finished: false });
+    const { ride, samples } = recorder().build({ pausedS: 0 });
 
     expect(ride.elapsedS).toBe(0);
     expect(ride.distanceM).toBe(0);
@@ -56,7 +56,7 @@ describe('RideRecorder', () => {
     r.add(sample({ t: 1, distanceM: 8.3 }));
     r.add(sample({ t: 2, distanceM: 16.9 }));
 
-    const { ride } = r.build({ pausedS: 0, finished: false });
+    const { ride } = r.build({ pausedS: 0 });
     expect(ride.elapsedS).toBe(2);
     expect(ride.distanceM).toBe(16.9);
   });
@@ -66,7 +66,7 @@ describe('RideRecorder', () => {
     r.add(sample({ t: 0 }));
     r.add(sample({ t: 120 }));
 
-    const { ride } = r.build({ pausedS: 45.5, finished: false });
+    const { ride } = r.build({ pausedS: 45.5 });
     // elapsedS + pausedS is the wall-clock time on the bike.
     expect(ride.elapsedS).toBe(120);
     expect(ride.pausedS).toBe(45.5);
@@ -103,7 +103,7 @@ describe('RideRecorder', () => {
   it('freezes the settings that produced the ride', () => {
     const r = recorder();
     r.add(sample({ t: 0 }));
-    const { ride } = r.build({ pausedS: 0, finished: true });
+    const { ride } = r.build({ pausedS: 0 });
 
     expect(ride.settings).toEqual(SETTINGS);
     expect(ride.settings).not.toBe(SETTINGS);
@@ -112,19 +112,18 @@ describe('RideRecorder', () => {
   it('keys the samples record to the ride and carries the route denormalised', () => {
     const r = recorder();
     r.add(sample({ t: 0 }));
-    const { ride, samples } = r.build({ pausedS: 0, finished: true });
+    const { ride, samples } = r.build({ pausedS: 0 });
 
     expect(samples.id).toBe(ride.id);
     expect(ride.routeId).toBe('test-mixed');
     expect(ride.routeName).toBe('Test Route 2 — Mixed');
     expect(ride.startedAt).toBe('2026-09-30T07:05:00.000Z');
-    expect(ride.finished).toBe(true);
   });
 
   it('copies the samples out rather than handing over its own array', () => {
     const r = recorder();
     r.add(sample({ t: 0 }));
-    const { samples } = r.build({ pausedS: 0, finished: false });
+    const { samples } = r.build({ pausedS: 0 });
 
     r.add(sample({ t: 1 }));
     expect(samples.samples).toHaveLength(1);
@@ -142,12 +141,12 @@ describe('RideRecorder', () => {
       startedAt: '2026-09-30T07:05:00.000Z',
       settings: SETTINGS,
     });
-    expect(fixed.build({ pausedS: 0, finished: false }).ride.id).toBe('known-id');
+    expect(fixed.build({ pausedS: 0 }).ride.id).toBe('known-id');
   });
 
   describe('the workout a ride was', () => {
     it('records no workout when none was given', () => {
-      const { ride } = recorder().build({ pausedS: 0, finished: false });
+      const { ride } = recorder().build({ pausedS: 0 });
 
       expect(ride.workoutId).toBeNull();
       expect(ride.workoutName).toBeNull();
@@ -163,7 +162,7 @@ describe('RideRecorder', () => {
         settings: { ...SETTINGS, workoutScalePct: 80 },
       });
 
-      const { ride } = r.build({ pausedS: 0, finished: false });
+      const { ride } = r.build({ pausedS: 0 });
       expect(ride.workoutId).toBe('threshold-2x20');
       expect(ride.workoutName).toBe('2x20 threshold');
       expect(ride.settings.workoutScalePct).toBe(80);
@@ -181,7 +180,7 @@ describe('RideRecorder', () => {
 
       // The control is reached for mid-interval, so what it was set to before anyone
       // touched it answers nothing about the session that was actually ridden.
-      const { ride } = r.build({ pausedS: 0, finished: false, workoutScalePct: 85 });
+      const { ride } = r.build({ pausedS: 0, workoutScalePct: 85 });
       expect(ride.settings.workoutScalePct).toBe(85);
     });
 
@@ -197,7 +196,7 @@ describe('RideRecorder', () => {
 
       // Turned off in the second interval: the session the rider held is not the session
       // the trainer held, and the record has to say which one happened.
-      const { ride } = r.build({ pausedS: 0, finished: false, ergMode: 'manual' });
+      const { ride } = r.build({ pausedS: 0, ergMode: 'manual' });
       expect(ride.settings.ergMode).toBe('manual');
     });
 
@@ -210,9 +209,9 @@ describe('RideRecorder', () => {
         settings: { trainerDifficulty, ftp, hrMax, riderMassKg, bikeMassKg },
       });
 
-      expect(r.build({ pausedS: 0, finished: false }).ride.settings.workoutScalePct).toBe(100);
+      expect(r.build({ pausedS: 0 }).ride.settings.workoutScalePct).toBe(100);
       // ...and ERG, which is what a session with no target for anything to hold was.
-      expect(r.build({ pausedS: 0, finished: false }).ride.settings.ergMode).toBe('erg');
+      expect(r.build({ pausedS: 0 }).ride.settings.ergMode).toBe('erg');
     });
   });
 });
@@ -234,7 +233,7 @@ describe('the FTP a ride freezes', () => {
       settings: { ...SETTINGS, ftp: workoutFtp(parseWorkout(source), SETTINGS.ftp) },
     });
     r.add(sample({ t: 0 }));
-    return r.build({ pausedS: 0, finished: true }).ride.settings.ftp;
+    return r.build({ pausedS: 0 }).ride.settings.ftp;
   }
 
   it("is the workout's own where it declares one, not the rider's profile", () => {
