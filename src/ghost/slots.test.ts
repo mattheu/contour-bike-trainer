@@ -6,7 +6,8 @@ describe('slots', () => {
   it('gives every slot its own symbol, and never a hexagon', () => {
     const shapes = SLOT_ORDER.map((slot) => SLOT_SYMBOL[slot].shape);
 
-    expect(shapes).toEqual(['square', 'triangle', 'star', 'diamond']);
+    // Star for Best: it is the one shape that already carries rank.
+    expect(shapes).toEqual(['star', 'triangle', 'square', 'diamond']);
     expect(new Set(SLOT_ORDER.map((slot) => SLOT_SYMBOL[slot].d)).size).toBe(4);
   });
 

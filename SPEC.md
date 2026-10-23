@@ -662,13 +662,13 @@ A route can be raced against up to five ghosts. Each slot has a fixed symbol.
 
 | Slot | Symbol | Contents |
 | --- | --- | --- |
-| Best | Square | Your fastest lap of this route. |
+| Best | Star | Your fastest lap of this route. |
 | Best this year | Triangle | Your fastest lap of the last 365 days. Where that is the lap already in Best, the next fastest inside the window. |
-| Most recent | Star | The last route length you completed here. Where that is already shown, the one before it. |
+| Most recent | Square | The last route length you completed here. Where that is already shown, the one before it. |
 | Picked ride | Diamond | A ride you chose with **Race this ride**. |
 | Friend | Hexagon | Reserved. Not built. |
 
-**The symbol belongs to the slot, not to the ride.** A square is always your best, on every route and in every session. Several ghosts can then share a screen without a legend.
+**The symbol belongs to the slot, not to the ride.** A star is always your best, on every route and in every session. The star holds Best because it is the one shape that already carries rank. Several ghosts can then share a screen without a legend.
 
 **An empty slot stays empty.** A slot with no qualifying lap shows nothing. It does not fall through to another ride, because a triangle on a lap that is not your best of the year would make the symbols unreliable. A first ride on a route fills no slots.
 
