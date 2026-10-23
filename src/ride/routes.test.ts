@@ -31,7 +31,7 @@ describe('bundledRoutes', () => {
 
   it('uses the id declared in the manifest rather than minting one', () => {
     // Rides reference this id. Minting one at runtime orphans every ride on reseed.
-    expect(bundledRoute('greenhow-hill')?.name).toBe('Greenhow Hill');
+    expect(bundledRoute('rosedale-chimney')?.name).toBe('Rosedale Chimney');
     expect(bundledRoute('sa-calobra')?.name).toBe('Sa Calobra');
     expect(bundledRoute('no-such-route')).toBeUndefined();
   });
@@ -103,7 +103,7 @@ describe('storedRouteGeometry', () => {
 describe('builtInRouteIds', () => {
   it('is exactly what routes/manifest.json declares', () => {
     const ids = builtInRouteIds();
-    expect(ids.has('greenhow-hill')).toBe(true);
+    expect(ids.has('rosedale-chimney')).toBe(true);
     expect(ids.size).toBe(bundledRoutes().length);
   });
 
@@ -158,13 +158,13 @@ describe('seedRoutes', () => {
     const repo = repository();
     await seedRoutes(repo);
 
-    const greenhow = await repo.get('greenhow-hill');
-    expect(greenhow).toMatchObject({
-      id: 'greenhow-hill',
-      file: 'greenhow-hill.gpx',
-      region: 'Yorkshire Dales, UK',
+    const rosedale = await repo.get('rosedale-chimney');
+    expect(rosedale).toMatchObject({
+      id: 'rosedale-chimney',
+      file: 'rosedale-chimney.gpx',
+      region: 'North York Moors, UK',
     });
-    expect(greenhow?.totalDistanceM).toBeGreaterThan(0);
+    expect(rosedale?.totalDistanceM).toBeGreaterThan(0);
   });
 
   it('writes the GPX onto the record, which is what makes it rideable', async () => {
@@ -179,7 +179,7 @@ describe('seedRoutes', () => {
   it('is idempotent: running twice neither duplicates nor rewrites', async () => {
     const repo = repository();
     await seedRoutes(repo);
-    const first = await repo.get('greenhow-hill');
+    const first = await repo.get('rosedale-chimney');
 
     const second = await seedRoutes(repo);
 
@@ -191,7 +191,7 @@ describe('seedRoutes', () => {
         .sort(),
     );
     // updatedAt is untouched, so a later sync layer does not read a reseed as an edit.
-    expect((await repo.get('greenhow-hill'))?.updatedAt).toBe(first?.updatedAt);
+    expect((await repo.get('rosedale-chimney'))?.updatedAt).toBe(first?.updatedAt);
   });
 
   it('reaches an install that has already booted when the manifest changes', async () => {
