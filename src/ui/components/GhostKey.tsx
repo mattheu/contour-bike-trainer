@@ -15,7 +15,9 @@ import { LABEL, MONO } from './styles';
 export function GhostKey({ ghosts }: { ghosts: readonly ActiveGhost[] }) {
   if (ghosts.length === 0) return null;
   return (
-    <div className="ml-auto flex items-center gap-[14px]">
+    // No alignment of its own: the desktop band puts it opposite the gradient key, the
+    // tablet's gives it a line of its own above one.
+    <div className="flex items-center gap-[14px]">
       <div className={`${LABEL} text-micro`}>Ghosts</div>
       {ghosts.map((ghost) => (
         <div key={ghost.slot} className="flex items-center gap-[8px]">

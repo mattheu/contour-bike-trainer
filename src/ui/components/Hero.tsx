@@ -12,15 +12,33 @@ export type HeroSize = 108 | 72 | 44;
  * did not fit on a smaller screen. A deliberate departure from the Type rule, asked for
  * after riding the real thing.
  */
-const SIZES: Record<HeroSize, { value: string; target: string; figure: string; unit: string }> = {
-  108: { value: 'text-hero', target: 'text-figure', figure: 'text-stat', unit: 'text-sub' },
+const SIZES: Record<
+  HeroSize,
+  { value: string; target: string; figure: string; unit: string; figureUnit: string }
+> = {
+  108: {
+    value: 'text-hero',
+    target: 'text-figure',
+    figure: 'text-stat',
+    unit: 'text-sub',
+    figureUnit: 'text-sub',
+  },
+  // The one size where the two units part company: design/DESIGN.md gives the tablet
+  // "72, figure 24, units 12", and 12 beside a 72 px value would be a hairline.
   72: {
     value: 'text-hero-tablet',
     target: 'text-stat',
     figure: 'text-title',
     unit: 'text-body',
+    figureUnit: 'text-caption',
   },
-  44: { value: 'text-figure', target: 'text-sub', figure: 'text-body', unit: 'text-caption' },
+  44: {
+    value: 'text-figure',
+    target: 'text-sub',
+    figure: 'text-body',
+    unit: 'text-caption',
+    figureUnit: 'text-caption',
+  },
 };
 
 interface HeroProps {
@@ -110,7 +128,9 @@ export function Hero({
         {figure !== undefined && (
           <div className={`${MONO} ${s.figure} ml-auto text-right text-muted tracking-[-0.02em]`}>
             {figure}
-            {figureUnit !== undefined && <span className={`${s.unit} ml-[6px]`}>{figureUnit}</span>}
+            {figureUnit !== undefined && (
+              <span className={`${s.figureUnit} ml-[6px]`}>{figureUnit}</span>
+            )}
           </div>
         )}
       </div>

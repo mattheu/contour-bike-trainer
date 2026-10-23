@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { arrangementFor, type ArrangementName } from './arrangement';
-import { PHONE_LANDSCAPE_QUERY, PHONE_PORTRAIT_QUERY } from './use-media-query';
+import {
+  PHONE_LANDSCAPE_QUERY,
+  PHONE_PORTRAIT_QUERY,
+  TABLET_PORTRAIT_QUERY,
+} from './use-media-query';
 
 interface Viewport {
   width: number;
@@ -8,7 +12,7 @@ interface Viewport {
 }
 
 /**
- * The media features the two phone queries use, evaluated against a viewport.
+ * The media features the three queries use, evaluated against a viewport.
  *
  * The tests run in node, so there is no matchMedia to ask. Parsing the exported strings
  * is what keeps this honest: a threshold changed in use-media-query is a threshold these
@@ -22,6 +26,8 @@ function matchesViewport(query: string, viewport: Viewport): boolean {
     switch (feature.trim()) {
       case 'max-width':
         return viewport.width <= px;
+      case 'min-width':
+        return viewport.width >= px;
       case 'max-height':
         return viewport.height <= px;
       // CSS calls a square viewport portrait: landscape is strictly wider than it is tall.
@@ -37,6 +43,7 @@ function arrangementAt(viewport: Viewport): ArrangementName {
   return arrangementFor({
     phonePortrait: matchesViewport(PHONE_PORTRAIT_QUERY, viewport),
     phoneLandscape: matchesViewport(PHONE_LANDSCAPE_QUERY, viewport),
+    tabletPortrait: matchesViewport(TABLET_PORTRAIT_QUERY, viewport),
   });
 }
 
@@ -44,9 +51,16 @@ function arrangementAt(viewport: Viewport): ArrangementName {
 const PHONE_LANDSCAPE: Viewport = { width: 844, height: 390 };
 const PHONE_PORTRAIT: Viewport = { width: 390, height: 844 };
 const SMALL_PHONE_LANDSCAPE: Viewport = { width: 667, height: 375 };
-const TABLET_PORTRAIT: Viewport = { width: 820, height: 1180 };
+/** design/mockups/tablet-portrait.html is drawn at 834 x 1194; an iPad is 820 x 1180. */
+const TABLET_PORTRAIT: Viewport = { width: 834, height: 1194 };
+const IPAD_PORTRAIT: Viewport = { width: 820, height: 1180 };
+const BIG_TABLET_PORTRAIT: Viewport = { width: 1024, height: 1366 };
+const SMALL_TABLET_PORTRAIT: Viewport = { width: 768, height: 1024 };
 const TABLET_LANDSCAPE: Viewport = { width: 1180, height: 820 };
 const DESKTOP: Viewport = { width: 1440, height: 900 };
+/** A desktop window dragged tall and narrow, and a portrait monitor behind it. */
+const NARROW_DESKTOP: Viewport = { width: 1100, height: 1400 };
+const PORTRAIT_MONITOR: Viewport = { width: 1440, height: 2560 };
 
 describe('which arrangement a viewport asks for', () => {
   it('gives a phone on its side the landscape arrangement', () => {
@@ -58,12 +72,31 @@ describe('which arrangement a viewport asks for', () => {
     expect(arrangementAt(PHONE_PORTRAIT)).toBe('phone-portrait');
   });
 
-  // The tablet arrangement is still the desktop one. What matters is that a tablet is
-  // not handed a phone's: four 44 px slots across 1180 px is not a ride screen.
+  // Four 44 px slots across 1180 px is not a ride screen.
   it('takes neither the tablet nor the desktop', () => {
-    expect(arrangementAt(TABLET_PORTRAIT)).toBe('desktop');
     expect(arrangementAt(TABLET_LANDSCAPE)).toBe('desktop');
     expect(arrangementAt(DESKTOP)).toBe('desktop');
+  });
+
+  it('gives a tablet held upright its own arrangement', () => {
+    expect(arrangementAt(TABLET_PORTRAIT)).toBe('tablet-portrait');
+    expect(arrangementAt(IPAD_PORTRAIT)).toBe('tablet-portrait');
+    expect(arrangementAt(BIG_TABLET_PORTRAIT)).toBe('tablet-portrait');
+    expect(arrangementAt(SMALL_TABLET_PORTRAIT)).toBe('tablet-portrait');
+  });
+
+  // The query it is chosen by has no floor, so the only thing keeping a phone off the
+  // tablet arrangement is the order arrangementFor reads the three in.
+  it('does not let the tablet query take a phone', () => {
+    expect(matchesViewport(TABLET_PORTRAIT_QUERY, PHONE_PORTRAIT)).toBe(true);
+    expect(arrangementAt(PHONE_PORTRAIT)).toBe('phone-portrait');
+    expect(arrangementAt(PHONE_LANDSCAPE)).toBe('phone-landscape');
+  });
+
+  it('does not let it take a desktop window either', () => {
+    expect(arrangementAt(TABLET_LANDSCAPE)).toBe('desktop');
+    expect(arrangementAt(NARROW_DESKTOP)).toBe('desktop');
+    expect(arrangementAt(PORTRAIT_MONITOR)).toBe('desktop');
   });
 
   it('turns a phone from one phone arrangement straight into the other', () => {
@@ -76,7 +109,9 @@ describe('which arrangement a viewport asks for', () => {
   });
 
   it('falls back to the widest arrangement where nothing matches', () => {
-    expect(arrangementFor({ phonePortrait: false, phoneLandscape: false })).toBe('desktop');
+    expect(
+      arrangementFor({ phonePortrait: false, phoneLandscape: false, tabletPortrait: false }),
+    ).toBe('desktop');
   });
 });
 
@@ -94,9 +129,9 @@ describe('the workout screen takes the same choice', () => {
     expect(arrangementAt(PHONE_LANDSCAPE)).toBe('phone-landscape');
   });
 
-  // The plan chart and the Steps panel are a desktop row: a tablet keeps them.
-  it('leaves a tablet and a desktop on the plan row', () => {
-    expect(arrangementAt(TABLET_PORTRAIT)).toBe('desktop');
+  // The plan chart and the Steps panel are a desktop row, and a tablet keeps them: the
+  // workout screen maps tablet-portrait onto WorkoutDesktop — see Workout.tsx.
+  it('leaves a desktop on the plan row', () => {
     expect(arrangementAt(DESKTOP)).toBe('desktop');
   });
 });

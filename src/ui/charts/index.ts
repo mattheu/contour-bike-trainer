@@ -60,6 +60,11 @@ export {
   PLAN_HEADING_GAP_PX,
   PLAN_HEADING_PX,
   PLAN_LABEL_GUTTER_PX,
+  TABLET_CHART_GAP_PX,
+  TABLET_MAP_HEIGHT,
+  TABLET_PROFILE_HEIGHT,
+  TABLET_STACK_GAP_PX,
+  TABLET_STRIP_HEIGHT,
   chartRowLayout,
   chartStackHeights,
   phoneChartStack,
@@ -68,5 +73,6 @@ export {
   phonePlanHeight,
   planChartHeight,
   planRowLayout,
+  tabletChartStack,
 } from './layout';
-export type { ChartRowLayout, PhoneChartStack, PlanRowLayout } from './layout';
+export type { ChartRowLayout, PhoneChartStack, PlanRowLayout, TabletChartStack } from './layout';

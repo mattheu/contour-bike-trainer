@@ -6,7 +6,12 @@ import type { RideSnapshot, WorkoutSnapshot } from '../store';
 import { arrangementFor, type ArrangementName } from './arrangement';
 import { heartRateLadder, powerLadder, primaryControlLabel } from './ride-view';
 import { RideSettings, type Targets } from './RideSettings';
-import { PHONE_LANDSCAPE_QUERY, PHONE_PORTRAIT_QUERY, useMediaQuery } from './use-media-query';
+import {
+  PHONE_LANDSCAPE_QUERY,
+  PHONE_PORTRAIT_QUERY,
+  TABLET_PORTRAIT_QUERY,
+  useMediaQuery,
+} from './use-media-query';
 import type { WorkoutArrangementProps } from './workout-arrangement';
 import { workoutReadings } from './workout-readings';
 import {
@@ -21,10 +26,18 @@ import { WorkoutDesktop } from './WorkoutDesktop';
 import { WorkoutPhoneLandscape } from './WorkoutPhoneLandscape';
 import { WorkoutPhonePortrait } from './WorkoutPhonePortrait';
 
-/** The component each arrangement name draws. One at a time — see arrangementFor. */
+/**
+ * The component each arrangement name draws. One at a time — see arrangementFor.
+ *
+ * A tablet held upright gets the desktop one: the plan chart and the Steps panel are a
+ * row this screen is built around, and no mockup re-proportions them yet. Named here
+ * rather than by withholding the query from arrangementFor, so the day there is a
+ * workout tablet arrangement this is the one line that changes.
+ */
 const ARRANGEMENTS: Record<ArrangementName, (props: WorkoutArrangementProps) => ReactElement> = {
   'phone-portrait': WorkoutPhonePortrait,
   'phone-landscape': WorkoutPhoneLandscape,
+  'tablet-portrait': WorkoutDesktop,
   desktop: WorkoutDesktop,
 };
 
@@ -117,6 +130,7 @@ export function Workout({
   const arrangementName = arrangementFor({
     phonePortrait: useMediaQuery(PHONE_PORTRAIT_QUERY),
     phoneLandscape: useMediaQuery(PHONE_LANDSCAPE_QUERY),
+    tabletPortrait: useMediaQuery(TABLET_PORTRAIT_QUERY),
   });
 
   // Space is the one keyboard shortcut: hands are on the bars, not the keyboard.

@@ -230,6 +230,66 @@ function phoneStack(
 }
 
 /**
+ * design/mockups/tablet-portrait.html draws all three charts at once inside an 834 x 1194
+ * artboard: the profile at 200 over the strip at 66, then the map at 240 under a heading
+ * of its own. 24 px between the profile and its strip, 40 before the map's heading.
+ */
+export const TABLET_PROFILE_HEIGHT = 200;
+export const TABLET_STRIP_HEIGHT = 66;
+export const TABLET_MAP_HEIGHT = 240;
+export const TABLET_CHART_GAP_PX = 24;
+export const TABLET_STACK_GAP_PX = 40;
+
+/**
+ * The map is 754 px wide here, so it runs out of use at a height the desktop's narrow
+ * column never reaches: under this it is a 5:1 letterbox and a route folds into a band
+ * rather than keeping a shape the rider can recognise.
+ */
+export const MIN_TABLET_MAP_HEIGHT = 160;
+
+export interface TabletChartStack {
+  profileHeight: number;
+  stripHeight: number;
+  mapHeight: number;
+}
+
+const TABLET_CHART_CHROME_PX =
+  TABLET_CHART_GAP_PX + TABLET_STACK_GAP_PX + CHART_HEADING_PX + CHART_HEADING_GAP_PX;
+
+const TABLET_STACK_DRAWN: TabletChartStack = {
+  profileHeight: TABLET_PROFILE_HEIGHT,
+  stripHeight: TABLET_STRIP_HEIGHT,
+  mapHeight: TABLET_MAP_HEIGHT,
+};
+
+/**
+ * How a tablet held upright divides the space its readings left.
+ *
+ * Capped at the drawn heights rather than grown into whatever is there, which is the
+ * bargain the phone stacks already make and the one the mockup draws: it centres the
+ * three charts and spends the slack above and below them. Unlike a phone this is three
+ * charts rather than one, so a short tablet has an order to give height up in — the map
+ * first, because the profile is the chart you ride to and the map is the reference beside
+ * it, which is the same call MIN_MAP_WIDTH makes across the desktop row. The strip is
+ * last because it is already the shortest thing on the screen.
+ */
+export function tabletChartStack(availableHeight: number | null): TabletChartStack {
+  if (availableHeight === null || !Number.isFinite(availableHeight)) return TABLET_STACK_DRAWN;
+
+  const forCharts = Math.floor(availableHeight) - TABLET_CHART_CHROME_PX;
+  let owed = TABLET_PROFILE_HEIGHT + TABLET_STRIP_HEIGHT + TABLET_MAP_HEIGHT - forCharts;
+  if (owed <= 0) return TABLET_STACK_DRAWN;
+
+  const mapHeight = Math.max(MIN_TABLET_MAP_HEIGHT, TABLET_MAP_HEIGHT - owed);
+  owed -= TABLET_MAP_HEIGHT - mapHeight;
+  const profileHeight = Math.max(MIN_PROFILE_HEIGHT, TABLET_PROFILE_HEIGHT - owed);
+  owed -= TABLET_PROFILE_HEIGHT - profileHeight;
+  const stripHeight = Math.max(MIN_STRIP_HEIGHT, TABLET_STRIP_HEIGHT - owed);
+
+  return { profileHeight, stripHeight, mapHeight };
+}
+
+/**
  * design/mockups/workout.html draws the lower row as `minmax(0, 1fr) 320px` with the same
  * 48 px gap, and keeps 32 px clear inside the chart column for the zone figures.
  */

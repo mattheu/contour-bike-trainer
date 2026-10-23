@@ -29,6 +29,19 @@ export const PHONE_PORTRAIT_QUERY = '(max-width: 560px) and (orientation: portra
  */
 export const PHONE_LANDSCAPE_QUERY = '(max-height: 560px) and (orientation: landscape)';
 
+/**
+ * design/DESIGN.md > Screen rules, the Tablet portrait bullet. A tablet held upright gets
+ * every chart at once, so the only thing this has to separate it from is a desktop window
+ * — hence the `wide` breakpoint as the ceiling: three screens already fold on 1100 px, and
+ * above it a portrait monitor is a desktop with a tall window rather than a tablet.
+ *
+ * No floor, deliberately. The phone's 560 px ceiling is this one's floor and arrangementFor
+ * reads the phone queries first, so the overlap is settled by order rather than by a second
+ * threshold that would have to be kept in step with the first — and a `min-width: 561px`
+ * would leave the half pixel between them matching nothing at all under browser zoom.
+ */
+export const TABLET_PORTRAIT_QUERY = '(max-width: 1099px) and (orientation: portrait)';
+
 export function useMediaQuery(query: string): boolean {
   const list = useMemo(
     () => (typeof globalThis.matchMedia === 'function' ? globalThis.matchMedia(query) : null),

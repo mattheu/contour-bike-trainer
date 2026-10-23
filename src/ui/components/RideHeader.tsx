@@ -5,7 +5,7 @@ import { ButtonGroup } from './ButtonGroup';
 import { IconButton } from './IconButton';
 import { SettingsIcon } from './icons';
 import { LABEL } from './styles';
-import { Logo } from './Wordmark';
+import { Logo, type LogoSize } from './Wordmark';
 
 interface RideHeaderProps {
   /** The route name, or the workout name when a workout is loaded. */
@@ -19,6 +19,12 @@ interface RideHeaderProps {
   tag?: ReactNode;
   /** What the one accent control reads now: Start, Pause or Resume. See ride-view. */
   pauseLabel: string;
+  /**
+   * The lockup's height, which the title follows: 48 and a 14 px title on a desktop, 44
+   * and 12 on the narrower screens design/mockups/tablet-portrait.html draws. The
+   * controls keep their own height either way — they are still a desktop's controls.
+   */
+  size?: LogoSize;
   /**
    * Controls that belong to what is being ridden rather than to the ride itself, drawn
    * left of the ride group as their own group. The workout difficulty is the one of them.
@@ -35,20 +41,23 @@ export function RideHeader({
   tag,
   pauseLabel,
   actions,
+  size = 48,
   onPause,
   onEnd,
   onSettings,
 }: RideHeaderProps) {
+  const titleClass = size === 48 ? LABEL : `${LABEL} text-caption`;
+
   return (
     <header className="flex items-center justify-between">
-      <div className="flex items-center gap-[18px]">
-        <Logo />
-        <div className={LABEL}>{title}</div>
+      <div className={`flex items-center ${size === 48 ? 'gap-[18px]' : 'gap-[16px]'}`}>
+        <Logo size={size} />
+        <div className={titleClass}>{title}</div>
         {tag}
         {subtitle !== undefined && (
           <>
-            <div className={`${LABEL} text-hairline`}>·</div>
-            <div className={LABEL}>{subtitle}</div>
+            <div className={`${titleClass} text-hairline`}>·</div>
+            <div className={titleClass}>{subtitle}</div>
           </>
         )}
       </div>

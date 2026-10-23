@@ -20,14 +20,21 @@ import { primaryControlLabel, type ProfileZoom } from './ride-view';
 import { RideDesktop } from './RideDesktop';
 import { RidePhoneLandscape } from './RidePhoneLandscape';
 import { RidePhonePortrait } from './RidePhonePortrait';
+import { RideTabletPortrait } from './RideTabletPortrait';
 import { RideSettings, type Targets } from './RideSettings';
 import { powerSamplesFrom } from './summary-view';
-import { PHONE_LANDSCAPE_QUERY, PHONE_PORTRAIT_QUERY, useMediaQuery } from './use-media-query';
+import {
+  PHONE_LANDSCAPE_QUERY,
+  PHONE_PORTRAIT_QUERY,
+  TABLET_PORTRAIT_QUERY,
+  useMediaQuery,
+} from './use-media-query';
 
 /** The component each arrangement name draws. One at a time — see arrangementFor. */
 const ARRANGEMENTS: Record<ArrangementName, (props: RideArrangementProps) => ReactElement> = {
   'phone-portrait': RidePhonePortrait,
   'phone-landscape': RidePhoneLandscape,
+  'tablet-portrait': RideTabletPortrait,
   desktop: RideDesktop,
 };
 
@@ -99,6 +106,7 @@ export function Ride({
   const arrangementName = arrangementFor({
     phonePortrait: useMediaQuery(PHONE_PORTRAIT_QUERY),
     phoneLandscape: useMediaQuery(PHONE_LANDSCAPE_QUERY),
+    tabletPortrait: useMediaQuery(TABLET_PORTRAIT_QUERY),
   });
 
   const profile = useMemo(() => buildProfile(route), [route]);
