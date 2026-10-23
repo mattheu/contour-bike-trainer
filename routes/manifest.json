@@ -62,6 +62,15 @@
       "description": "A cobbled lane out of Melden, and a national monument. 600 m averaging 10 % and pitching to 22 %, which has put plenty of riders off their bikes in the Tour of Flanders.",
       "totalDistanceM": 6677,
       "totalAscentM": 72
+    },
+    {
+      "id": "montjuic",
+      "name": "Montjuïc",
+      "region": "Barcelona, Spain",
+      "file": "montjuic.gpx",
+      "description": "A circuit on the hill above Barcelona, climbing to the castle and dropping back through the park. The Volta a Catalunya has finished here every year since 2013, seven laps of it.",
+      "totalDistanceM": 7828,
+      "totalAscentM": 205
     }
   ]
 }
