@@ -19,6 +19,11 @@ import type { WorkoutArrangementProps } from './workout-arrangement';
  * and strip. The Steps panel does not come: at 390 px it would be a list of eight rows
  * under a chart too short to read, and the band above already says what is being asked
  * for now and what is coming next.
+ *
+ * Provisional, not settled. Neither phone mockup has room for the panel and DESIGN.md's
+ * phone bullets do not mention it, so this follows the design as drawn — but a rider who
+ * navigates a long session by looking ahead loses that here, and the question was still
+ * with design when this was built.
  */
 export function WorkoutPhonePortrait({
   snapshot,
