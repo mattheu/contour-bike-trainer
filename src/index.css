@@ -242,3 +242,35 @@ body {
     padding-block: 16px 14px;
   }
 }
+
+/*
+ * The header lockup, sized by the same rules as the page gutter.
+ *
+ * AppHeader is shared by every list screen at every width, so it cannot pick a size the
+ * way an arrangement does. Without this a phone held sideways showed the 111x48 lockup
+ * on Routes and the 83x44 one on the ride behind it — the logo moved as the rider
+ * crossed between them.
+ *
+ * Matches PHONE_LANDSCAPE_QUERY in screens/use-media-query.ts, as .page-gutter does.
+ */
+.logo-header {
+  height: 44px;
+  width: 83px;
+  font-size: 24px;
+}
+
+@media (width >= 40rem) {
+  .logo-header {
+    height: 48px;
+    width: 111px;
+    font-size: 32px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .logo-header {
+    height: 44px;
+    width: 83px;
+    font-size: 24px;
+  }
+}

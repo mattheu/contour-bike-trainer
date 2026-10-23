@@ -63,11 +63,13 @@ export function Lockup() {
 export type LogoVariant = 'primary' | 'inverted';
 
 /** The logo guide: a header lockup is the control height, mark 32 px; 44 and 24 on a phone. */
-export type LogoSize = 48 | 44;
+export type LogoSize = 48 | 44 | 'header';
 
 const BOXES: Record<LogoSize, string> = {
   48: 'h-[48px] w-[111px] text-[32px]',
   44: 'h-[44px] w-[83px] text-[24px]',
+  // Sized in CSS, so a shared header follows the viewport without being told.
+  header: 'logo-header',
 };
 
 /**
