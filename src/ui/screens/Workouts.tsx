@@ -157,7 +157,7 @@ export function Workouts({
   );
 
   return (
-    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden px-[64px] py-[44px]">
+    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden px-[16px] sm:px-[40px] wide:px-[64px] py-[24px] sm:py-[44px]">
       <AppHeader
         nav={<Nav value="workouts" onChange={onNavigate} />}
         action={
