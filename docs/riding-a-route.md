@@ -5,7 +5,7 @@
 The **Routes** tab lists what you can ride. Each row shows a thumbnail of the route's profile, its
 name, distance, elevation gain, and how many times you have ridden it.
 
-Six real routes ship with the app — no synthetic ones, because an app about riding real roads
+Seven real routes ship with the app — no synthetic ones, because an app about riding real roads
 should not open on a test fixture:
 
 - **Rosedale Chimney**, North York Moors, UK. 19 km, 346 m — a moor loop over one of the steepest
@@ -17,6 +17,8 @@ should not open on a test fixture:
   running on through the village.
 - **Montjuïc**, Barcelona, Spain. 8 km, 205 m — the Volta a Catalunya's finishing circuit, which
   the race laps seven times. Two climbs and a long descent, so it settles into a rhythm.
+- **Ilkley**, Wharfedale, UK. 1.5 km, 30 m — a town-centre race circuit, and the shortest here
+  by a long way: a lap is about two minutes.
 - **Koppenberg**, Flanders, Belgium. 7 km, 72 m — the shortest here, and a lap turns on one
   cobbled wall: 600 m averaging 10 % and pitching to 22 %.
 
@@ -73,8 +75,8 @@ reading that is no longer live, not a reading of nought.
 ## Finishing
 
 Reaching the end of a point-to-point route ends the ride on its own. **A loop does not stop you at
-the start line**: it rolls through onto the next lap, and keeps going until you end it. Four of the
-six — Rosedale Chimney, Box Hill, the Koppenberg and Montjuïc — start and finish in the same
+the start line**: it rolls through onto the next lap, and keeps going until you end it. Five of the
+seven — Rosedale Chimney, Box Hill, the Koppenberg, Montjuïc and Ilkley — start and finish in the same
 place, and the app works that out from the route itself rather than being told, so a loop you
 import laps too.
 
