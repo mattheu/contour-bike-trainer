@@ -148,17 +148,16 @@ export const COLUMNS: Column[] = [
          * a ride has been saved. It also leaves the column ending on the reason to come
          * back rather than on a file format.
          *
-         * Plain, like the three entries above it. One draft named all three slots and
-         * ran to forty words beside neighbours of twenty; the next sold the feature and
-         * read as copy written from the docs. The column wants neither.
+         * The first sentence is the author's own. Two drafts before it missed: one
+         * named all three slots and ran to forty words, the next sold the feature and
+         * read as copy written from the docs.
          *
-         * "Not at an average pace" is the one thing a rider would otherwise assume
-         * wrongly, and it is literally what ghost/lap.ts does: it interpolates between
-         * the recorded samples, so the ghost moves as that ride moved.
+         * The loop sentence stays because it is the part a rider would not guess, and
+         * it is what ghost/lap.ts does: the series is re-resolved at every crossing.
          */
         label: 'Ghosts',
         sentence:
-          'Race a previous ride of the same route. The ghost moves as that ride did, not at an average pace. On a loop it restarts every lap.',
+          'Race against ghosts of your previous rides and see how you compare. On a loop it restarts every lap.',
       },
     ],
   },
