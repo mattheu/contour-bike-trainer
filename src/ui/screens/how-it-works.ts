@@ -148,21 +148,17 @@ export const COLUMNS: Column[] = [
          * a ride has been saved. It also leaves the column ending on the reason to come
          * back rather than on a file format.
          *
-         * Sells the feature rather than listing its slots. The first draft named all
-         * three — best, best this year, most recent — and ran to forty words beside
-         * neighbours of twenty: a specification where the column wants a reason.
+         * Plain, like the three entries above it. One draft named all three slots and
+         * ran to forty words beside neighbours of twenty; the next sold the feature and
+         * read as copy written from the docs. The column wants neither.
          *
-         * "Replays the real ride" is the claim worth making, and it is literally true:
-         * ghost/lap.ts interpolates between the recorded samples, so an effort that
-         * faded fades in the same place. A pace line is what a rider would otherwise
-         * assume, and it is the duller thing.
-         *
-         * The loop sentence is last because it is the surprise — lap.ts re-resolves at
-         * each crossing, so the lap just ridden becomes the next thing to chase.
+         * "Not at an average pace" is the one thing a rider would otherwise assume
+         * wrongly, and it is literally what ghost/lap.ts does: it interpolates between
+         * the recorded samples, so the ghost moves as that ride moved.
          */
         label: 'Ghosts',
         sentence:
-          'Race your own fastest time up the same road. The ghost replays the real ride, so if you went out too hard, it does too. On a loop, a fresh race every lap.',
+          'Race a previous ride of the same route. The ghost moves as that ride did, not at an average pace. On a loop it restarts every lap.',
       },
     ],
   },
