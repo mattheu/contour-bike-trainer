@@ -13,6 +13,7 @@ import {
   ListHeaderFrame,
   ListRow,
   ListRowFrame,
+  ListSort,
   ROUTES_ACTIONS,
   ROUTES_ARMED_INSET,
   ROUTES_COLUMNS,
@@ -21,6 +22,7 @@ import { RouteKindMark } from '../components/RouteKindMark';
 import { LABEL, MONO } from '../components/styles';
 import { distance, elevation } from '../format';
 import { AlertStrip } from './AlertStrip';
+import { listHeaders, pressSort, sortOptions, sortRows, type SortState } from './list-sort';
 import { Nav, type ListScreen } from './Nav';
 import {
   cancelDelete,
@@ -42,12 +44,12 @@ import {
   rideCounts,
   riddenLabel,
   routeFigures,
-  sortRoutes,
+  routeSortSpec,
+  ROUTE_SORT_INITIAL,
+  type RouteSortKey,
 } from './routes-list';
 import { Selectable } from './Selectable';
 import { useAsync } from './use-async';
-
-const LABELS = ['Profile', 'Route', 'Distance', 'Gain', 'Ridden'] as const;
 
 /**
  * What a row says instead of its region when this install has no GPX for it: a record
@@ -104,8 +106,18 @@ export function Routes({
   onNavigate,
   onOpenProfile,
 }: RoutesProps) {
-  const ordered = useMemo(() => sortRoutes(routes), [routes]);
   const counts = useMemo(() => rideCounts(rides), [rides]);
+  // Per list and per visit: a sort is how the rider is reading this screen now, not a
+  // preference, and nothing in the mockups says it outlives a reload.
+  const [sort, setSort] = useState<SortState<RouteSortKey>>(ROUTE_SORT_INITIAL);
+  const sorting = useMemo(() => routeSortSpec(counts), [counts]);
+  const onSort = useCallback(
+    (key: RouteSortKey) => {
+      setSort((state) => pressSort(sorting, state, key));
+    },
+    [sorting],
+  );
+  const ordered = useMemo(() => sortRows(sorting, routes, sort), [sorting, routes, sort]);
   const [alert, setAlert] = useState<AlertState | null>(null);
   // Stable: AlertStrip's five-second info timer restarts whenever this identity changes.
   const clearAlert = useCallback(() => setAlert(null), []);
@@ -134,20 +146,26 @@ export function Routes({
   );
 
   return (
-    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden page-gutter page-gutter-y">
-      <AppHeader nav={<Nav value="routes" onChange={onNavigate} />} onSettings={onOpenProfile} />
+    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden max-sm:gap-[18px] page-gutter page-gutter-y">
+      <AppHeader
+        nav={<Nav value="routes" onChange={onNavigate} />}
+        onSettings={onOpenProfile}
+        stacked
+      />
 
       {/* Cancels the column gap the strip would otherwise sit below, so an alert lands
           directly under the header as it does on the other list screens. */}
       {alert !== null && (
-        <div className="-mt-[40px]">
+        <div className="-mt-[40px] max-sm:-mt-[18px]">
           <AlertStrip alert={alert} onDismiss={clearAlert} onRetry={clearAlert} />
         </div>
       )}
 
+      <ListSort options={sortOptions(sorting, sort)} value={sort.key} onChange={onSort} />
+
       <div className="flex min-h-0 grow flex-col">
         <ListHeaderFrame actionsWidth={ROUTES_ACTIONS}>
-          <ListHeader columns={ROUTES_COLUMNS} labels={LABELS} />
+          <ListHeader columns={ROUTES_COLUMNS} cells={listHeaders(sorting, sort, onSort)} />
         </ListHeaderFrame>
         <div className="min-h-0 overflow-y-auto">
           {ordered.map((route) => (

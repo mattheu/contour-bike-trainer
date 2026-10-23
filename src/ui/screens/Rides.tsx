@@ -10,6 +10,7 @@ import {
   ListHeaderFrame,
   ListRow,
   ListRowFrame,
+  ListSort,
   RIDES_ACTIONS,
   RIDES_ARMED_INSET,
   RIDES_COLUMNS,
@@ -18,9 +19,12 @@ import { Segmented } from '../components/Segmented';
 import { LABEL, MONO } from '../components/styles';
 import { distance, duration, num } from '../format';
 import { AlertStrip } from './AlertStrip';
+import { listHeaders, pressSort, sortOptions, sortRows, type SortState } from './list-sort';
 import { Nav, type ListScreen } from './Nav';
 import {
   ALL_ROUTES,
+  RIDE_SORT,
+  RIDE_SORT_INITIAL,
   ALL_WORKOUTS,
   INITIAL_RIDE_FILTER,
   PERIODS,
@@ -35,6 +39,7 @@ import {
   riddenWorkouts,
   selectType,
   type RideFilter,
+  type RideSortKey,
 } from './rides-list';
 import {
   cancelDelete,
@@ -48,8 +53,6 @@ import {
 } from './ride-delete';
 import { importAlert, type ImportResult } from './rides-import';
 import { Selectable } from './Selectable';
-
-const LABELS = ['Date', 'Route', 'Distance', 'Time', 'Avg power'] as const;
 
 interface RidesProps {
   rides: readonly Ride[];
@@ -99,7 +102,16 @@ export function Rides({
   /** Rebuilt only when a route is added or removed, so the per-row check is a lookup. */
   const installed = useMemo(() => new Set(routes.map((route) => route.id)), [routes]);
   const workouts = useMemo(() => riddenWorkouts(rides), [rides]);
-  const shown = useMemo(() => filterRides(rides, filter), [rides, filter]);
+  // Per list and per visit: a sort is how the rider is reading this screen now, not a
+  // preference, and nothing in the mockups says it outlives a reload.
+  const [sort, setSort] = useState<SortState<RideSortKey>>(RIDE_SORT_INITIAL);
+  const onSort = useCallback((key: RideSortKey) => {
+    setSort((state) => pressSort(RIDE_SORT, state, key));
+  }, []);
+  const shown = useMemo(
+    () => sortRows(RIDE_SORT, filterRides(rides, filter), sort),
+    [rides, filter, sort],
+  );
   // Totals whatever is on screen, under every combination of the four.
   const summary = useMemo(() => periodSummary(shown, filter.period), [shown, filter.period]);
 
@@ -127,20 +139,24 @@ export function Rides({
   );
 
   return (
-    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden page-gutter page-gutter-y">
+    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden max-sm:gap-[18px] page-gutter page-gutter-y">
       <AppHeader
         nav={<Nav value="rides" onChange={onNavigate} />}
-        action={<div className={`${MONO} text-label text-muted`}>{summary}</div>}
+        // Micro on a phone, where the top row is the logo, this and the settings icon.
+        action={<div className={`${MONO} text-label text-muted max-sm:text-micro`}>{summary}</div>}
         onSettings={onOpenProfile}
+        stacked
       />
 
       {/* Cancels the column gap the strip would otherwise sit below, so an alert lands
           directly under the header as it does on the ride screen. */}
       {alert !== null && (
-        <div className="-mt-[40px]">
+        <div className="-mt-[40px] max-sm:-mt-[18px]">
           <AlertStrip alert={alert} onDismiss={clearAlert} onRetry={clearAlert} />
         </div>
       )}
+
+      <ListSort options={sortOptions(RIDE_SORT, sort)} value={sort.key} onChange={onSort} />
 
       <div className="-mt-[8px] flex items-end gap-[40px]">
         <div className="flex flex-col gap-[8px]">
@@ -190,7 +206,7 @@ export function Rides({
 
       <div className="flex min-h-0 grow flex-col">
         <ListHeaderFrame actionsWidth={RIDES_ACTIONS}>
-          <ListHeader columns={RIDES_COLUMNS} labels={LABELS} />
+          <ListHeader columns={RIDES_COLUMNS} cells={listHeaders(RIDE_SORT, sort, onSort)} />
         </ListHeaderFrame>
         <div className="min-h-0 overflow-y-auto">
           {shown.map((ride) => (

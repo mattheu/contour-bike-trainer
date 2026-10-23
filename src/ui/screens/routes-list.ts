@@ -2,6 +2,7 @@ import { KIND_LABEL, type RouteKind } from '../../route/loop';
 import type { Ride, Route as StoredRoute } from '../../storage/types';
 import type { FoldedFigure } from '../components/ListRow';
 import { distance, elevation } from '../format';
+import type { SortSpec, SortState } from './list-sort';
 
 /**
  * The routes list's one derived column. Storage keeps no ride count on a route — it
@@ -38,9 +39,37 @@ export function routeFigures(route: StoredRoute, count: number): readonly Folded
   ];
 }
 
+export type RouteSortKey = 'name' | 'distance' | 'gain' | 'ridden';
+
 /** Alphabetical: the bundled set is small and has no meaningful intrinsic order. */
-export function sortRoutes(routes: readonly StoredRoute[]): StoredRoute[] {
-  return [...routes].sort((a, b) => a.name.localeCompare(b.name));
+export const ROUTE_SORT_INITIAL: SortState<RouteSortKey> = { key: 'name', direction: 'asc' };
+
+/**
+ * The four columns a route sorts by, in the order they are drawn — design/DESIGN.md >
+ * Screen rules, Lists. Profile leads the grid and is not one of them: a thumbnail has
+ * nothing to order rows by.
+ *
+ * Built against the ride counts rather than reading them, because Ridden is the one
+ * column that is not on the record: storage keeps no count on a route, so the list counts
+ * the history it already has to hand and sorting has to see the same numbers the rows do.
+ *
+ * A route nobody has ridden counts as nought rather than as absent. The row words it
+ * "Not ridden", but it is a count that happens to be nought, and ascending by Ridden to
+ * find what is still untouched is the most useful thing the column does.
+ */
+export function routeSortSpec(
+  counts: ReadonlyMap<string, number>,
+): SortSpec<RouteSortKey, StoredRoute> {
+  return {
+    slots: [
+      'Profile',
+      { key: 'name', label: 'Route', short: 'Name', value: (route) => route.name },
+      { key: 'distance', label: 'Distance', value: (route) => route.totalDistanceM },
+      { key: 'gain', label: 'Gain', value: (route) => route.totalAscentM },
+      { key: 'ridden', label: 'Ridden', value: (route) => counts.get(route.id) ?? 0 },
+    ],
+    tiebreak: (route) => route.name,
+  };
 }
 
 /**

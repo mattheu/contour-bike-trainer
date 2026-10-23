@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { SWIPE_MIN_PX, swipeDirection } from './phone-ride';
-import { workoutViewAfterSwipe, workoutViewToggle } from './phone-workout';
+import { ergToggle, workoutViewAfterSwipe, workoutViewToggle } from './phone-workout';
 
 describe('workoutViewToggle', () => {
   it('shows the steps glyph while the plan is on screen', () => {
@@ -29,6 +29,27 @@ describe('workoutViewToggle', () => {
   // things called the same thing on one screen is the failure this guards.
   it('does not take the plan chart’s accessible name', () => {
     expect(workoutViewToggle('steps').label).not.toBe('Workout plan');
+  });
+});
+
+describe('ergToggle', () => {
+  it('reads pressed while ERG is the chosen mode, and offers the way out', () => {
+    expect(ergToggle('erg')).toEqual({ pressed: true, next: 'manual', label: 'ERG mode' });
+  });
+
+  it('reads unpressed with ERG off, and offers the way back in', () => {
+    expect(ergToggle('manual')).toEqual({ pressed: false, next: 'erg', label: 'ERG mode' });
+  });
+
+  // The state is aria-pressed's to carry. A label that changed with it would be announced
+  // twice and, worse, in the two different tenses a screen reader cannot tell apart.
+  it('keeps one name in both states', () => {
+    expect(ergToggle('erg').label).toBe(ergToggle('manual').label);
+  });
+
+  it('round-trips, so a press and a press back leave the mode where it started', () => {
+    expect(ergToggle(ergToggle('erg').next).next).toBe('erg');
+    expect(ergToggle(ergToggle('manual').next).next).toBe('manual');
   });
 });
 

@@ -151,13 +151,14 @@ describe('the interval band', () => {
 });
 
 describe('the line over the plan chart', () => {
-  it('carries the FTP the session is ridden at and whether the trainer is holding it', () => {
-    expect(planReadout(FTP, true)).toBe('FTP 265 · ERG on');
+  it('carries the FTP the session is ridden at', () => {
+    expect(planReadout(FTP)).toBe('FTP 265');
   });
 
-  // ergEngaged, not the mode: a free block releases the trainer with ERG still chosen.
-  it('says off the moment the trainer stops pushing back', () => {
-    expect(planReadout(FTP, false)).toBe('FTP 265 · ERG off');
+  // The ERG button beside the chart carries the mode now, and two places saying it is one
+  // too many — see planReadout.
+  it('says nothing about ERG', () => {
+    expect(planReadout(FTP)).not.toMatch(/erg/i);
   });
 });
 

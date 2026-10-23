@@ -117,7 +117,7 @@ steps:
 });
 
 describe('workoutRows', () => {
-  it('sorts by name and keeps broken records in the list', () => {
+  it('keeps a broken record in the list rather than dropping it', () => {
     const rows = workoutRows(
       [
         stored('1', 'Zulu', STEADY),
@@ -126,9 +126,9 @@ describe('workoutRows', () => {
       ],
       FTP,
     );
-    // Sorted on the record's name, which is the one field every row has.
-    expect(rows.map((row) => row.id)).toEqual(['2', '3', '1']);
-    expect(rows[0]?.status).toBe('broken');
+    // Order is WORKOUT_SORT's now; what this holds is that nothing is lost on the way.
+    expect(rows.map((row) => row.id)).toEqual(['1', '2', '3']);
+    expect(rows[1]?.status).toBe('broken');
   });
 
   it('reads the five starter workouts as rows', () => {

@@ -2,7 +2,14 @@ import { useMemo, useRef } from 'react';
 import { PHONE_PLAN_LABEL_GUTTER_PX, PlanChart, phoneLandscapePlanHeight } from '../charts';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
-import { EndIcon, PauseIcon, PlanIcon, SettingsIcon, StepsIcon } from '../components/icons';
+import {
+  EndIcon,
+  PauseIcon,
+  PlanIcon,
+  SettingsIcon,
+  SkipIcon,
+  StepsIcon,
+} from '../components/icons';
 import {
   PhoneInlinePrimary,
   PhoneInlineStat,
@@ -11,10 +18,11 @@ import {
 import { LABEL, MONO } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
-import { workoutViewAfterSwipe, workoutViewToggle } from './phone-workout';
+import { ergToggle, workoutViewAfterSwipe, workoutViewToggle } from './phone-workout';
 import { useElementHeight, useElementWidth } from './use-element-width';
 import { useViewSwipe } from './use-view-swipe';
 import type { WorkoutArrangementProps } from './workout-arrangement';
+import { canSkip } from './workout-view';
 import { WorkoutPhoneSteps } from './WorkoutPhoneSteps';
 
 /**
@@ -44,6 +52,8 @@ export function WorkoutPhoneLandscape({
   onPause,
   onEnd,
   onSettings,
+  onErgModeChange,
+  onSkipStep,
   onDismissAlert,
   onRetryTrainer,
 }: WorkoutArrangementProps) {
@@ -58,6 +68,7 @@ export function WorkoutPhoneLandscape({
   const chartWidth = (width ?? 796) - PHONE_PLAN_LABEL_GUTTER_PX;
 
   const toggle = workoutViewToggle(view);
+  const erg = ergToggle(workout.ergMode);
   const swipe = useViewSwipe(workoutViewAfterSwipe, onView);
 
   return (
@@ -68,8 +79,33 @@ export function WorkoutPhoneLandscape({
           <div className={`${LABEL} text-micro`}>{workout.name}</div>
         </div>
         {/* The session's own controls stay in the header here: the line under the slots is
-            11 px type, and 44 px buttons in it would cost the chart its height twice over. */}
-        <div className="flex items-center">
+            11 px type, and 44 px buttons in it would cost the chart its height twice over.
+            Three objects, 12 px apart — the plan's controls, the session's, then settings —
+            so a press aimed at Skip cannot land on Pause. ERG | Skip leads because it is
+            the pair reached for mid-interval; Pause and End sit nearest the thumb's rest. */}
+        <div className="flex items-center gap-[12px]">
+          <ButtonGroup label="Plan">
+            <IconButton
+              label={erg.label}
+              title={erg.label}
+              size={44}
+              pressed={erg.pressed}
+              onClick={() => {
+                onErgModeChange(erg.next);
+              }}
+            >
+              <span className="text-micro tracking-[0.08em]">ERG</span>
+            </IconButton>
+            <IconButton
+              label="Skip step"
+              title="Skip step"
+              size={44}
+              disabled={!canSkip(workout)}
+              onClick={onSkipStep}
+            >
+              <SkipIcon />
+            </IconButton>
+          </ButtonGroup>
           <ButtonGroup label="Workout">
             <IconButton label={pauseLabel} size={44} onClick={onPause}>
               <PauseIcon />
@@ -78,11 +114,9 @@ export function WorkoutPhoneLandscape({
               <EndIcon />
             </IconButton>
           </ButtonGroup>
-          <div className="ml-[12px]">
-            <IconButton label="Settings" size={44} onClick={onSettings}>
-              <SettingsIcon />
-            </IconButton>
-          </div>
+          <IconButton label="Settings" size={44} onClick={onSettings}>
+            <SettingsIcon />
+          </IconButton>
         </div>
       </header>
 

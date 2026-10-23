@@ -46,7 +46,7 @@ export interface WorkoutReadings {
   distance: Reading;
   speed: Reading;
   interval: IntervalBand;
-  /** The line over the plan chart: `FTP 265 · ERG on`. */
+  /** The line over the plan chart: `FTP 265`. */
   plan: string;
   /** What is coming: `next 5:00 recovery · 55 %`, dashed on the last step. */
   next: string;
@@ -130,14 +130,14 @@ export function intervalBand(workout: WorkoutSnapshot): IntervalBand {
 }
 
 /**
- * The line over the plan chart: `FTP 265 · ERG on`.
+ * The line over the plan chart: `FTP 265`, and nothing else.
  *
- * Both facts the desktop keeps in its bottom band, in the width a phone has. `on` reads
- * the trainer rather than the control — it is `ergEngaged`, so a free block that released
- * the trainer says off while the mode is still ERG, which is what the rider is feeling.
+ * It said `· ERG on` until the phones grew an ERG button of their own. Two places saying
+ * the same thing is one too many, and the button is the better of them: it is where a
+ * rider looks to change the mode, so it is where they will look to read it.
  */
-export function planReadout(ftpW: number, ergEngaged: boolean): string {
-  return `FTP ${num(ftpW)} · ERG ${ergEngaged ? 'on' : 'off'}`;
+export function planReadout(ftpW: number): string {
+  return `FTP ${num(ftpW)}`;
 }
 
 /** `next 5:00 recovery · 55 %`, and a dash on the last step, which has nothing after it. */
@@ -198,7 +198,7 @@ export function workoutReadings(input: WorkoutReadingsInput): WorkoutReadings {
     },
     speed: { ...ride.speed, testId: 'workout-speed' },
     interval: intervalBand(workout),
-    plan: planReadout(ftpW, workout.ergEngaged),
+    plan: planReadout(ftpW),
     next: nextStepReadout(workout),
   };
 }

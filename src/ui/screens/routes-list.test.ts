@@ -8,7 +8,6 @@ import {
   rideCounts,
   riddenLabel,
   routeFigures,
-  sortRoutes,
 } from './routes-list';
 
 function ride(routeId: string | null, id: string): Ride {
@@ -86,14 +85,6 @@ describe('routeFigures', () => {
   it('says a route has never been ridden rather than folding a nought', () => {
     const [, , ridden] = routeFigures(ditchling, 0);
     expect(ridden).toEqual({ value: 'Not ridden', muted: true });
-  });
-});
-
-describe('sortRoutes', () => {
-  it('sorts by name without touching the input', () => {
-    const input = [route('b', 'Sa Calobra'), route('a', 'Box Hill Repeats')];
-    expect(sortRoutes(input).map((r) => r.id)).toEqual(['a', 'b']);
-    expect(input.map((r) => r.id)).toEqual(['b', 'a']);
   });
 });
 
