@@ -1,3 +1,4 @@
+import type { ErgMode } from '../../storage/types';
 import type { SwipeDirection } from './phone-ride';
 
 /**
@@ -11,6 +12,10 @@ import type { SwipeDirection } from './phone-ride';
  *
  * The gesture itself is phone-ride's, borrowed rather than copied: one swipe judged one
  * way, so a diagonal that is the start of a scroll on a route is one on a workout too.
+ *
+ * The ERG control the phones add is here for the same reason: the desktop gives the mode a
+ * segmented pair, a phone has room for one box, and the arithmetic turning a mode into a
+ * press belongs where a test can hold it rather than in two arrangements.
  */
 
 export type WorkoutView = 'plan' | 'steps';
@@ -49,4 +54,29 @@ export function workoutViewToggle(view: WorkoutView): WorkoutViewToggle {
  */
 export function workoutViewAfterSwipe(direction: SwipeDirection): WorkoutView {
   return direction === 'left' ? 'steps' : 'plan';
+}
+
+export interface ErgToggle {
+  /** Whether ERG is the chosen mode, which is what the button's fill and aria-pressed say. */
+  pressed: boolean;
+  /** The mode a press asks for. */
+  next: ErgMode;
+  /** One name in both states: aria-pressed carries which it is in, so the label must not. */
+  label: string;
+}
+
+/**
+ * The phone's ERG button, as the desktop's two-member choice folded into one box.
+ *
+ * `workout.ergMode` and not `ergEngaged`: this is the control, and a free block that has
+ * released the trainer has not unchosen the mode. The release is a fact about the step and
+ * belongs to the readout, not to a button whose fill would otherwise flicker off mid-plan
+ * and invite a press that changed nothing.
+ */
+export function ergToggle(mode: ErgMode): ErgToggle {
+  return {
+    pressed: mode === 'erg',
+    next: mode === 'erg' ? 'manual' : 'erg',
+    label: 'ERG mode',
+  };
 }

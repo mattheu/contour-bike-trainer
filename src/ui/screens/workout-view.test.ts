@@ -273,6 +273,13 @@ describe('canSkip', () => {
     expect(canSkip(snapshot())).toBe(true);
   });
 
+  // The last step is skippable like any other — it ends the workout, which is a thing a
+  // rider is allowed to ask for. What is not skippable is the nothing that follows it.
+  it('is on through the last step and off after it', () => {
+    expect(canSkip(snapshot({ stepIndex: STEPS.length - 1 }))).toBe(true);
+    expect(canSkip(snapshot({ stepIndex: STEPS.length }))).toBe(false);
+  });
+
   it('is off once the plan has run out', () => {
     expect(canSkip(snapshot({ stepIndex: STEPS.length }))).toBe(false);
   });

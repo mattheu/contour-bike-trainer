@@ -252,8 +252,12 @@ export function PhoneInlineStat({
  *
  * Two shapes rather than one with a prop, for the reason the primaries above give: the
  * portrait band is a row of the page with the next step opposite it, the landscape one is
- * the fourth slot of a row of four. What they genuinely share is the track underneath,
- * and that is the part that is a component.
+ * the fourth slot of a row of four.
+ *
+ * Neither carries a progress track. design/DESIGN.md > Screen rules settles it against the
+ * desktop, which has none: the countdown already says how much is left, in the words a
+ * rider acts on, and an accent bar under it was the one place on these screens the accent
+ * was spent on something other than the data.
  */
 
 interface IntervalProps {
@@ -262,41 +266,18 @@ interface IntervalProps {
   value: string;
   /** What it is counting down from. */
   total: string;
-  /** How much of the step is behind the rider, 0 through 1. */
-  progress: number;
   /** design/DESIGN.md: accent through a step's last ten seconds — see intervalTone. */
   tone?: 'ink' | 'accent';
   testId?: string;
 }
 
 /**
- * The 3 px progress track: accent over hairline, the width of whatever it sits under.
- *
- * aria-hidden, because the countdown above it already says the same thing in words — and
- * says it better, since "six minutes left" is what a rider acts on and a third of a bar
- * is not. No transition either: it steps once a second with the clock, and easing a
- * figure that is already counting is the smear design/DESIGN.md keeps off live readings.
- */
-function ProgressTrack({ progress }: { progress: number }) {
-  return (
-    <div aria-hidden="true" className="bg-hairline relative h-[3px] w-full">
-      <div
-        className="bg-accent absolute top-0 left-0 h-[3px]"
-        style={{ width: `${(progress * 100).toFixed(2)}%` }}
-      />
-    </div>
-  );
-}
-
-/**
- * The portrait band: the countdown at 32 px with its total inline, the next step opposite,
- * and the track across the full width beneath both.
+ * The portrait band: the countdown at 32 px with its total inline, the next step opposite.
  */
 export function PhoneIntervalBand({
   label,
   value,
   total,
-  progress,
   next,
   tone = 'ink',
   testId,
@@ -317,19 +298,15 @@ export function PhoneIntervalBand({
             one wraps the band and the chart below loses the height to it. */}
         <div className={`${MONO} text-micro text-muted min-w-0 truncate pb-[4px]`}>{next}</div>
       </div>
-      <div className="mt-[12px]">
-        <ProgressTrack progress={progress} />
-      </div>
     </div>
   );
 }
 
-/** The landscape slot: a 44 px countdown beside its total, over the same track. */
+/** The landscape slot: a 44 px countdown with its total beside it. */
 export function PhoneIntervalPrimary({
   label,
   value,
   total,
-  progress,
   tone = 'ink',
   divided = false,
   testId,
@@ -348,7 +325,6 @@ export function PhoneIntervalPrimary({
         </div>
         <div className={`${MONO} text-micro text-muted`}>/ {total}</div>
       </div>
-      <ProgressTrack progress={progress} />
     </div>
   );
 }
