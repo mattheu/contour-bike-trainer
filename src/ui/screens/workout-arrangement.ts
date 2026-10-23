@@ -1,5 +1,6 @@
 import type { ErgMode } from '../../storage/types';
 import type { RideSnapshot, WorkoutSnapshot } from '../store';
+import type { WorkoutView } from './phone-workout';
 import type { LadderView } from './ride-view';
 import type { WorkoutReadings } from './workout-readings';
 import type { CadenceBandView, PowerHeroView, StepRow } from './workout-view';
@@ -12,9 +13,9 @@ import type { CadenceBandView, PowerHeroView, StepRow } from './workout-view';
  * arrives here already derived. An arrangement is a layout, and the moment one of them
  * formats a figure of its own the three start disagreeing about the session.
  *
- * Only the plan chart is drawn on a phone, so unlike the ride screen there are no chart
- * handles to share: PlanChart holds no ref, because the screen re-renders every second
- * for its clocks anyway and there is nothing for mutation to save.
+ * A phone draws one of its two views at a time, as the ride screen does — but unlike it
+ * there are no chart handles to share: PlanChart holds no ref, because the screen
+ * re-renders every second for its clocks anyway and there is nothing mutation would save.
  */
 export interface WorkoutArrangementProps {
   /** For what no arrangement formats: the alert, the plan, the difficulty. */
@@ -38,8 +39,15 @@ export interface WorkoutArrangementProps {
   powerZone: LadderView | null;
   heartZone: LadderView | null;
 
-  /** Every step the session will ride, as the Steps panel lists them. */
+  /** Every step the session will ride, as the Steps panel and the phone list show them. */
   rows: readonly StepRow[];
+
+  /**
+   * The plan chart or the step list. A phone has room for one, and the desktop
+   * arrangements ignore it: they draw both, side by side, and never ask.
+   */
+  view: WorkoutView;
+  onView: (view: WorkoutView) => void;
   /** The row the hovered step points at, by number, or null for none. */
   hoveredRow: number | null;
   /** The hovered step by expanded-step index, which the chart outlines. */

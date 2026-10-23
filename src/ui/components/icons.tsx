@@ -2,9 +2,10 @@
  * The ride controls' glyphs.
  *
  * design/DESIGN.md > Screen rules: on a phone every ride control is an icon — pause, end,
- * view, zoom, settings — drawn at 1.25 px on a 16 px box. The paths are read off
- * design/mockups/phone-portrait-profile.html and phone-portrait-map.html rather than
- * redrawn, so a glyph means the same thing in the build as it does in the design.
+ * view, zoom, steps, settings — drawn at 1.25 px on a 16 px box. The paths are read off
+ * design/mockups/icons.html rather than redrawn, so a glyph means the same thing in the
+ * build as it does in the design. That guide is the one source: a screen mockup drawing
+ * an older version of a glyph is the screen being out of date, not a second opinion.
  *
  * One <svg> wrapper for all of them: stroke weight, cap and join are the drawing's
  * grammar rather than each glyph's own choice, and a glyph that set its own would be the
@@ -61,11 +62,18 @@ export function MapIcon({ size }: { size?: IconSize }) {
   );
 }
 
-/** A mountain profile, shown while the map is up. */
+/**
+ * A ridge over its baseline, shown while the map is up.
+ *
+ * An open line and a separate rule rather than one closed shape: the profile chart draws
+ * a ridge against an axis, and a glyph that closed the ridge into a silhouette was a
+ * mountain rather than the chart it stands for.
+ */
 export function ProfileIcon({ size }: { size?: IconSize }) {
   return (
     <Glyph size={size}>
-      <path d="M1.5,13 L5,7 L7.5,10 L11,3.5 L14.5,13 Z" />
+      <path d="M1.5,12.5 L5,6.5 L8,9.5 L11,3.5 L14.5,8" />
+      <path d="M1.5,14.5 H14.5" />
     </Glyph>
   );
 }
@@ -91,8 +99,38 @@ export function ZoomOutIcon({ size }: { size?: IconSize }) {
 }
 
 /**
- * A gear. Drawn on its own 18 px box rather than the 16 the rest share: the spokes run to
- * the corners, so the same shape inside a 16 px viewBox loses its points to the edge.
+ * A bulleted list, shown while the workout plan chart is up.
+ *
+ * The bullets are filled rather than stroked, which is the one place a glyph overrides the
+ * wrapper: a 0.9 r circle at 1.25 px of stroke is a ring with no hole in it.
+ */
+export function StepsIcon({ size }: { size?: IconSize }) {
+  return (
+    <Glyph size={size}>
+      <path d="M5.5,4 H14 M5.5,8 H14 M5.5,12 H14" />
+      <circle cx={2.5} cy={4} r={0.9} fill="currentColor" stroke="none" />
+      <circle cx={2.5} cy={8} r={0.9} fill="currentColor" stroke="none" />
+      <circle cx={2.5} cy={12} r={0.9} fill="currentColor" stroke="none" />
+    </Glyph>
+  );
+}
+
+/** Four blocks rising, as the plan chart draws them, shown while the step list is up. */
+export function PlanIcon({ size }: { size?: IconSize }) {
+  return (
+    <Glyph size={size}>
+      <path d="M2.5,13.5 V9 M6.5,13.5 V4.5 M10.5,13.5 V7 M14.5,13.5 V2.5" />
+    </Glyph>
+  );
+}
+
+/**
+ * A gear: a toothed outline round a hub, not a hub with spokes. Drawn on its own 18 px
+ * box rather than the 16 the rest share, because the teeth run to the corners and the
+ * same shape inside a 16 px viewBox loses them to the edge.
+ *
+ * No round cap, since the outline is closed and has no ends to cap — only the join, which
+ * is what keeps twelve teeth from coming to twelve points.
  */
 export function SettingsIcon({ size = 18 }: { size?: IconSize }) {
   return (
@@ -103,10 +141,11 @@ export function SettingsIcon({ size = 18 }: { size?: IconSize }) {
       fill="none"
       stroke="currentColor"
       strokeWidth={1.25}
+      strokeLinejoin="round"
       aria-hidden="true"
     >
-      <circle cx={9} cy={9} r={2.5} />
-      <path d="M9,1.5 V4 M9,14 V16.5 M1.5,9 H4 M14,9 H16.5 M3.7,3.7 L5.5,5.5 M12.5,12.5 L14.3,14.3 M3.7,14.3 L5.5,12.5 M12.5,5.5 L14.3,3.7" />
+      <path d="M9.00,1.50 L10.94,1.76 L11.75,4.24 L12.89,5.11 L15.50,5.25 L16.24,7.06 L14.50,9.00 L14.31,10.42 L15.50,12.75 L14.30,14.30 L11.75,13.76 L10.42,14.31 L9.00,16.50 L7.06,16.24 L6.25,13.76 L5.11,12.89 L2.50,12.75 L1.76,10.94 L3.50,9.00 L3.69,7.58 L2.50,5.25 L3.70,3.70 L6.25,4.24 L7.58,3.69 Z" />
+      <circle cx={9} cy={9} r={2.2} />
     </svg>
   );
 }

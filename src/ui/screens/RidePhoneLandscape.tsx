@@ -15,7 +15,7 @@ import { PhoneInlinePrimary, PhoneInlineStat, PhoneRowReading } from '../compone
 import { LABEL } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
-import { nextMapZoom, nextProfileZoom, viewToggle, zoomToggle } from './phone-ride';
+import { nextMapZoom, nextProfileZoom, viewAfterSwipe, viewToggle, zoomToggle } from './phone-ride';
 import type { RideArrangementProps } from './ride-arrangement';
 import { MapChart, ProfileChart } from './RideCharts';
 import { useElementHeight, useElementWidth } from './use-element-width';
@@ -78,7 +78,7 @@ export function RidePhoneLandscape({
     else onMapZoom(nextMapZoom(mapZoom));
   }
 
-  const swipe = useViewSwipe(onView);
+  const swipe = useViewSwipe(viewAfterSwipe, onView);
 
   return (
     <div className="flex min-h-0 grow flex-col px-[24px] pt-[16px] pb-[14px]">

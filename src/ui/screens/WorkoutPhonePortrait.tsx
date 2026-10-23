@@ -2,34 +2,38 @@ import { useMemo, useRef } from 'react';
 import { PHONE_PLAN_LABEL_GUTTER_PX, PlanChart, phonePlanHeight } from '../charts';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
-import { EndIcon, PauseIcon, SettingsIcon } from '../components/icons';
+import { EndIcon, PauseIcon, PlanIcon, SettingsIcon, StepsIcon } from '../components/icons';
 import { PhoneIntervalBand, PhonePrimary, PhoneStat } from '../components/PhoneReading';
 import { LABEL, MONO } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
+import { useViewSwipe } from './use-view-swipe';
+import { workoutViewAfterSwipe, workoutViewToggle } from './phone-workout';
 import { useElementHeight, useElementWidth } from './use-element-width';
 import type { WorkoutArrangementProps } from './workout-arrangement';
+import { stepsHeading } from './workout-view';
+import { WorkoutPhoneSteps } from './WorkoutPhoneSteps';
 
 /**
  * The workout screen on a phone held upright, after
  * design/mockups/phone-portrait-workout.html.
  *
  * One column: the three primaries with their targets in the readout line, the interval as
- * a band of its own, the three clocks, then the plan chart where a ride draws its profile
- * and strip. The Steps panel does not come: at 390 px it would be a list of eight rows
- * under a chart too short to read, and the band above already says what is being asked
- * for now and what is coming next.
+ * a band of its own, the three clocks, then the view — the plan chart or the step list,
+ * never both — where a ride draws its profile and strip.
  *
- * Provisional, not settled. Neither phone mockup has room for the panel and DESIGN.md's
- * phone bullets do not mention it, so this follows the design as drawn — but a rider who
- * navigates a long session by looking ahead loses that here, and the question was still
- * with design when this was built.
+ * One at a time, because at 390 px neither is worth drawing at half height, and the pair
+ * are the same choice the ride screen makes between the profile and the map: a toggle at
+ * the left of the foot, a swipe across the view itself, and the plan is where it opens.
  */
 export function WorkoutPhonePortrait({
   snapshot,
   workout,
   readings,
   ftpW,
+  rows,
+  view,
+  onView,
   pauseLabel,
   onPause,
   onEnd,
@@ -47,6 +51,9 @@ export function WorkoutPhonePortrait({
   // The zone figures are drawn outside the SVG's own box, so the chart gives up the
   // gutter they sit in rather than overflowing the page padding.
   const chartWidth = (width ?? 358) - PHONE_PLAN_LABEL_GUTTER_PX;
+
+  const toggle = workoutViewToggle(view);
+  const swipe = useViewSwipe(workoutViewAfterSwipe, onView);
 
   return (
     <div className="flex min-h-0 grow flex-col px-[16px] pt-[28px] pb-[28px]">
@@ -77,40 +84,72 @@ export function WorkoutPhonePortrait({
         <PhoneIntervalBand {...readings.interval} next={readings.next} />
       </div>
 
-      <div className="mt-[18px] grid shrink-0 grid-cols-3 gap-[14px] whitespace-nowrap">
+      <div className="mt-[24px] grid shrink-0 grid-cols-3 gap-[14px] whitespace-nowrap">
         <PhoneStat {...readings.workout} />
         <PhoneStat {...readings.distance} divided />
         <PhoneStat {...readings.speed} divided />
       </div>
 
-      {/* min-h-0 so the area measures the space the chart has rather than the chart it
-          contains; justify-end so the heading travels with the chart and a short screen
-          takes its height off the top, where the readings have already had theirs. The
-          bottom margin is the room the tick figures need under the baseline, kept as a
-          margin because a padded box would measure two different heights. */}
+      {/* min-h-0 so the area measures the space the view has rather than the chart it
+          contains; justify-end so the heading travels with the view and a short screen
+          takes its height off the top, where the readings have already had theirs. The top
+          margin is a floor rather than the gap: justify-end already puts the area's slack
+          above its content, so it is invisible on the eight-step session the mockup draws
+          and is the only thing keeping the Steps heading off the clocks on a plan long
+          enough to fill the list.
+          pan-y so a vertical gesture still belongs to the browser — the step list scrolls
+          under the same finger — and the horizontal one is not spent on the back-swipe.
+          The bottom margin is only the plan's: it is the room the tick figures need under
+          the baseline, which a list of rows does not have. A margin rather than padding,
+          because a padded box would measure two different heights. */}
       <div
         ref={chartAreaRef}
-        className="mt-[18px] mb-[22px] flex min-h-0 grow flex-col justify-end gap-[14px]"
+        className={`mt-[18px] flex min-h-0 grow flex-col justify-end gap-[14px] ${
+          view === 'plan' ? 'mb-[22px]' : ''
+        }`}
+        style={{ touchAction: 'pan-y' }}
+        data-testid="phone-view"
+        {...swipe}
       >
         <div className="flex h-[16px] shrink-0 items-center justify-between">
-          <div className={`${LABEL} text-micro`}>Plan</div>
-          {/* The two facts the desktop keeps in its bottom band, in a phone's width. */}
-          <div className={`${MONO} text-micro text-muted`}>{readings.plan}</div>
+          <div className={`${LABEL} text-micro`}>{view === 'plan' ? 'Plan' : 'Steps'}</div>
+          {/* The two facts the desktop keeps in its bottom band, in a phone's width — and
+              on the list, the count and length its own panel heading carries there. */}
+          <div className={`${MONO} text-micro text-muted`}>
+            {view === 'plan' ? readings.plan : stepsHeading(workout.steps)}
+          </div>
         </div>
-        <PlanChart
-          steps={workout.steps}
-          samples={snapshot.samples}
-          ftpW={ftpW}
-          scalePct={workout.scalePct}
-          elapsedS={snapshot.elapsedS}
-          width={chartWidth}
-          height={chartHeight}
-        />
+        {view === 'plan' ? (
+          <PlanChart
+            steps={workout.steps}
+            samples={snapshot.samples}
+            ftpW={ftpW}
+            scalePct={workout.scalePct}
+            elapsedS={snapshot.elapsedS}
+            width={chartWidth}
+            height={chartHeight}
+          />
+        ) : (
+          <WorkoutPhoneSteps rows={rows} />
+        )}
       </div>
 
-      {/* Pause and End as glyphs, and grey: design/DESIGN.md takes the accent off a
+      {/* The view toggle takes the slot the ride screen gives its view and zoom icons —
+          what you are looking at on the left, what the session is doing on the right.
+
+          Pause and End as glyphs, and grey: design/DESIGN.md takes the accent off a
           control once the session is under way — the data owns the colour from then on. */}
-      <div className="mt-[18px] flex shrink-0 items-center justify-end">
+      <div className="mt-[18px] flex shrink-0 items-center justify-between">
+        <IconButton
+          label={toggle.label}
+          title={toggle.label}
+          size={44}
+          onClick={() => {
+            onView(toggle.next);
+          }}
+        >
+          {toggle.glyph === 'steps' ? <StepsIcon /> : <PlanIcon />}
+        </IconButton>
         <ButtonGroup label="Workout">
           <IconButton label={pauseLabel} size={44} onClick={onPause}>
             <PauseIcon />

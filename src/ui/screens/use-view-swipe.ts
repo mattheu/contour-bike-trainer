@@ -1,15 +1,22 @@
 import { useRef, type PointerEvent as ReactPointerEvent } from 'react';
-import { swipeDirection, viewAfterSwipe, type PhoneView, type SwipePoint } from './phone-ride';
+import { swipeDirection, type SwipeDirection, type SwipePoint } from './phone-ride';
 
 /**
- * Swiping the chart to change which one is showing, for the phone arrangements that draw
+ * Swiping the view to change which one is showing, for the phone arrangements that draw
  * one at a time. The judgement itself is swipeDirection's; this is the plumbing.
  *
- * Shared rather than written into each arrangement: portrait and landscape are the same
- * gesture on the same two views, and a second copy is the one that would still be
- * reading a tap as a swipe after the first was fixed.
+ * Shared rather than written into each arrangement: four screens — the ride's two and the
+ * workout's two — are the same gesture on a pair of views, and a second copy is the one
+ * that would still be reading a tap as a swipe after the first was fixed.
+ *
+ * Generic over the views, because the pairs differ: a ride swipes between the profile and
+ * the map, a workout between the plan and its steps. Which view a direction lands on is
+ * the caller's, since only it knows which of its two sits on the left.
  */
-export function useViewSwipe(onView: (view: PhoneView) => void): {
+export function useViewSwipe<View>(
+  viewAfterSwipe: (direction: SwipeDirection) => View,
+  onView: (view: View) => void,
+): {
   onPointerDown: (event: ReactPointerEvent<HTMLElement>) => void;
   onPointerUp: (event: ReactPointerEvent<HTMLElement>) => void;
   onPointerCancel: () => void;

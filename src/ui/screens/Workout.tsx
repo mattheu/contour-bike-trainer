@@ -4,6 +4,7 @@ import type { DevicesView } from '../components/Devices';
 import { useFlash } from '../components/motion';
 import type { RideSnapshot, WorkoutSnapshot } from '../store';
 import { arrangementFor, type ArrangementName } from './arrangement';
+import type { WorkoutView } from './phone-workout';
 import { heartRateLadder, powerLadder, primaryControlLabel } from './ride-view';
 import { RideSettings, type Targets } from './RideSettings';
 import {
@@ -104,6 +105,12 @@ export function Workout({
   onDisconnectHrm,
 }: WorkoutProps) {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  /**
+   * Which of the two a phone is showing. Held here rather than in the arrangements, so
+   * turning the phone mid-session lands on the view the rider chose rather than resetting
+   * it — the two phone arrangements are different components and one unmounts the other.
+   */
+  const [view, setView] = useState<WorkoutView>('plan');
   /**
    * The step under the pointer, by expanded-step index. One value for both directions:
    * the chart's blocks set it, and so do the Steps panel's rows, so a block and a row can
@@ -218,6 +225,8 @@ export function Workout({
     powerZone,
     heartZone,
     rows,
+    view,
+    onView: setView,
     hoveredRow: hoveredRowNumber(rows, hoveredStep),
     hoveredStep,
     onHoverStep: setHoveredStep,

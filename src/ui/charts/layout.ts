@@ -401,7 +401,7 @@ export const PHONE_PLAN_LABEL_GUTTER_PX = 40;
 
 /** The heights the same two mockups draw, inside 844 px and 390 px artboards. */
 export const PHONE_PLAN_HEIGHT = 140;
-export const PHONE_LANDSCAPE_PLAN_HEIGHT = 112;
+export const PHONE_LANDSCAPE_PLAN_HEIGHT = 174;
 
 /**
  * Shallower than the desktop's floor, because a phone is not reading a target off this
@@ -417,6 +417,15 @@ export const MIN_PHONE_PLAN_HEIGHT = 88;
  */
 export const PHONE_PLAN_HEADING_PX = 16;
 export const PHONE_PLAN_HEADING_GAP_PX = 14;
+
+/**
+ * The room the time figures need under the baseline. They are drawn outside the SVG's own
+ * box — design/mockups/phone-landscape-workout.html puts them at y 196 inside a box 174
+ * tall — so a box given the whole area would push them past its bottom edge, where the
+ * landscape arrangement's overflow-hidden cuts them off. Taken out of the chart's height
+ * rather than added under it, so the figures land inside the area that was measured.
+ */
+export const PHONE_PLAN_TICK_ROOM_PX = 22;
 
 /**
  * How tall the chart is drawn in the space the readings left it.
@@ -440,9 +449,9 @@ export function phonePlanHeight(availableHeight: number | null): number {
   );
 }
 
-/** The same chart on a phone turned sideways: wider, a good deal shorter, and unheaded. */
+/** The same chart on a phone turned sideways: wider, shorter, and with no heading over it. */
 export function phoneLandscapePlanHeight(availableHeight: number | null): number {
-  return phonePlan(availableHeight, PHONE_LANDSCAPE_PLAN_HEIGHT, 0);
+  return phonePlan(availableHeight, PHONE_LANDSCAPE_PLAN_HEIGHT, PHONE_PLAN_TICK_ROOM_PX);
 }
 
 export function chartRowLayout(availableWidth: number | null): ChartRowLayout {
