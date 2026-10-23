@@ -109,13 +109,13 @@ export const COLUMNS: Column[] = [
       {
         /*
          * Import rather than upload: the file never leaves the machine, and "Import
-         * routes" is what the button a rider will go looking for actually says. One GPX
-         * can carry several routes — see routes-import.ts — but a rider arrives with one
-         * ride in mind, so the singular is what the sentence promises.
+         * routes" is what the button a rider will go looking for actually says. One GPX can
+         * carry several routes and the importer reads them all — see routes-import.ts —
+         * which is why the plural is honest here.
          */
         label: 'Routes',
         sentence:
-          'Choose a route and press Start. Your trainer simulates the gradient. Import a GPX file to ride roads you know.',
+          'Choose a route and start riding. Your trainer simulates the gradient. Import GPX files to ride roads you know.',
       },
       {
         /*
@@ -128,7 +128,7 @@ export const COLUMNS: Column[] = [
          */
         label: 'Workouts',
         sentence:
-          'Structured rides with power targets set from your FTP. ERG holds each one, or switch it off and hold them yourself. Write your own in YAML.',
+          'Ride to power targets based on your FTP. Let ERG hold the target or control your effort yourself. Create workouts in YAML.',
       },
       {
         /*
@@ -138,8 +138,7 @@ export const COLUMNS: Column[] = [
          * is what docs/exporting-to-strava.md walks through.
          */
         label: 'Rides',
-        sentence:
-          'Every ride is saved when it ends. Open one to see its summary, or download it as a TCX file for Strava.',
+        sentence: 'Save your rides, browse your history and export TCX files to upload to Strava.',
       },
       {
         /*
@@ -152,12 +151,12 @@ export const COLUMNS: Column[] = [
          * named all three slots and ran to forty words, the next sold the feature and
          * read as copy written from the docs.
          *
-         * The loop sentence stays because it is the part a rider would not guess, and
-         * it is what ghost/lap.ts does: the series is re-resolved at every crossing.
+         * One sentence, and the shortest entry in the column. Lap-relative racing on a
+         * loop is the part a rider would not guess, but the place to meet it is the
+         * ride screen rather than a page read before signing in.
          */
         label: 'Ghosts',
-        sentence:
-          'Race against ghosts of your previous rides and see how you compare. On a loop it restarts every lap.',
+        sentence: 'Race against ghosts of your previous rides and see how you compare.',
       },
     ],
   },
