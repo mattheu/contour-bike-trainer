@@ -78,27 +78,33 @@ export const COLUMNS: Column[] = [
       },
       {
         /*
-         * "For now" is doing real work, and it is in the sentence rather than tucked
-         * into the label where a reader skimming the prose would miss it. Accounts and a
-         * mirror to a second screen are both on the table — SPEC.md already has the
-         * phone mirror in phase 5 — so this says what is true now rather than what will
-         * always be true. It stops short of announcing either: a signed-out screen that
-         * sells an unbuilt feature is how onboarding starts lying.
+         * Three steps in one line, which is what a reader at this point wants: what do
+         * I do. Accounts and a phone mirror are both on the roadmap, and this claims
+         * neither — a signed-out screen that sells an unbuilt feature is how onboarding
+         * starts lying.
+         *
+         * Chrome alone here, where Set up says "Chrome or Edge". The shorter claim is
+         * for someone deciding whether to read on; the exact one belongs beside the
+         * other requirements.
          */
         label: 'In the browser',
         sentence:
-          'For now, Contour is a browser app and nothing more. There is no account to make, and no ride leaves your machine.',
+          'Open Contour in Chrome, connect your trainer and start riding. No installation or account needed.',
       },
       {
         /*
-         * Chrome's default storage tier is best-effort: no time limit on it, and in
-         * practice the data goes when the rider clears site data. It can also be evicted
-         * when the disk is nearly full — true, rare, and more words than a column can
-         * carry, so docs/getting-started.md is where that belongs.
+         * The default storage tier is best-effort: no time limit on it, and in practice
+         * the data goes when the rider clears site data. It can also be evicted when the
+         * disk is nearly full — true, rare, and more words than a column can carry, so
+         * docs/getting-started.md is where that belongs.
+         *
+         * "Into another browser" is the honest reach of the exports that exist: rides as
+         * an archive, routes as GPX, workouts as YAML. A single backup of everything is
+         * specified but not built.
          */
         label: 'Your data',
         sentence:
-          'Everything is stored in this browser, and Chrome keeps it until you clear the site data. You can export your rides, routes and workouts, and import them back.',
+          'Your rides, routes and workouts stay in this browser until you clear its site data. Export them to keep a backup or import them into another browser.',
       },
     ],
   },
