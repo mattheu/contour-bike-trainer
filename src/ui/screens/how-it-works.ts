@@ -141,6 +141,23 @@ export const COLUMNS: Column[] = [
         sentence:
           'Every ride is saved when it ends. Open one to see its summary, or download it as a TCX file for Strava.',
       },
+      {
+        /*
+         * Last in the column rather than beside Routes, because it is the one entry that
+         * needs what the entry above it just established: there is nothing to race until
+         * a ride has been saved. It also leaves the column ending on the reason to come
+         * back rather than on a file format.
+         *
+         * Every claim checked against src/ghost/: the three resolved slots are Best, a
+         * rolling 365 days and the last completed route length (resolve.ts), and a lap
+         * from the ride in progress is a candidate as soon as it is finished (live.ts >
+         * candidatePool). "Of the same route" carries the one limit worth stating here —
+         * a workout has no route, so it has no ghost.
+         */
+        label: 'Ghosts',
+        sentence:
+          'Race a previous ride of the same route: your best, your best of the last year, or the last time you were here. On a loop you race lap by lap, including laps from the ride you are on.',
+      },
     ],
   },
   {
