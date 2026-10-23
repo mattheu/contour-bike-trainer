@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   CHART_HEADING_GAP_PX,
+  MIN_PHONE_STRIP_HEIGHT,
+  MIN_PHONE_VIEW_HEIGHT,
+  PHONE_CHART_GAP_PX,
+  PHONE_STRIP_HEIGHT,
+  PHONE_VIEW_HEIGHT,
+  phoneChartStack,
   CHART_HEADING_PX,
   CHART_ROW_GAP_PX,
   CHART_STACK_GAP_PX,
@@ -260,5 +266,36 @@ describe('planChartHeight', () => {
   it('falls back to the drawn height before anything has been measured', () => {
     expect(planChartHeight(null)).toBe(MOCKUP_PROFILE_HEIGHT);
     expect(planChartHeight(Number.NaN)).toBe(MOCKUP_PROFILE_HEIGHT);
+  });
+});
+
+describe('phoneChartStack', () => {
+  it('draws the mockup before the area has been measured', () => {
+    expect(phoneChartStack(null)).toEqual({
+      viewHeight: PHONE_VIEW_HEIGHT,
+      stripHeight: PHONE_STRIP_HEIGHT,
+    });
+  });
+
+  it('keeps both at their drawn heights where there is room', () => {
+    const stack = phoneChartStack(400);
+    expect(stack.viewHeight).toBe(PHONE_VIEW_HEIGHT);
+    expect(stack.stripHeight).toBe(PHONE_STRIP_HEIGHT);
+  });
+
+  it("spends a taller phone's extra height above the chart rather than on it", () => {
+    expect(phoneChartStack(460).viewHeight).toBe(phoneChartStack(300).viewHeight);
+  });
+
+  it('takes it off the view first on a screen with less', () => {
+    const stack = phoneChartStack(260);
+    expect(stack.viewHeight).toBe(260 - PHONE_CHART_GAP_PX - PHONE_STRIP_HEIGHT);
+    expect(stack.stripHeight).toBe(PHONE_STRIP_HEIGHT);
+  });
+
+  it('holds both floors on a screen too short for either', () => {
+    const stack = phoneChartStack(100);
+    expect(stack.viewHeight).toBe(MIN_PHONE_VIEW_HEIGHT);
+    expect(stack.stripHeight).toBe(MIN_PHONE_STRIP_HEIGHT);
   });
 });

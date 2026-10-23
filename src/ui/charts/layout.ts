@@ -138,6 +138,60 @@ export function chartStackHeights(availableHeight: number | null): {
 }
 
 /**
+ * A phone shows one chart over the power strip, so its stack is simpler than the
+ * desktop's: no heading row, no second column, and one gap.
+ *
+ * design/mockups/phone-portrait-profile.html draws the view at 200 and the strip at 58
+ * inside an 844 px artboard, 36 px apart.
+ */
+export const PHONE_VIEW_HEIGHT = 200;
+export const PHONE_STRIP_HEIGHT = 58;
+export const PHONE_CHART_GAP_PX = 36;
+
+/** Below this the profile is a line rather than terrain, and the map a smudge. */
+export const MIN_PHONE_VIEW_HEIGHT = 120;
+
+/**
+ * The strip carries its own type — POWER, the FTP mark, the average — inside its box, so
+ * it runs out of room sooner than the desktop's and holds its height for longer.
+ */
+export const MIN_PHONE_STRIP_HEIGHT = 48;
+
+/**
+ * How a phone divides the space left under its readings.
+ *
+ * Both charts keep the height they are drawn at and give it up only on a screen too
+ * short for them, which is the opposite of the desktop's "grow into whatever is there".
+ * The phone's view is 358 px wide: at the desktop's full height it would be nearly
+ * square, and a profile that tall shows the same terrain as a band floating in an empty
+ * box rather than more of it. design/mockups/phone-portrait-profile.html spends the
+ * slack above the chart instead, where it costs nothing.
+ */
+export function phoneChartStack(availableHeight: number | null): {
+  viewHeight: number;
+  stripHeight: number;
+} {
+  if (availableHeight === null || !Number.isFinite(availableHeight)) {
+    return { viewHeight: PHONE_VIEW_HEIGHT, stripHeight: PHONE_STRIP_HEIGHT };
+  }
+
+  const forCharts = Math.floor(availableHeight) - PHONE_CHART_GAP_PX;
+  const viewHeight = Math.min(
+    PHONE_VIEW_HEIGHT,
+    Math.max(MIN_PHONE_VIEW_HEIGHT, forCharts - PHONE_STRIP_HEIGHT),
+  );
+  // Only once the view is already at its floor does the strip start giving height up,
+  // and it stops at its own: two charts too short to read is worse than one that
+  // overflows a screen nobody should be riding on.
+  const stripHeight = Math.max(
+    MIN_PHONE_STRIP_HEIGHT,
+    Math.min(PHONE_STRIP_HEIGHT, forCharts - viewHeight),
+  );
+
+  return { viewHeight, stripHeight };
+}
+
+/**
  * design/mockups/workout.html draws the lower row as `minmax(0, 1fr) 320px` with the same
  * 48 px gap, and keeps 32 px clear inside the chart column for the zone figures.
  */

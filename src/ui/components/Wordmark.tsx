@@ -62,15 +62,25 @@ export function Lockup() {
 
 export type LogoVariant = 'primary' | 'inverted';
 
+/** The logo guide: a header lockup is the control height, mark 32 px; 44 and 24 on a phone. */
+export type LogoSize = 48 | 44;
+
+const BOXES: Record<LogoSize, string> = {
+  48: 'h-[48px] w-[111px] text-[32px]',
+  44: 'h-[44px] w-[83px] text-[24px]',
+};
+
 /**
  * The boxed lockup used in a header: 111x48, the control height, so it lines up with
- * everything beside it.
+ * everything beside it. A phone's header is 44 tall, so its lockup is too.
  */
 export function Logo({
   variant = 'primary',
+  size = 48,
   className = '',
 }: {
   variant?: LogoVariant;
+  size?: LogoSize;
   className?: string;
 }) {
   const box =
@@ -80,10 +90,10 @@ export function Logo({
 
   return (
     <div
-      className={`flex h-[48px] w-[111px] items-center justify-center overflow-hidden ${box} ${className}`}
+      className={`flex items-center justify-center overflow-hidden ${BOXES[size]} ${box} ${className}`}
     >
       {/* The mark sits a touch high in its box without this: the serif's baseline, not a nudge. */}
-      <span className="pb-[2px] text-[32px] leading-none">
+      <span className="pb-[2px] leading-none">
         <Wordmark />
       </span>
     </div>

@@ -7,27 +7,18 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
-import {
-  SLOT_ORDER,
-  SLOT_SYMBOL,
-  SYMBOL_BOX,
-  SYMBOL_STROKE_WIDTH,
-  type GhostSlot,
-} from '../../ghost/slots';
+import { SLOT_ORDER, SLOT_SYMBOL, SYMBOL_STROKE_WIDTH, type GhostSlot } from '../../ghost/slots';
 import type { ActiveGhost } from '../../ghost/state';
 import type { Climb } from '../../route/climbs';
 import type { ProfileWindow, RouteProfile } from '../../route/profile';
 import type { Route } from '../../route/types';
 import { AHEAD_BAND_OPACITY, RIDDEN_BAND_OPACITY, elevationGeometry } from './elevation';
 import {
-  LABEL_BASELINE_PX,
-  LABEL_FONT_PX,
-  LABEL_PLATE_H,
+  DESKTOP_METRICS,
   LABEL_PLATE_OPACITY,
-  LABEL_PLATE_W,
-  LABEL_RISE_PX,
-  LABEL_STEM_PX,
   ghostLayer,
+  symbolTransform,
+  type GhostMetrics,
 } from './ghosts';
 import { FADE } from '../components/motion';
 import type { Pt } from './path';
@@ -104,6 +95,12 @@ export interface ElevationProfileProps {
    * handle, which is the whole reason this is a callback rather than internal.
    */
   onHover?: (distanceM: number | null) => void;
+  /**
+   * The sizes a ghost is drawn at. Desktop unless a phone says otherwise: on a 390 px
+   * screen the gap goes beside the symbol rather than on a stem above it, and the symbol
+   * itself comes down to 4 px. See GhostMetrics.
+   */
+  ghostMetrics?: GhostMetrics;
   ref?: RefObject<ElevationProfileHandle | null>;
 }
 
@@ -116,6 +113,7 @@ export function ElevationProfile({
   width = PROFILE_WIDTH,
   height = PROFILE_HEIGHT,
   onHover,
+  ghostMetrics = DESKTOP_METRICS,
   ref,
 }: ElevationProfileProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
@@ -164,6 +162,7 @@ export function ElevationProfile({
         ghosts: ghosts.current,
         project,
         summits: geometry.summits.map((summit) => summit.x),
+        metrics: ghostMetrics,
       });
 
       const drawn = new Set<GhostSlot>();
@@ -203,7 +202,7 @@ export function ElevationProfile({
         node?.setAttribute('visibility', hidden.has(index) ? 'hidden' : 'visible');
       });
     };
-  }, [geometry, project]);
+  }, [geometry, project, ghostMetrics]);
 
   const paint = useMemo(() => {
     return (distance: number, next?: readonly ActiveGhost[]): void => {
@@ -442,7 +441,7 @@ export function ElevationProfile({
         >
           <path
             d={SLOT_SYMBOL[slot].d}
-            transform={`translate(${String(-SYMBOL_BOX / 2)},${String(-SYMBOL_BOX / 2)})`}
+            transform={symbolTransform(ghostMetrics)}
             fill="var(--color-ground)"
             stroke="var(--color-muted)"
             strokeWidth={SYMBOL_STROKE_WIDTH}
@@ -454,23 +453,27 @@ export function ElevationProfile({
             }}
             visibility="hidden"
           >
-            <line
-              x1={0}
-              y1={-SYMBOL_BOX / 2}
-              x2={0}
-              y2={-SYMBOL_BOX / 2 - LABEL_STEM_PX}
-              stroke="var(--color-muted)"
-              strokeWidth="var(--stroke-hairline)"
-              strokeDasharray="2 3"
-            />
+            {/* Nothing to hang from where the gap sits beside the symbol, so the stem
+                is left out rather than drawn at zero length. */}
+            {ghostMetrics.stemPx > 0 && (
+              <line
+                x1={0}
+                y1={-ghostMetrics.symbolBox / 2}
+                x2={0}
+                y2={-ghostMetrics.symbolBox / 2 - ghostMetrics.stemPx}
+                stroke="var(--color-muted)"
+                strokeWidth="var(--stroke-hairline)"
+                strokeDasharray="2 3"
+              />
+            )}
             <rect
               ref={(node) => {
                 ghostNodes.current[slot].plate = node;
               }}
-              x={-LABEL_PLATE_W / 2}
-              y={-LABEL_RISE_PX - LABEL_PLATE_H / 2}
-              width={LABEL_PLATE_W}
-              height={LABEL_PLATE_H}
+              x={-ghostMetrics.plateW / 2}
+              y={-ghostMetrics.risePx - ghostMetrics.plateH / 2}
+              width={ghostMetrics.plateW}
+              height={ghostMetrics.plateH}
               fill="var(--color-ground)"
               opacity={LABEL_PLATE_OPACITY}
             />
@@ -479,10 +482,10 @@ export function ElevationProfile({
                 ghostNodes.current[slot].text = node;
               }}
               x={0}
-              y={-LABEL_RISE_PX + LABEL_BASELINE_PX}
+              y={-ghostMetrics.risePx + ghostMetrics.baselinePx}
               textAnchor="middle"
               className="font-mono"
-              fontSize={LABEL_FONT_PX}
+              fontSize={ghostMetrics.fontPx}
               fill="var(--color-ink)"
             />
           </g>

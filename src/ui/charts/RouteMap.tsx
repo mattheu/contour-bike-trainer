@@ -8,18 +8,12 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import {
-  SLOT_ORDER,
-  SLOT_SYMBOL,
-  SYMBOL_BOX,
-  SYMBOL_STROKE_WIDTH,
-  type GhostSlot,
-} from '../../ghost/slots';
+import { SLOT_ORDER, SLOT_SYMBOL, SYMBOL_STROKE_WIDTH, type GhostSlot } from '../../ghost/slots';
 import type { ActiveGhost } from '../../ghost/state';
 import type { Route } from '../../route/types';
 import { FADE } from '../components/motion';
 import type { PlanePoint } from '../projection';
-import { ghostMarks } from './ghosts';
+import { DESKTOP_METRICS, ghostMarks, symbolTransform, type GhostMetrics } from './ghosts';
 import { HOVER_SNAP_PX, routeMapGeometry, type MapZoom } from './map';
 
 export const MAP_WIDTH = 320;
@@ -65,6 +59,9 @@ export interface RouteMapProps {
    * state on a screen that would re-render under the mouse.
    */
   onHover?: (distanceM: number | null) => void;
+  /** The sizes a ghost is drawn at: 4 px symbols on a phone. The map carries no gaps,
+   * so the symbol box is the only part of them it reads. */
+  ghostMetrics?: GhostMetrics;
   ref?: RefObject<RouteMapHandle | null>;
 }
 
@@ -75,6 +72,7 @@ export function RouteMap({
   width = MAP_WIDTH,
   height = MAP_HEIGHT,
   onHover,
+  ghostMetrics = DESKTOP_METRICS,
   ref,
 }: RouteMapProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
@@ -287,7 +285,7 @@ export function RouteMap({
         >
           <path
             d={SLOT_SYMBOL[slot].d}
-            transform={`translate(${String(-SYMBOL_BOX / 2)},${String(-SYMBOL_BOX / 2)})`}
+            transform={symbolTransform(ghostMetrics)}
             fill="var(--color-ground)"
             stroke="var(--color-muted)"
             strokeWidth={SYMBOL_STROKE_WIDTH}

@@ -144,6 +144,15 @@ export const PHONE_METRICS: GhostMetrics = {
   gapY: 16,
 };
 
+/**
+ * A slot's symbol is one set of paths drawn on a SYMBOL_BOX square, so a smaller ghost is
+ * that square scaled rather than a second drawing: one shape per slot at every size.
+ */
+export function symbolTransform(metrics: GhostMetrics): string {
+  const scale = metrics.symbolBox / SYMBOL_BOX;
+  return `scale(${String(scale)}) translate(${String(-SYMBOL_BOX / 2)},${String(-SYMBOL_BOX / 2)})`;
+}
+
 /** The weight a ghost is drawn at, per end state. Shared by the profile and the map so
  * the two cannot disagree about how far gone a ghost is. */
 export const END_OPACITY: Record<GhostEnd, number> = {

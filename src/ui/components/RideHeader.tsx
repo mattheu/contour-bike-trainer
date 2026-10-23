@@ -3,6 +3,7 @@ import { Button } from './Button';
 import { CONTROL_GAP } from './control';
 import { ButtonGroup } from './ButtonGroup';
 import { IconButton } from './IconButton';
+import { SettingsIcon } from './icons';
 import { LABEL } from './styles';
 import { Logo } from './Wordmark';
 
@@ -65,18 +66,7 @@ export function RideHeader({
           <Button onClick={onEnd}>End ride</Button>
         </ButtonGroup>
         <IconButton label="Settings" onClick={onSettings}>
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 18 18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.25"
-            aria-hidden="true"
-          >
-            <circle cx="9" cy="9" r="2.5" />
-            <path d="M9,1.5 V4 M9,14 V16.5 M1.5,9 H4 M14,9 H16.5 M3.7,3.7 L5.5,5.5 M12.5,12.5 L14.3,14.3 M3.7,14.3 L5.5,12.5 M12.5,5.5 L14.3,3.7" />
-          </svg>
+          <SettingsIcon />
         </IconButton>
       </div>
     </header>
