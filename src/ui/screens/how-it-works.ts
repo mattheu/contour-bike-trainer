@@ -68,9 +68,9 @@ export const COLUMNS: Column[] = [
          * missing — and the nos name no one: a screen that defines itself against a
          * rival ages the day the rival changes.
          *
-         * "Real-world routes" is the same phrase the Routes entry opens with, and the
-         * nos pay it off: no virtual world is the one a reader would otherwise wonder
-         * about.
+         * "Real-world routes" is claimed once, here, where a reader meets the app. The
+         * Routes entry does not repeat it: by then the question is which route, not
+         * what kind.
          */
         label: 'Why it exists',
         sentence:
@@ -123,7 +123,7 @@ export const COLUMNS: Column[] = [
          */
         label: 'Routes',
         sentence:
-          'Choose a real-world route and start riding. Your trainer simulates the gradient. Import GPX files to ride roads you know.',
+          'Choose a route and start riding. Your trainer simulates the gradient. Import GPX files to ride roads you know.',
       },
       {
         /*
