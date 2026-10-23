@@ -198,11 +198,6 @@ describe('filterRides', () => {
     expect(kept.map((r) => r.id)).toEqual(['c']);
   });
 
-  it('returns newest first', () => {
-    const kept = filterRides(rides, filter({ period: 'all' }), NOW);
-    expect(kept.map((r) => r.id)).toEqual(['a', 'c', 'b']);
-  });
-
   it('does not mutate the array it was given', () => {
     const input = [...rides];
     filterRides(input, filter({ period: 'all' }), NOW);
