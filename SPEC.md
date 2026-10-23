@@ -872,6 +872,22 @@ On not looking like a bad actor: mark rides honestly. `VirtualRide` with `traine
 
 **A workout with no route uploads with no coordinates at all.** `Position` is optional in TCX and Strava accepts a file without it: you get an activity with no map, full power and heart rate, and the distance read from `DistanceMeters` rather than derived from GPS. That is what a trainer and a head unit produce for an indoor session.
 
+### A hand-downloaded TCX cannot say it is virtual
+
+Unscheduled, and worth exploring rather than fixing now.
+
+Sync sets the activity type through the API, so a synced ride is categorised correctly whatever the file says. A rider who downloads the TCX and uploads it to Strava themselves gets no such help: Strava reads only `biking`, `running`, `hiking`, `walking` and `swimming` from a TCX file, so `Sport="Biking"` arrives as an ordinary **Ride**.
+
+Our TCX carries real coordinates, and Strava matches segments on any file with real GPS and time data. A rider who uploads without changing the type therefore appears on real-world leaderboards for a climb they rode indoors, and is liable to be flagged for it. Retyping the activity to Virtual Ride after upload is the whole fix, but it depends on the rider knowing to do it.
+
+**FIT could say it on its own.** `sport = cycling` with `sub_sport = virtual_activity` is what Strava reads as a Virtual Ride, and it is how Zwift is categorised correctly without the API. TCX has no sub-sport field, so it cannot express this. GPX cannot either, and has nowhere to put power.
+
+[ADR-0005](docs/adr/0005-tcx-rather-than-fit.md) chose TCX partly to avoid writing a binary encoder. That reason has expired: Garmin publishes a JavaScript SDK with an encoder, no runtime dependencies, and a profile that already contains `virtualActivity`. What remains is about a megabyte of message schema in the bundle, and a licence that is not open source. See the amendment on that ADR.
+
+Nothing above `src/export/` knows a file's shape, so a FIT writer would sit beside `buildTcx` and read the same ride and samples. Storage is unaffected, per [ADR-0019](docs/adr/0019-data-is-legible-on-the-way-out.md).
+
+**Revisit when the manual download path matters more than sync.** Until then the smaller fix is to say, at the point of download, that the activity needs retyping.
+
 Zwift's trick of placing its fictional worlds in the sea solves a different problem — a virtual *course* needs coordinates to render as a map, and open water keeps it off real segments. A routeless workout is not a place; it is effort over time, and inventing coordinates would claim a journey that did not happen. Still `VirtualRide` with `trainer: true`, so it is categorised as what it was rather than looking like a ride that lost its signal.
 
 ---
