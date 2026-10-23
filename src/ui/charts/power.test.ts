@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  BASELINE_FRACTION,
+  LABEL_BAND_PX,
   MAX_FRACTION_OF_FTP,
   ZONE_OPACITY,
   powerStripGeometry,
@@ -30,7 +30,7 @@ describe('powerStripGeometry', () => {
   it('puts the axis at 56 and the FTP rule where the mockup draws it', () => {
     const geometry = strip(ramp([200, 200]));
     expect(geometry.baselineY).toBeCloseTo(56, 9);
-    expect(geometry.baselineY).toBeCloseTo(HEIGHT * BASELINE_FRACTION, 9);
+    expect(geometry.baselineY).toBeCloseTo(HEIGHT - LABEL_BAND_PX, 9);
     // FTP sits 1/1.6 of the way up from the axis.
     expect(geometry.ftpY).toBeCloseTo(56 - 56 / MAX_FRACTION_OF_FTP, 9);
     expect(geometry.ftpY).toBeCloseTo(21, 6);

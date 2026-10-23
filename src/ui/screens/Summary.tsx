@@ -97,7 +97,7 @@ export function Summary({
   };
 
   return (
-    <div className="text-ink flex h-screen flex-col overflow-hidden px-[64px] py-[44px]">
+    <div className="text-ink flex h-screen flex-col overflow-hidden page-gutter page-gutter-y">
       <header className="flex items-center justify-between">
         <div className="flex items-center gap-[18px]">
           <Logo />

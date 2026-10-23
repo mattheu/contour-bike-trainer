@@ -16,6 +16,7 @@ import {
   matchesLoad,
   parseDetail,
   workoutControls,
+  workoutFigures,
   workoutMeta,
   workoutRow,
   workoutRows,
@@ -350,5 +351,19 @@ describe('workoutControls', () => {
       duplicate: false,
       delete: true,
     });
+  });
+});
+
+describe('workoutFigures', () => {
+  it('folds the two figures the row has, length then load', () => {
+    const row = readable(STEADY);
+    expect(workoutFigures(row)).toEqual([
+      { value: lengthLabel(row.totalDurationS), unit: 'min' },
+      { value: loadLabel(row.tss), muted: true },
+    ]);
+  });
+
+  it('folds nothing for a workout that will not parse', () => {
+    expect(workoutFigures(workoutRow(stored('b', 'Broken', 'steps: ['), FTP))).toEqual([]);
   });
 });

@@ -707,7 +707,7 @@ function SummaryScreen({
  * could put someone else's numbers under this ride's heading. */
 function Missing({ onDone }: { onDone: () => void }) {
   return (
-    <div className="text-ink flex h-screen flex-col justify-center gap-[24px] px-[64px]">
+    <div className="text-ink flex h-screen flex-col justify-center gap-[24px] page-gutter">
       <div className={`${SERIF} text-stat`}>That ride is not in the history.</div>
       <div className="self-start">
         <Button onClick={onDone}>Back to rides</Button>

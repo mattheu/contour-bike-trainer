@@ -10,6 +10,8 @@ import {
   ListHeaderFrame,
   ListRow,
   ListRowFrame,
+  RIDES_ACTIONS,
+  RIDES_ARMED_INSET,
   RIDES_COLUMNS,
 } from '../components/ListRow';
 import { Segmented } from '../components/Segmented';
@@ -27,6 +29,7 @@ import {
   periodSummary,
   raceableRouteId,
   rideDate,
+  rideFigures,
   rideTitle,
   riddenRoutes,
   riddenWorkouts,
@@ -124,7 +127,7 @@ export function Rides({
   );
 
   return (
-    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden px-[64px] py-[44px]">
+    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden page-gutter page-gutter-y">
       <AppHeader
         nav={<Nav value="rides" onChange={onNavigate} />}
         action={<div className={`${MONO} text-label text-muted`}>{summary}</div>}
@@ -186,7 +189,7 @@ export function Rides({
       </div>
 
       <div className="flex min-h-0 grow flex-col">
-        <ListHeaderFrame>
+        <ListHeaderFrame actionsWidth={RIDES_ACTIONS}>
           <ListHeader columns={RIDES_COLUMNS} labels={LABELS} />
         </ListHeaderFrame>
         <div className="min-h-0 overflow-y-auto">
@@ -207,14 +210,13 @@ export function Rides({
           {shown.length === 0 && (
             <div className={`${LABEL} text-micro pt-[26px]`}>No rides match these filters</div>
           )}
+          <Footer
+            empty={rides.length === 0}
+            onExportAll={() => void onExportAll()}
+            onImport={(file) => void onImport(file).then((result) => setAlert(importAlert(result)))}
+          />
         </div>
       </div>
-
-      <Footer
-        empty={rides.length === 0}
-        onExportAll={() => void onExportAll()}
-        onImport={(file) => void onImport(file).then((result) => setAlert(importAlert(result)))}
-      />
     </div>
   );
 }
@@ -297,7 +299,7 @@ function Footer({
   const input = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="border-hairline bg-ground/60 flex shrink-0 items-center gap-[16px] border-t pt-[24px]">
+    <div className="flex items-center gap-[16px] pt-[24px] pb-[8px]">
       <Button onClick={onExportAll} disabled={empty}>
         Download all rides
       </Button>
@@ -348,6 +350,7 @@ function RideRow({
 
   return (
     <ListRowFrame
+      actionsWidth={RIDES_ACTIONS}
       actions={
         armed ? (
           <DeleteButtons title={title} onConfirm={onPressDelete} onCancel={onCancelDelete} />
@@ -421,6 +424,9 @@ function RideRow({
             </span>,
             <Figure key="power" value={num(ride.avgPowerW)} unit="W" />,
           ]}
+          // Below 1100 px the three columns fold into one mono line, as the routes list
+          // does: same row shape, same rule — design/mockups/routes-tablet.html.
+          folded={rideFigures(ride)}
           cellsOverlay={
             armed ? (
               <span className={`${LABEL} text-caption text-ink whitespace-nowrap`}>
@@ -428,6 +434,9 @@ function RideRow({
               </span>
             ) : undefined
           }
+          // Delete and Keep are wider than the three icons the gutter is cut for, so
+          // they reach back over the figures; this keeps them off the question.
+          overlayInset={RIDES_ARMED_INSET}
         />
       </Selectable>
     </ListRowFrame>

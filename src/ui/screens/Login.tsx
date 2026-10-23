@@ -22,7 +22,7 @@ import { formatHash } from '../routing';
  */
 export function Login({ onStart }: { onStart: () => void }) {
   return (
-    <div className="text-ink relative flex h-screen flex-col items-center justify-center gap-[40px] overflow-hidden px-[24px] sm:gap-[56px] sm:px-[56px]">
+    <div className="text-ink relative flex h-screen flex-col items-center justify-center gap-[40px] overflow-hidden px-[16px] sm:gap-[56px] sm:px-[56px]">
       {/* The column takes the lockup's own width rather than a number of its own, so the
           control lines up with the mark above it and keeps doing so if the type scale
           moves. On a phone both go full width, where there is nothing to line up with. */}

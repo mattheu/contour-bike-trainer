@@ -1,5 +1,6 @@
 import type { ConnectionState } from '../../ble/types';
 import type { RideState } from '../../ride/types';
+import type { MapZoom } from '../charts/map';
 import {
   ladderFraction as hrFraction,
   targetBand as hrTargetBand,
@@ -92,3 +93,22 @@ export function primaryControlLabel(
 export function kilometres(metres: number | null): number | null {
   return usable(metres) ? metres / 1000 : null;
 }
+
+/** The profile's two views: the whole route, or the window around the rider. */
+export type ProfileZoom = 'route' | 'window';
+
+/**
+ * The two zoom toggles, in one place because two arrangements now draw them: the desktop
+ * row draws them as a Segmented and a phone as a single icon button that cycles. A label
+ * written twice is a label that ends up disagreeing with the chart it names.
+ */
+export const PROFILE_ZOOMS = [
+  { value: 'route', label: 'Route' },
+  { value: 'window', label: '5 km' },
+] as const satisfies readonly { value: ProfileZoom; label: string }[];
+
+/** 5 km of ground, not of route: see NEAR_WINDOW_M in charts/map.ts. */
+export const MAP_ZOOMS = [
+  { value: 'route', label: 'Route' },
+  { value: 'near', label: '5 km' },
+] as const satisfies readonly { value: MapZoom; label: string }[];

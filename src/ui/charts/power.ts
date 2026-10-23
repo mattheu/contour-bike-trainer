@@ -6,8 +6,18 @@
 import { zoneForPower, type PowerZone } from '../../zones/power';
 import { areaPath, polylinePath, type Pt } from './path';
 
-/** 944 x 74 with the axis at 56, from design/mockups/ride.html. */
-export const BASELINE_FRACTION = 56 / 74;
+/**
+ * The band under the axis, which carries POWER on the left and the average on the right.
+ *
+ * A constant, not a fraction of the height, because it holds 11 px type and type does
+ * not shrink with the chart. As a fraction the axis slid down onto the labels as the
+ * strip got shorter: 12 px of clearance on the desktop's 74, 7 on a sideways phone's 52,
+ * which is less than the cap height of the words sitting in it.
+ *
+ * 18 px is what design/mockups/ride.html draws — 944 x 74 with the axis at 56 — so the
+ * desktop is unchanged and the phones gain the room.
+ */
+export const LABEL_BAND_PX = 18;
 
 /**
  * The top of the strip is 160 % of FTP: the ceiling of zone 5, so a hard effort
@@ -76,7 +86,7 @@ export interface PowerStripInput {
 
 export function powerStripGeometry(input: PowerStripInput): PowerStripGeometry {
   const { samples, ftpW, width, height, startM, endM } = input;
-  const baselineY = height * BASELINE_FRACTION;
+  const baselineY = height - LABEL_BAND_PX;
   const ceilingW = Math.max(ftpW, 1) * MAX_FRACTION_OF_FTP;
   const spanM = Math.max(endM - startM, 1e-9);
 

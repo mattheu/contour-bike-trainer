@@ -1,5 +1,7 @@
 import { KIND_LABEL, type RouteKind } from '../../route/loop';
 import type { Ride, Route as StoredRoute } from '../../storage/types';
+import type { FoldedFigure } from '../components/ListRow';
+import { distance, elevation } from '../format';
 
 /**
  * The routes list's one derived column. Storage keeps no ride count on a route — it
@@ -19,6 +21,21 @@ export function rideCounts(rides: readonly Ride[]): Map<string, number> {
 export function riddenLabel(count: number): string {
   if (count <= 0) return 'Not ridden';
   return `${count} ${count === 1 ? 'ride' : 'rides'}`;
+}
+
+/**
+ * The row's three figures as one line, for widths too narrow to column them — distance,
+ * gain, then how often it has been ridden, in the order the columns run left to right.
+ *
+ * The count stays muted whichever way it is set, as it is in both mockups: the two
+ * measurements are the route, the count is this install's history of it.
+ */
+export function routeFigures(route: StoredRoute, count: number): readonly FoldedFigure[] {
+  return [
+    { value: distance(route.totalDistanceM / 1000), unit: 'km' },
+    { value: elevation(route.totalAscentM), unit: 'm' },
+    { value: riddenLabel(count), muted: true },
+  ];
 }
 
 /** Alphabetical: the bundled set is small and has no meaningful intrinsic order. */

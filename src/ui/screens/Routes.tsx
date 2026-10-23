@@ -13,6 +13,8 @@ import {
   ListHeaderFrame,
   ListRow,
   ListRowFrame,
+  ROUTES_ACTIONS,
+  ROUTES_ARMED_INSET,
   ROUTES_COLUMNS,
 } from '../components/ListRow';
 import { RouteKindMark } from '../components/RouteKindMark';
@@ -39,6 +41,7 @@ import {
   type LabelPart,
   rideCounts,
   riddenLabel,
+  routeFigures,
   sortRoutes,
 } from './routes-list';
 import { Selectable } from './Selectable';
@@ -131,7 +134,7 @@ export function Routes({
   );
 
   return (
-    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden px-[64px] py-[44px]">
+    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden page-gutter page-gutter-y">
       <AppHeader nav={<Nav value="routes" onChange={onNavigate} />} onSettings={onOpenProfile} />
 
       {/* Cancels the column gap the strip would otherwise sit below, so an alert lands
@@ -143,7 +146,7 @@ export function Routes({
       )}
 
       <div className="flex min-h-0 grow flex-col">
-        <ListHeaderFrame>
+        <ListHeaderFrame actionsWidth={ROUTES_ACTIONS}>
           <ListHeader columns={ROUTES_COLUMNS} labels={LABELS} />
         </ListHeaderFrame>
         <div className="min-h-0 overflow-y-auto">
@@ -151,7 +154,7 @@ export function Routes({
             <RouteRow
               key={route.id}
               route={route}
-              ridden={riddenLabel(counts.get(route.id) ?? 0)}
+              count={counts.get(route.id) ?? 0}
               removable={canRemoveRoute(route.id, builtIn)}
               armed={isArmed(armed, route.id)}
               onSelect={onSelect}
@@ -165,16 +168,15 @@ export function Routes({
           {ordered.length === 0 && (
             <div className={`${LABEL} text-micro pt-[26px]`}>No routes in this install</div>
           )}
+          <Footer
+            empty={ordered.length === 0}
+            onExportAll={() => void onExportAll()}
+            onImport={(file) =>
+              void onImport(file).then((result) => setAlert(routeImportAlert(result)))
+            }
+          />
         </div>
       </div>
-
-      <Footer
-        empty={ordered.length === 0}
-        onExportAll={() => void onExportAll()}
-        onImport={(file) =>
-          void onImport(file).then((result) => setAlert(routeImportAlert(result)))
-        }
-      />
     </div>
   );
 }
@@ -198,7 +200,7 @@ function Footer({
   const input = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="border-hairline bg-ground/60 flex shrink-0 items-center gap-[16px] border-t pt-[24px]">
+    <div className="flex items-center gap-[16px] pt-[24px] pb-[8px]">
       <Button onClick={onExportAll} disabled={empty}>
         Download all routes
       </Button>
@@ -224,7 +226,7 @@ function Footer({
 
 function RouteRow({
   route,
-  ridden,
+  count,
   removable,
   armed,
   onSelect,
@@ -234,7 +236,8 @@ function RouteRow({
   onCancelDelete,
 }: {
   route: StoredRoute;
-  ridden: string;
+  /** How many rides this install holds on this route; the row words it itself. */
+  count: number;
   removable: boolean;
   armed: boolean;
   onSelect: (routeId: string) => void;
@@ -257,6 +260,7 @@ function RouteRow({
   // honest about not knowing yet rather than calling everything a point to point.
   const kind = geometry === null ? null : routeKind(geometry);
   const description = descriptionLine(route);
+  const ridden = riddenLabel(count);
   // Decided here rather than inside the row, because an empty label row is not an empty
   // element: ListRow's slots are a flex column, so one that rendered nothing would still
   // cost its 4 px of gap under the name. A route with neither a known kind nor a region
@@ -265,6 +269,7 @@ function RouteRow({
 
   return (
     <ListRowFrame
+      actionsWidth={ROUTES_ACTIONS}
       actions={
         armed ? (
           <ButtonGroup label={`${ROUTE_DELETE_WORDING.action} ${route.name}?`}>
@@ -350,6 +355,9 @@ function RouteRow({
               {ridden}
             </span>,
           ]}
+          // design/mockups/routes-tablet.html: below 1100 px the three columns are one
+          // mono line under the description instead.
+          folded={routeFigures(route, count)}
           cellsOverlay={
             armed ? (
               <span className={`${LABEL} text-caption text-ink whitespace-nowrap`}>
@@ -357,6 +365,9 @@ function RouteRow({
               </span>
             ) : undefined
           }
+          // Remove and Keep are wider than the two icons the gutter is cut for, so they
+          // reach back over the figures; this keeps them off the end of the question.
+          overlayInset={ROUTES_ARMED_INSET}
         />
       </Selectable>
     </ListRowFrame>

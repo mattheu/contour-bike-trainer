@@ -138,6 +138,158 @@ export function chartStackHeights(availableHeight: number | null): {
 }
 
 /**
+ * A phone shows one chart over the power strip, so its stack is simpler than the
+ * desktop's: no heading row, no second column, and one gap.
+ *
+ * design/mockups/phone-portrait-profile.html draws the view at 200 and the strip at 58
+ * inside an 844 px artboard, 36 px apart.
+ */
+export const PHONE_VIEW_HEIGHT = 200;
+export const PHONE_STRIP_HEIGHT = 58;
+export const PHONE_CHART_GAP_PX = 36;
+
+/** Below this the profile is a line rather than terrain, and the map a smudge. */
+export const MIN_PHONE_VIEW_HEIGHT = 120;
+
+/**
+ * The strip carries its own type — POWER, the FTP mark, the average — inside its box, so
+ * it runs out of room sooner than the desktop's and holds its height for longer.
+ */
+export const MIN_PHONE_STRIP_HEIGHT = 48;
+
+/**
+ * How a phone divides the space left under its readings.
+ *
+ * Both charts keep the height they are drawn at and give it up only on a screen too
+ * short for them, which is the opposite of the desktop's "grow into whatever is there".
+ * The phone's view is 358 px wide: at the desktop's full height it would be nearly
+ * square, and a profile that tall shows the same terrain as a band floating in an empty
+ * box rather than more of it. design/mockups/phone-portrait-profile.html spends the
+ * slack above the chart instead, where it costs nothing.
+ */
+export function phoneChartStack(availableHeight: number | null): PhoneChartStack {
+  return phoneStack(availableHeight, {
+    view: PHONE_VIEW_HEIGHT,
+    strip: PHONE_STRIP_HEIGHT,
+    gap: PHONE_CHART_GAP_PX,
+    minView: MIN_PHONE_VIEW_HEIGHT,
+  });
+}
+
+/**
+ * design/mockups/phone-landscape.html draws the view at 124 and the strip at 52 inside a
+ * 390 px artboard, 14 px apart — the map at the same 124, so one height serves whichever
+ * chart is showing. Shallower than portrait's because the four-slot row and the stats
+ * line have already taken the top half of a short screen.
+ */
+export const PHONE_LANDSCAPE_VIEW_HEIGHT = 124;
+export const PHONE_LANDSCAPE_STRIP_HEIGHT = 52;
+export const PHONE_LANDSCAPE_CHART_GAP_PX = 14;
+
+/**
+ * Lower than the portrait floor because the box is a different shape: at 796 px wide a
+ * 96 px profile is still a 8:1 band of terrain, where the same height at 358 px wide is
+ * the squashed chart MIN_PHONE_VIEW_HEIGHT exists to prevent.
+ */
+export const MIN_PHONE_LANDSCAPE_VIEW_HEIGHT = 96;
+
+/** The same division on a phone turned sideways. */
+export function phoneLandscapeChartStack(availableHeight: number | null): PhoneChartStack {
+  return phoneStack(availableHeight, {
+    view: PHONE_LANDSCAPE_VIEW_HEIGHT,
+    strip: PHONE_LANDSCAPE_STRIP_HEIGHT,
+    gap: PHONE_LANDSCAPE_CHART_GAP_PX,
+    minView: MIN_PHONE_LANDSCAPE_VIEW_HEIGHT,
+  });
+}
+
+export interface PhoneChartStack {
+  viewHeight: number;
+  stripHeight: number;
+}
+
+function phoneStack(
+  availableHeight: number | null,
+  drawn: { view: number; strip: number; gap: number; minView: number },
+): PhoneChartStack {
+  if (availableHeight === null || !Number.isFinite(availableHeight)) {
+    return { viewHeight: drawn.view, stripHeight: drawn.strip };
+  }
+
+  const forCharts = Math.floor(availableHeight) - drawn.gap;
+  const viewHeight = Math.min(drawn.view, Math.max(drawn.minView, forCharts - drawn.strip));
+  // Only once the view is already at its floor does the strip start giving height up,
+  // and it stops at its own: two charts too short to read is worse than one that
+  // overflows a screen nobody should be riding on.
+  const stripHeight = Math.max(
+    MIN_PHONE_STRIP_HEIGHT,
+    Math.min(drawn.strip, forCharts - viewHeight),
+  );
+
+  return { viewHeight, stripHeight };
+}
+
+/**
+ * design/mockups/tablet-portrait.html draws all three charts at once inside an 834 x 1194
+ * artboard: the profile at 200 over the strip at 66, then the map at 240 under a heading
+ * of its own. 24 px between the profile and its strip, 40 before the map's heading.
+ */
+export const TABLET_PROFILE_HEIGHT = 200;
+export const TABLET_STRIP_HEIGHT = 66;
+export const TABLET_MAP_HEIGHT = 240;
+export const TABLET_CHART_GAP_PX = 24;
+export const TABLET_STACK_GAP_PX = 40;
+
+/**
+ * The map is 754 px wide here, so it runs out of use at a height the desktop's narrow
+ * column never reaches: under this it is a 5:1 letterbox and a route folds into a band
+ * rather than keeping a shape the rider can recognise.
+ */
+export const MIN_TABLET_MAP_HEIGHT = 160;
+
+export interface TabletChartStack {
+  profileHeight: number;
+  stripHeight: number;
+  mapHeight: number;
+}
+
+const TABLET_CHART_CHROME_PX =
+  TABLET_CHART_GAP_PX + TABLET_STACK_GAP_PX + CHART_HEADING_PX + CHART_HEADING_GAP_PX;
+
+const TABLET_STACK_DRAWN: TabletChartStack = {
+  profileHeight: TABLET_PROFILE_HEIGHT,
+  stripHeight: TABLET_STRIP_HEIGHT,
+  mapHeight: TABLET_MAP_HEIGHT,
+};
+
+/**
+ * How a tablet held upright divides the space its readings left.
+ *
+ * Capped at the drawn heights rather than grown into whatever is there, which is the
+ * bargain the phone stacks already make and the one the mockup draws: it centres the
+ * three charts and spends the slack above and below them. Unlike a phone this is three
+ * charts rather than one, so a short tablet has an order to give height up in — the map
+ * first, because the profile is the chart you ride to and the map is the reference beside
+ * it, which is the same call MIN_MAP_WIDTH makes across the desktop row. The strip is
+ * last because it is already the shortest thing on the screen.
+ */
+export function tabletChartStack(availableHeight: number | null): TabletChartStack {
+  if (availableHeight === null || !Number.isFinite(availableHeight)) return TABLET_STACK_DRAWN;
+
+  const forCharts = Math.floor(availableHeight) - TABLET_CHART_CHROME_PX;
+  let owed = TABLET_PROFILE_HEIGHT + TABLET_STRIP_HEIGHT + TABLET_MAP_HEIGHT - forCharts;
+  if (owed <= 0) return TABLET_STACK_DRAWN;
+
+  const mapHeight = Math.max(MIN_TABLET_MAP_HEIGHT, TABLET_MAP_HEIGHT - owed);
+  owed -= TABLET_MAP_HEIGHT - mapHeight;
+  const profileHeight = Math.max(MIN_PROFILE_HEIGHT, TABLET_PROFILE_HEIGHT - owed);
+  owed -= TABLET_PROFILE_HEIGHT - profileHeight;
+  const stripHeight = Math.max(MIN_STRIP_HEIGHT, TABLET_STRIP_HEIGHT - owed);
+
+  return { profileHeight, stripHeight, mapHeight };
+}
+
+/**
  * design/mockups/workout.html draws the lower row as `minmax(0, 1fr) 320px` with the same
  * 48 px gap, and keeps 32 px clear inside the chart column for the zone figures.
  */
@@ -234,6 +386,72 @@ export function planChartHeight(availableHeight: number | null): number {
   if (availableHeight === null || !Number.isFinite(availableHeight)) return MOCKUP_PROFILE_HEIGHT;
   const chrome = PLAN_HEADING_PX + PLAN_HEADING_GAP_PX + PLAN_AXIS_PX;
   return Math.max(MIN_PLAN_HEIGHT, Math.floor(availableHeight) - chrome);
+}
+
+/**
+ * The plan chart on a phone, where it stands in for the profile and the power strip
+ * together and the Steps panel is not drawn at all.
+ *
+ * design/mockups/phone-portrait-workout.html draws it 320 wide inside a 358 px column and
+ * phone-landscape-workout.html 756 inside 796, so both keep 40 px clear to the right of
+ * the chart. That is where the Z1-Z6 figures sit: the SVG overflows its own box to draw
+ * them, and without the gutter they would be clipped by the page padding.
+ */
+export const PHONE_PLAN_LABEL_GUTTER_PX = 40;
+
+/** The heights the same two mockups draw, inside 844 px and 390 px artboards. */
+export const PHONE_PLAN_HEIGHT = 140;
+export const PHONE_LANDSCAPE_PLAN_HEIGHT = 174;
+
+/**
+ * Shallower than the desktop's floor, because a phone is not reading a target off this
+ * chart. The interval band above it carries the figures; the chart is there to show where
+ * in the session the rider is, which survives the zone bands crowding well past the point
+ * where MIN_PLAN_HEIGHT says a desktop should stop.
+ */
+export const MIN_PHONE_PLAN_HEIGHT = 88;
+
+/**
+ * Portrait keeps a `Plan` heading over the chart, where landscape has no room for one.
+ * It is inside the measured area, so it comes out of the budget before the chart does.
+ */
+export const PHONE_PLAN_HEADING_PX = 16;
+export const PHONE_PLAN_HEADING_GAP_PX = 14;
+
+/**
+ * The room the time figures need under the baseline. They are drawn outside the SVG's own
+ * box — design/mockups/phone-landscape-workout.html puts them at y 196 inside a box 174
+ * tall — so a box given the whole area would push them past its bottom edge, where the
+ * landscape arrangement's overflow-hidden cuts them off. Taken out of the chart's height
+ * rather than added under it, so the figures land inside the area that was measured.
+ */
+export const PHONE_PLAN_TICK_ROOM_PX = 22;
+
+/**
+ * How tall the chart is drawn in the space the readings left it.
+ *
+ * Capped at the drawn height rather than grown into whatever is there, which is the
+ * bargain phoneChartStack already makes: a plan chart stretched to fill a tall phone is
+ * the same six zone bands in a taller box, and the mockups spend that slack above the
+ * chart instead, where it costs nothing.
+ */
+function phonePlan(availableHeight: number | null, drawn: number, chrome: number): number {
+  if (availableHeight === null || !Number.isFinite(availableHeight)) return drawn;
+  const forChart = Math.floor(availableHeight) - chrome;
+  return Math.max(MIN_PHONE_PLAN_HEIGHT, Math.min(drawn, forChart));
+}
+
+export function phonePlanHeight(availableHeight: number | null): number {
+  return phonePlan(
+    availableHeight,
+    PHONE_PLAN_HEIGHT,
+    PHONE_PLAN_HEADING_PX + PHONE_PLAN_HEADING_GAP_PX,
+  );
+}
+
+/** The same chart on a phone turned sideways: wider, shorter, and with no heading over it. */
+export function phoneLandscapePlanHeight(availableHeight: number | null): number {
+  return phonePlan(availableHeight, PHONE_LANDSCAPE_PLAN_HEIGHT, PHONE_PLAN_TICK_ROOM_PX);
 }
 
 export function chartRowLayout(availableWidth: number | null): ChartRowLayout {

@@ -80,7 +80,7 @@ export function WorkoutEditor({ workout, onSave, onClose, builtIn }: WorkoutEdit
   const dirty = draft !== saved;
 
   return (
-    <div className="text-ink flex h-screen flex-col gap-[24px] overflow-hidden px-[64px] py-[44px]">
+    <div className="text-ink flex h-screen flex-col gap-[24px] overflow-hidden page-gutter page-gutter-y">
       <header className="flex shrink-0 items-center justify-between">
         <div className="flex items-center gap-[18px]">
           <Logo />

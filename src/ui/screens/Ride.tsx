@@ -1,61 +1,42 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import type { HistorySlot } from '../../ghost/resolve';
-import type { Climb } from '../../route/climbs';
 import { detectClimbs } from '../../route/climbs';
 import { lapLabel, lapStartM } from '../../route/loop';
 import { WINDOW_WIDE_M, buildProfile, projectWindow } from '../../route/profile';
 import type { Route } from '../../route/types';
-import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
-import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
 import {
-  CHART_ROW_GAP_PX,
-  ElevationProfile,
-  PowerStrip,
-  RouteMap,
-  chartRowLayout,
   type ElevationProfileHandle,
   type MapZoom,
   type PowerStripHandle,
   type RouteMapHandle,
-  chartStackHeights,
 } from '../charts';
 import type { DevicesView } from '../components/Devices';
-import { GhostKey } from '../components/GhostKey';
-import { GradientKey } from '../components/GradientKey';
-import { Hero } from '../components/Hero';
-import { LoopTag } from '../components/LoopTag';
-import { RideHeader } from '../components/RideHeader';
-import { Segmented } from '../components/Segmented';
-import { Stat } from '../components/Stat';
-import { LABEL, MONO } from '../components/styles';
-import { ZoneLadder } from '../components/ZoneLadder';
-import { distance, duration, elevation, num, percent } from '../format';
 import type { RideSnapshot } from '../store';
-import { AlertStrip } from './AlertStrip';
-import {
-  ftpSharePercent,
-  heartRateLadder,
-  kilometres,
-  powerLadder,
-  primaryControlLabel,
-  readingTone,
-} from './ride-view';
-import { powerSamplesFrom } from './summary-view';
+import type { PhoneView } from './phone-ride';
+import { arrangementFor, type ArrangementName } from './arrangement';
+import { type RideArrangementProps } from './ride-arrangement';
+import { rideReadings } from './ride-readings';
+import { primaryControlLabel, type ProfileZoom } from './ride-view';
+import { RideDesktop } from './RideDesktop';
+import { RidePhoneLandscape } from './RidePhoneLandscape';
+import { RidePhonePortrait } from './RidePhonePortrait';
+import { RideTabletPortrait } from './RideTabletPortrait';
 import { RideSettings, type Targets } from './RideSettings';
-import { useElementHeight, useElementWidth } from './use-element-width';
+import { powerSamplesFrom } from './summary-view';
+import {
+  PHONE_LANDSCAPE_QUERY,
+  PHONE_PORTRAIT_QUERY,
+  TABLET_PORTRAIT_QUERY,
+  useMediaQuery,
+} from './use-media-query';
 
-type ProfileZoom = 'route' | 'window';
-
-const PROFILE_ZOOMS = [
-  { value: 'route', label: 'Route' },
-  { value: 'window', label: '5 km' },
-] as const;
-
-/** 5 km of ground, not of route: see NEAR_WINDOW_M in charts/map.ts. */
-const MAP_ZOOMS = [
-  { value: 'route', label: 'Route' },
-  { value: 'near', label: '5 km' },
-] as const;
+/** The component each arrangement name draws. One at a time — see arrangementFor. */
+const ARRANGEMENTS: Record<ArrangementName, (props: RideArrangementProps) => ReactElement> = {
+  'phone-portrait': RidePhonePortrait,
+  'phone-landscape': RidePhoneLandscape,
+  'tablet-portrait': RideTabletPortrait,
+  desktop: RideDesktop,
+};
 
 export interface RideProps {
   snapshot: RideSnapshot;
@@ -80,6 +61,13 @@ export interface RideProps {
   onDisconnectHrm: () => void;
 }
 
+/**
+ * The ride screen: everything the arrangements share, and the choice between them.
+ *
+ * The readings, the projected window, the chart handles and the clock that drives them
+ * all live here, because they are the ride rather than any one layout of it. What a
+ * screen size changes is where those land — see ride-arrangement.
+ */
 export function Ride({
   snapshot,
   route,
@@ -103,25 +91,23 @@ export function Ride({
 }: RideProps) {
   const [profileZoom, setProfileZoom] = useState<ProfileZoom>('route');
   const [mapZoom, setMapZoom] = useState<MapZoom>('route');
+  const [view, setView] = useState<PhoneView>('profile');
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const profileRef = useRef<ElevationProfileHandle>(null);
   const mapRef = useRef<RouteMapHandle>(null);
   const stripRef = useRef<PowerStripHandle>(null);
 
-  // The charts are re-projected to the row they are actually given rather than scaled
-  // into it, so strokes and tick type stay at their token sizes at every width. Below
-  // the layout's minimum the map is dropped instead of drawn uselessly narrow.
-  const rowRef = useRef<HTMLDivElement>(null);
-  const rowWidth = useElementWidth(rowRef);
-  // The growing flex child, so its height IS the space the charts have left after the
-  // fixed rows have taken theirs. Measured rather than assumed: the design's 900 px
-  // artboard is taller than a MacBook's Chrome viewport, so there is never a figure to
-  // hard-code.
-  const chartAreaRef = useRef<HTMLDivElement>(null);
-  const chartAreaHeight = useElementHeight(chartAreaRef);
-  const layout = useMemo(() => chartRowLayout(rowWidth), [rowWidth]);
-  const stack = useMemo(() => chartStackHeights(chartAreaHeight), [chartAreaHeight]);
+  /**
+   * One arrangement is rendered, not two with one hidden: the charts below are
+   * imperatively-updated SVGs held by these refs, and a hidden second set would be built,
+   * handed every tick and given handles to keep straight, all to draw nothing.
+   */
+  const arrangementName = arrangementFor({
+    phonePortrait: useMediaQuery(PHONE_PORTRAIT_QUERY),
+    phoneLandscape: useMediaQuery(PHONE_LANDSCAPE_QUERY),
+    tabletPortrait: useMediaQuery(TABLET_PORTRAIT_QUERY),
+  });
 
   const profile = useMemo(() => buildProfile(route), [route]);
   const climbs = useMemo(() => detectClimbs(route), [route]);
@@ -146,11 +132,6 @@ export function Ride({
         }
       : null;
 
-  // design/DESIGN.md: a fault shows in the data too. The trainer's readings go stale
-  // when it drops; heart rate follows the strap, which can fail on its own.
-  const trainerTone = readingTone(snapshot.trainerState);
-  const heartRateTone = readingTone(snapshot.hrmState);
-
   // The window follows the rider, so it is rebuilt as the ride moves. Route zoom — the
   // default — keeps a null window and so a stable geometry for the whole ride.
   const window = useMemo(
@@ -173,6 +154,10 @@ export function Ride({
 
   // The one place the charts are told the time has moved. They mutate their own SVG
   // through these handles; nothing here puts a chart's geometry into React state.
+  //
+  // No dependency list, so it also runs on the render that swapped the view or the
+  // arrangement: a chart that has just mounted is seeded at zero, and this is what walks
+  // it up to where the rider actually is.
   useEffect(() => {
     profileRef.current?.update(routePositionM, snapshot.ghosts);
     mapRef.current?.update(routePositionM, snapshot.ghosts);
@@ -212,25 +197,14 @@ export function Ride({
     return () => globalThis.removeEventListener('keydown', onKeyDown);
   }, [onPauseToggle]);
 
-  // The hero, the ladder and the ladder's target band all read the one smoothed figure
-  // the store publishes. The raw reading is still on the snapshot, and the recorder and
-  // the devices panel still read it; nothing on this row does, because a hero and a
-  // ladder disagreeing about the same instant is what the smoothing is for.
-  //
-  // The FTP share goes with them. It is drawn inside the same Hero, on the same line: it
-  // is the hero's number restated as a percentage, so sourcing it separately would
-  // reproduce exactly the disagreement being fixed one slot to the right.
-  const power = powerLadder(snapshot.displayPowerW, ftpW, targets.powerW, targetMarginPct);
-  const heart = heartRateLadder(
-    snapshot.heartRateBpm,
+  const readings = rideReadings({
+    snapshot,
+    ftpW,
     hrMaxBpm,
-    targets.heartRateBpm,
+    targetPowerW: targets.powerW,
+    targetHeartRateBpm: targets.heartRateBpm,
     targetMarginPct,
-  );
-  const share = ftpSharePercent(snapshot.displayPowerW, ftpW);
-
-  const startM = window?.startM ?? 0;
-  const endM = window?.endM ?? route.totalDistanceM;
+  });
 
   // Pairing lives in the settings panel now: there is no connect screen, and a fault
   // reaches the rider through the alert strip above rather than a screen of its own.
@@ -248,191 +222,46 @@ export function Ride({
     onDisconnectHrm,
   };
 
+  const arrangement: RideArrangementProps = {
+    snapshot,
+    readings,
+    route,
+    profile,
+    climbs,
+    window,
+    samples,
+    ftpW,
+    title: snapshot.routeName ?? 'Free ride',
+    lapLabel: lap?.label ?? null,
+    pauseLabel: primaryControlLabel(snapshot.state, snapshot.elapsedS),
+    view,
+    onView: setView,
+    profileZoom,
+    onProfileZoom: setProfileZoom,
+    mapZoom,
+    onMapZoom: setMapZoom,
+    profileRef,
+    mapRef,
+    stripRef,
+    onProfileHover,
+    onMapHover,
+    onPause: onPauseToggle,
+    onEnd,
+    onSettings: () => {
+      setSettingsOpen(true);
+    },
+    onDismissAlert,
+    onRetryTrainer,
+  };
+
+  const Arrangement = ARRANGEMENTS[arrangementName];
+
   return (
-    <div className="text-ink relative flex h-screen flex-col overflow-hidden">
-      <div className="px-[64px] pt-[36px]">
-        <RideHeader
-          title={snapshot.routeName ?? 'Free ride'}
-          tag={lap === null ? undefined : <LoopTag label={lap.label} />}
-          pauseLabel={primaryControlLabel(snapshot.state, snapshot.elapsedS)}
-          onPause={onPauseToggle}
-          onEnd={onEnd}
-          onSettings={() => setSettingsOpen(true)}
-        />
-      </div>
-
-      <AlertStrip alert={snapshot.alert} onDismiss={onDismissAlert} onRetry={onRetryTrainer} />
-
-      <div className="grid grid-cols-3 gap-[48px] px-[64px] pt-[28px]">
-        <Primary>
-          <Hero
-            testId="ride-power"
-            label="Power"
-            value={num(snapshot.displayPowerW)}
-            unit="W"
-            tone={trainerTone}
-            figure={share === null ? undefined : percent(share, 0)}
-            figureUnit={share === null ? undefined : '% FTP'}
-          />
-          <Ladder view={power} label="Power zone" count={POWER_ZONE_COUNT} />
-        </Primary>
-        <Primary divided>
-          <Hero
-            testId="ride-cadence"
-            label="Cadence"
-            value={num(snapshot.cadenceRpm)}
-            unit="rpm"
-            tone={trainerTone}
-          />
-          {/* Cadence has no zones, so it gets the rule alone rather than a count it
-              would have to invent. */}
-          <Rule />
-        </Primary>
-        <Primary divided>
-          <Hero
-            testId="ride-heart-rate"
-            label="Heart rate"
-            value={num(snapshot.heartRateBpm)}
-            unit="bpm"
-            tone={heartRateTone}
-            figure={heart === null ? undefined : `Z${heart.zone}`}
-          />
-          <Ladder view={heart} label="Heart rate zone" count={HR_ZONE_COUNT} />
-        </Primary>
-      </div>
-
-      <div className="grid grid-cols-5 gap-[32px] px-[64px] pt-[28px]">
-        <Secondary>
-          <Stat testId="ride-elapsed" label="Elapsed" value={duration(snapshot.elapsedS)} />
-        </Secondary>
-        <Secondary divided>
-          {/* Position on the route over the route's length, which on a loop is the
-              lap's progress rather than the ride's: "distance of total" has no meaning
-              when the total is however long you choose to keep going. The lap it belongs
-              to is named once, in the header. */}
-          <Stat
-            testId="ride-distance"
-            label="Distance"
-            value={distance(kilometres(snapshot.routePositionM))}
-            total={distance(kilometres(snapshot.routeTotalDistanceM))}
-            unit="km"
-          />
-        </Secondary>
-        <Secondary divided>
-          <Stat
-            testId="ride-climbed"
-            label="Climbed"
-            value={elevation(snapshot.ascentM)}
-            total={elevation(snapshot.routeTotalAscentM)}
-            unit="m"
-          />
-        </Secondary>
-        <Secondary divided>
-          {/* Speed is solved from the trainer's power, so it is only as live as the trainer. */}
-          <Stat
-            testId="ride-speed"
-            label="Speed"
-            value={distance(snapshot.speedKmh)}
-            unit="km/h"
-            tone={trainerTone}
-          />
-        </Secondary>
-        <Secondary divided>
-          <Stat
-            testId="ride-gradient"
-            label="Gradient"
-            value={percent(snapshot.gradePercent)}
-            unit="%"
-          />
-        </Secondary>
-      </div>
-
-      {/* The page padding is on the wrapper so the measured element carries none of its
-          own: the columns are explicit pixels handed to the geometry, and a border box
-          measured against a content box would put the charts a padding out. */}
-      {/* min-h-0: a grow child will not shrink below its content without it, so the area
-          would measure the charts it contains rather than the space they have. */}
-      <div
-        ref={chartAreaRef}
-        className="mt-[64px] flex min-h-0 grow flex-col justify-center px-[64px]"
-      >
-        <div
-          ref={rowRef}
-          className="grid items-start"
-          style={{
-            gridTemplateColumns: layout.showMap
-              ? `${layout.profileWidth}px ${layout.mapWidth}px`
-              : `${layout.profileWidth}px`,
-            columnGap: `${CHART_ROW_GAP_PX}px`,
-          }}
-        >
-          <div className="flex flex-col gap-[6px]">
-            <ChartHeading label="Profile">
-              <Segmented
-                size={32}
-                label="Profile zoom"
-                options={PROFILE_ZOOMS}
-                value={profileZoom}
-                onChange={setProfileZoom}
-              />
-            </ChartHeading>
-            <ProfileChart
-              route={route}
-              profile={profile}
-              climbs={climbs}
-              window={window}
-              width={layout.profileWidth}
-              height={stack.profileHeight}
-              handleRef={profileRef}
-              onHover={onProfileHover}
-            />
-            <div className="mt-[26px]">
-              {/* The strip shares the profile's x-axis, so it shares its width exactly. */}
-              <PowerStrip
-                ref={stripRef}
-                samples={samples}
-                ftpW={ftpW}
-                startM={startM}
-                endM={endM}
-                distanceM={0}
-                width={layout.profileWidth}
-                height={stack.stripHeight}
-              />
-            </div>
-          </div>
-
-          {layout.showMap && (
-            <div className="flex flex-col gap-[6px]">
-              <ChartHeading label="Map">
-                <Segmented
-                  size={32}
-                  label="Map zoom"
-                  options={MAP_ZOOMS}
-                  value={mapZoom}
-                  onChange={setMapZoom}
-                />
-              </ChartHeading>
-              <MapChart
-                route={route}
-                zoom={mapZoom}
-                width={layout.mapWidth}
-                height={stack.mapHeight}
-                handleRef={mapRef}
-                onHover={onMapHover}
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="mt-[24px] flex items-end justify-between px-[64px] pb-[36px]">
-        <div className="flex items-center gap-[14px]">
-          <GradientKey />
-          <div className={`${LABEL} text-micro ml-[26px]`}>Difficulty</div>
-          <div className={`${MONO} text-micro text-ink`}>{snapshot.trainerDifficulty}</div>
-        </div>
-        <GhostKey ghosts={snapshot.ghosts} />
-      </div>
+    // h-dvh rather than h-screen: on a phone the viewport is whatever the browser's
+    // toolbars have left, and design/DESIGN.md asks every screen to fit one without
+    // scrolling. The same height as h-screen anywhere the toolbars do not move.
+    <div className="text-ink relative flex h-dvh flex-col overflow-hidden">
+      <Arrangement {...arrangement} />
 
       {settingsOpen && (
         <RideSettings
@@ -447,141 +276,11 @@ export function Ride({
           onDifficultyChange={onDifficultyChange}
           onTargetsChange={onTargetsChange}
           onEnd={onEnd}
-          onClose={() => setSettingsOpen(false)}
+          onClose={() => {
+            setSettingsOpen(false);
+          }}
         />
       )}
-    </div>
-  );
-}
-
-/**
- * The profile and the map are memoised on their geometry alone and seeded at zero: the
- * effect above walks them forward by hand once a second, so neither SVG tree is rebuilt
- * on every snapshot. The power strip stays outside because its zone washes are props by
- * design — their element count changes as new zones are entered.
- */
-const ProfileChart = memo(function ProfileChart({
-  route,
-  profile,
-  climbs,
-  window,
-  width,
-  height,
-  handleRef,
-  onHover,
-}: {
-  route: Route;
-  profile: ReturnType<typeof buildProfile>;
-  climbs: readonly Climb[];
-  window: ReturnType<typeof projectWindow> | null;
-  width: number;
-  height: number;
-  handleRef: RefObject<ElevationProfileHandle | null>;
-  onHover: (hoveredM: number | null) => void;
-}) {
-  return (
-    <ElevationProfile
-      ref={handleRef}
-      route={route}
-      profile={profile}
-      climbs={climbs}
-      window={window}
-      width={width}
-      height={height}
-      distanceM={0}
-      onHover={onHover}
-    />
-  );
-});
-
-const MapChart = memo(function MapChart({
-  route,
-  zoom,
-  width,
-  height,
-  handleRef,
-  onHover,
-}: {
-  route: Route;
-  zoom: MapZoom;
-  width: number;
-  height: number;
-  handleRef: RefObject<RouteMapHandle | null>;
-  onHover: (hoveredM: number | null) => void;
-}) {
-  return (
-    <RouteMap
-      ref={handleRef}
-      route={route}
-      zoom={zoom}
-      width={width}
-      height={height}
-      distanceM={0}
-      onHover={onHover}
-    />
-  );
-});
-
-function Primary({ children, divided = false }: { children: React.ReactNode; divided?: boolean }) {
-  return (
-    <div
-      className={`flex flex-col gap-[10px] ${divided ? 'border-hairline border-l pl-[36px]' : ''}`}
-    >
-      {children}
-    </div>
-  );
-}
-
-function Secondary({
-  children,
-  divided = false,
-}: {
-  children: React.ReactNode;
-  divided?: boolean;
-}) {
-  return <div className={divided ? 'border-hairline border-l pl-[32px]' : ''}>{children}</div>;
-}
-
-/** A reading with no zones to measure it against still keeps the row's baseline. */
-function Rule() {
-  return (
-    <div className="mt-[14px]">
-      <div className="relative h-[30px]">
-        <div className="bg-hairline absolute top-[5px] right-0 left-0 h-px" />
-      </div>
-    </div>
-  );
-}
-
-/** The count is the caller's: power has six zones and heart rate five. */
-function Ladder({
-  view,
-  label,
-  count,
-}: {
-  view: ReturnType<typeof powerLadder>;
-  label: string;
-  count: number;
-}) {
-  if (view === null) return <Rule />;
-  return (
-    <div className="mt-[14px]">
-      <ZoneLadder
-        count={count}
-        zone={view.zone}
-        marker={view.marker}
-        target={view.target}
-        label={label}
-      />
-    </div>
-  );
-}
-
-function ChartHeading({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center justify-between">
-      <div className={`${LABEL} text-micro`}>{label}</div>
-      {children}
     </div>
   );
 }

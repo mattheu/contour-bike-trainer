@@ -63,6 +63,11 @@
   --color-surface: #0c0c0b;
   --color-surface-raised: #171717;
 
+  /* design/DESIGN.md > Routes: the width a list row's three number columns need. Below
+     it they fold into one line under the description — design/mockups/routes-tablet.html.
+     A named breakpoint rather than an arbitrary one, because three screens fold on it. */
+  --breakpoint-wide: 1100px;
+
   /* design/DESIGN.md: ten sizes, nothing in between. */
   --text-hero: 108px;
   --text-hero-tablet: 72px;
@@ -175,4 +180,97 @@ body {
   margin: 0;
   background: var(--color-surface);
   color: #e5e5e5;
+}
+
+/*
+ * The page gutter, as one rule rather than four utilities.
+ *
+ * Tailwind's `sm:` is a width breakpoint, and a phone on its side is 844 px wide — so a
+ * screen padded with `sm:` gives a landscape phone the tablet's gutter while the ride
+ * beside it uses the phone's. The ride arrangements never had that problem because they
+ * select on height and orientation, which is what actually distinguishes a phone.
+ *
+ * Order is load-bearing: the landscape rule comes last so it wins over both width rules
+ * whatever the viewport is wide. That ordering is the reason this is a class and not a
+ * stack of variants, where it would rest on how Tailwind happens to emit them.
+ *
+ * The query matches PHONE_LANDSCAPE_QUERY in screens/use-media-query.ts. Change both.
+ */
+.page-gutter {
+  padding-inline: 16px;
+}
+
+@media (width >= 40rem) {
+  .page-gutter {
+    padding-inline: 40px;
+  }
+}
+
+@media (width >= 1100px) {
+  .page-gutter {
+    padding-inline: 64px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .page-gutter {
+    padding-inline: 24px;
+  }
+}
+
+/*
+ * The same scale down the other axis, and a separate class because not every screen
+ * wants both: the ride and workout arrangements set their own block padding around a
+ * chart that has to fill what is left.
+ *
+ * Height is the scarce axis on a phone held sideways — 390 px of it — so the landscape
+ * rule gives back 60 of the 88 the width breakpoint would have spent, and matches the
+ * 16/14 the ride arrangements use.
+ */
+.page-gutter-y {
+  padding-block: 24px;
+}
+
+@media (width >= 40rem) {
+  .page-gutter-y {
+    padding-block: 44px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .page-gutter-y {
+    padding-block: 16px 14px;
+  }
+}
+
+/*
+ * The header lockup, sized by the same rules as the page gutter.
+ *
+ * AppHeader is shared by every list screen at every width, so it cannot pick a size the
+ * way an arrangement does. Without this a phone held sideways showed the 111x48 lockup
+ * on Routes and the 83x44 one on the ride behind it — the logo moved as the rider
+ * crossed between them.
+ *
+ * Matches PHONE_LANDSCAPE_QUERY in screens/use-media-query.ts, as .page-gutter does.
+ */
+.logo-header {
+  height: 44px;
+  width: 83px;
+  font-size: 24px;
+}
+
+@media (width >= 40rem) {
+  .logo-header {
+    height: 48px;
+    width: 111px;
+    font-size: 32px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .logo-header {
+    height: 44px;
+    width: 83px;
+    font-size: 24px;
+  }
 }

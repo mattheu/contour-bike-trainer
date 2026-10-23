@@ -1,6 +1,7 @@
 import type { Ride } from '../../storage/types';
+import type { FoldedFigure } from '../components/ListRow';
 import type { SegmentedOption } from '../components/Segmented';
-import { ABSENT, distance } from '../format';
+import { ABSENT, distance, duration, num } from '../format';
 
 /**
  * Filtering, grouping and the period header for the rides list. Storage deliberately
@@ -65,6 +66,19 @@ export function rideDate(iso: string): string {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return ABSENT;
   return `${DAYS[at.getDay()]} ${at.getDate()} ${MONTHS_SHORT[at.getMonth()]}`;
+}
+
+/**
+ * A ride's three figures as one line, for widths too narrow to column them — distance,
+ * elapsed time, then average power, in the order the columns run left to right. The same
+ * fold the routes list uses, because the rows are the same shape.
+ */
+export function rideFigures(ride: Ride): readonly FoldedFigure[] {
+  return [
+    { value: distance(ride.distanceM / 1000), unit: 'km' },
+    { value: duration(ride.elapsedS) },
+    { value: num(ride.avgPowerW), unit: 'W' },
+  ];
 }
 
 /** The inclusive lower bound of a period, or null for "everything ever". */

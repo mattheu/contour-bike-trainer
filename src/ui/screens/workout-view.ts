@@ -46,6 +46,29 @@ export interface StepRow {
 /** What the hairline token is worth as ink over the ground, and the rule's margin. */
 export const RULE_MARGIN = 0.15;
 
+/**
+ * The row's wash is the plan chart's block wash: one scale, so a list shows intensity at
+ * the shade the chart already drew it at. Mixed from the ink token rather than written as
+ * a colour, and left off the current row, where solid ink has already taken the space.
+ */
+export function washColour(wash: number | null): string | undefined {
+  if (wash === null) return undefined;
+  return `color-mix(in srgb, var(--color-ink) ${String(wash * 100)}%, transparent)`;
+}
+
+/**
+ * The rule above a row, as translucent ink rather than the flat hairline token, at the
+ * strength `stepRows` computed from the rows either side of it.
+ *
+ * A rule has two sides and a top border only knows one. Fixed at the hairline's own value
+ * it reads crisp against an unwashed row and blurred against a brighter one; taken from
+ * the brighter of its two neighbours it is above both, so the boundary is a line from
+ * either direction. On two unwashed rows it comes out at the hairline exactly.
+ */
+export function ruleColour(rule: number): string {
+  return `color-mix(in srgb, var(--color-ink) ${String(Math.min(1, rule) * 100)}%, transparent)`;
+}
+
 export interface Clock {
   value: string;
   total: string;
@@ -186,12 +209,21 @@ export function canSkip(workout: WorkoutSnapshot): boolean {
  */
 export function powerHero(targetW: number | null, ftpW: number): PowerHeroView {
   if (!usable(targetW) || targetW <= 0) return { target: null, note: 'no target' };
-  if (!usable(ftpW) || ftpW <= 0)
-    return { target: targetW.toFixed(0), note: `target ${targetW.toFixed(0)} W` };
-  return {
-    target: targetW.toFixed(0),
-    note: `target ${((targetW / ftpW) * 100).toFixed(0)} % FTP`,
-  };
+  const share = targetSharePercent(targetW, ftpW);
+  if (share === null) return { target: targetW.toFixed(0), note: `target ${targetW.toFixed(0)} W` };
+  return { target: targetW.toFixed(0), note: `target ${share.toFixed(0)} % FTP` };
+}
+
+/**
+ * The target as a share of the FTP it was resolved against: 239 W of 265 reads 90 %. Null
+ * where there is no usable FTP to be a share of, which is the hero's "target 239 W" case.
+ *
+ * Shared with the phone arrangements' readout line, which says the same two numbers in a
+ * narrower shape — `/ 239 · 90 %`. One sum, so the two cannot round apart.
+ */
+export function targetSharePercent(targetW: number, ftpW: number): number | null {
+  if (!usable(ftpW) || ftpW <= 0) return null;
+  return (targetW / ftpW) * 100;
 }
 
 /** `target 90 rpm`, `target 85–95 rpm`, or nothing at all where the step names no cadence. */
