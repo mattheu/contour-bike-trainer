@@ -217,3 +217,28 @@ body {
     padding-inline: 24px;
   }
 }
+
+/*
+ * The same scale down the other axis, and a separate class because not every screen
+ * wants both: the ride and workout arrangements set their own block padding around a
+ * chart that has to fill what is left.
+ *
+ * Height is the scarce axis on a phone held sideways — 390 px of it — so the landscape
+ * rule gives back 60 of the 88 the width breakpoint would have spent, and matches the
+ * 16/14 the ride arrangements use.
+ */
+.page-gutter-y {
+  padding-block: 24px;
+}
+
+@media (width >= 40rem) {
+  .page-gutter-y {
+    padding-block: 44px;
+  }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .page-gutter-y {
+    padding-block: 16px 14px;
+  }
+}

@@ -68,7 +68,7 @@ export function Experiment() {
 
   return (
     <div className="text-ink h-screen overflow-y-auto">
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-[28px] page-gutter py-[24px] sm:py-[44px]">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-[28px] page-gutter page-gutter-y">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-[18px]">
             <Logo />
