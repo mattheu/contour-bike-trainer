@@ -63,6 +63,11 @@
   --color-surface: #0c0c0b;
   --color-surface-raised: #171717;
 
+  /* design/DESIGN.md > Routes: the width a list row's three number columns need. Below
+     it they fold into one line under the description — design/mockups/routes-tablet.html.
+     A named breakpoint rather than an arbitrary one, because three screens fold on it. */
+  --breakpoint-wide: 1100px;
+
   /* design/DESIGN.md: ten sizes, nothing in between. */
   --text-hero: 108px;
   --text-hero-tablet: 72px;

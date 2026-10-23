@@ -39,6 +39,7 @@ import {
   type LabelPart,
   rideCounts,
   riddenLabel,
+  routeFigures,
   sortRoutes,
 } from './routes-list';
 import { Selectable } from './Selectable';
@@ -151,7 +152,7 @@ export function Routes({
             <RouteRow
               key={route.id}
               route={route}
-              ridden={riddenLabel(counts.get(route.id) ?? 0)}
+              count={counts.get(route.id) ?? 0}
               removable={canRemoveRoute(route.id, builtIn)}
               armed={isArmed(armed, route.id)}
               onSelect={onSelect}
@@ -224,7 +225,7 @@ function Footer({
 
 function RouteRow({
   route,
-  ridden,
+  count,
   removable,
   armed,
   onSelect,
@@ -234,7 +235,8 @@ function RouteRow({
   onCancelDelete,
 }: {
   route: StoredRoute;
-  ridden: string;
+  /** How many rides this install holds on this route; the row words it itself. */
+  count: number;
   removable: boolean;
   armed: boolean;
   onSelect: (routeId: string) => void;
@@ -257,6 +259,7 @@ function RouteRow({
   // honest about not knowing yet rather than calling everything a point to point.
   const kind = geometry === null ? null : routeKind(geometry);
   const description = descriptionLine(route);
+  const ridden = riddenLabel(count);
   // Decided here rather than inside the row, because an empty label row is not an empty
   // element: ListRow's slots are a flex column, so one that rendered nothing would still
   // cost its 4 px of gap under the name. A route with neither a known kind nor a region
@@ -350,6 +353,9 @@ function RouteRow({
               {ridden}
             </span>,
           ]}
+          // design/mockups/routes-tablet.html: below 1100 px the three columns are one
+          // mono line under the description instead.
+          folded={routeFigures(route, count)}
           cellsOverlay={
             armed ? (
               <span className={`${LABEL} text-caption text-ink whitespace-nowrap`}>

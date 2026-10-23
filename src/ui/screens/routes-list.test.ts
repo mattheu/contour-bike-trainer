@@ -7,6 +7,7 @@ import {
   labelRow,
   rideCounts,
   riddenLabel,
+  routeFigures,
   sortRoutes,
 } from './routes-list';
 
@@ -64,6 +65,27 @@ describe('riddenLabel', () => {
     expect(riddenLabel(7)).toBe('7 rides');
     expect(riddenLabel(1)).toBe('1 ride');
     expect(riddenLabel(0)).toBe('Not ridden');
+  });
+});
+
+describe('routeFigures', () => {
+  const ditchling: StoredRoute = {
+    ...route('ditchling', 'Ditchling Beacon Loop'),
+    totalDistanceM: 38_240,
+    totalAscentM: 512,
+  };
+
+  it('folds distance, gain and rides ridden, in that order and in their own units', () => {
+    expect(routeFigures(ditchling, 7)).toEqual([
+      { value: '38.2', unit: 'km' },
+      { value: '512', unit: 'm' },
+      { value: '7 rides', muted: true },
+    ]);
+  });
+
+  it('says a route has never been ridden rather than folding a nought', () => {
+    const [, , ridden] = routeFigures(ditchling, 0);
+    expect(ridden).toEqual({ value: 'Not ridden', muted: true });
   });
 });
 

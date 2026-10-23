@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { LABEL, SERIF } from './styles';
+import type { CSSProperties, ReactNode } from 'react';
+import { LABEL, MONO, SERIF } from './styles';
 
 /** One five-column grid, two sets of widths: the lead and last columns differ per screen. */
 export type ListColumns = readonly [string, string, string, string, string];
@@ -7,7 +7,34 @@ export type ListColumns = readonly [string, string, string, string, string];
 export const RIDES_COLUMNS: ListColumns = ['160px', '1fr', '140px', '140px', '140px'];
 export const ROUTES_COLUMNS: ListColumns = ['160px', '1fr', '140px', '140px', '120px'];
 
-const GRID = 'grid gap-[32px]';
+/**
+ * The grid, both ways round. Above the fold it is the screen's five columns; below it the
+ * number columns are gone and the row is a thumbnail and a text block — the widths and the
+ * 24 px gap are design/mockups/routes-tablet.html.
+ *
+ * The five-column template arrives as a custom property because a media query cannot reach
+ * an inline style, and the widths vary per screen.
+ */
+const GRID =
+  'grid grid-cols-[120px_1fr] gap-[24px] wide:grid-cols-[var(--list-columns)] wide:gap-[32px]';
+
+function columnsVar(columns: ListColumns): CSSProperties {
+  return { '--list-columns': columns.join(' ') } as CSSProperties;
+}
+
+/**
+ * One figure on the folded number line: a value, the unit it is in, and whether the whole
+ * thing is muted (a count rather than a measurement — "7 rides").
+ *
+ * Data rather than markup, so the line can be assembled and tested per list without a
+ * renderer, and so each screen keeps its own typography for the unfolded cells.
+ */
+export interface FoldedFigure {
+  value: string;
+  unit?: string;
+  /** The whole figure in muted, for a cell the lists already set quieter than the rest. */
+  muted?: boolean;
+}
 
 /**
  * The width reserved for a row's actions, gap included, on every row and on the column
@@ -78,12 +105,11 @@ interface ListHeaderProps {
 
 export function ListHeader({ columns, labels }: ListHeaderProps) {
   return (
-    <div
-      className={`${LABEL} text-caption ${GRID} pb-[12px]`}
-      style={{ gridTemplateColumns: columns.join(' ') }}
-    >
+    <div className={`${LABEL} text-caption ${GRID} pb-[12px]`} style={columnsVar(columns)}>
       {labels.map((text, index) => (
-        <div key={text} className={index >= 2 ? 'text-right' : undefined}>
+        // The number columns go with their figures: below the fold the header is Profile
+        // and Route alone, as the tablet mockup has it.
+        <div key={text} className={index >= 2 ? 'hidden text-right wide:block' : undefined}>
           {text}
         </div>
       ))}
@@ -117,10 +143,13 @@ interface ListRowProps {
    */
   metaVariant?: 'label' | 'plain';
   /**
-   * Prose under the meta, in muted body text, wrapped to as many lines as it takes. It is
-   * deliberately not clipped: a description cut off at a third of itself is a worse answer
-   * than a taller row, and the column is only about fifty characters wide. The routes list
-   * puts a route's own description here.
+   * Prose under the meta, in muted body text, clamped to two lines with an ellipsis. The
+   * routes list puts a route's own description here.
+   *
+   * Clamped at every width, which both mockups draw and design/DESIGN.md now states: the
+   * full text belongs to the route's start sheet, where there is room for it, and a row
+   * that grows to four lines because one route's author wrote an essay sets the whole
+   * list at that height. This reverses an earlier call to let it wrap freely.
    *
    * Its own slot rather than more meta, because the two lines are different kinds of
    * thing — the meta is a row of labels, this is prose — and because either can be absent
@@ -140,8 +169,17 @@ interface ListRowProps {
    * list asks for the mockup's 22 px, because its rows are three lines deep.
    */
   paddingY?: number;
-  /** The three right-aligned cells. */
+  /** The three right-aligned cells. Hidden below the fold, where `folded` replaces them. */
   cells: readonly [ReactNode, ReactNode, ReactNode];
+  /**
+   * The same figures as `cells`, as data, for the one mono line they fold into under the
+   * description below the fold — "38.2 km  512 m  7 rides".
+   *
+   * A list that leaves it out keeps its figures only above the fold, which is the honest
+   * rendering of a column set this line cannot carry. Empty means the row has no figures
+   * worth folding — a workout whose plan will not parse — and the line is left out.
+   */
+  folded?: readonly FoldedFigure[];
   /**
    * Replaces all three cells with one node spanning their columns. The delete confirm
    * uses it: the row becomes the question where its figures were, rather than growing a
@@ -162,6 +200,7 @@ export function ListRow({
   paddingY,
   cells,
   cellsOverlay,
+  folded,
 }: ListRowProps) {
   const sparkline = leadVariant === 'sparkline';
   const metaLabel = (metaVariant ?? (sparkline ? 'plain' : 'label')) === 'label';
@@ -171,14 +210,14 @@ export function ListRow({
     <a
       href={href}
       // The rule is ListRowFrame's: it has to span the actions as well as the figures.
-      className={`${GRID} text-ink no-underline ${sparkline ? 'items-center' : 'items-baseline'}`}
-      style={{
-        gridTemplateColumns: columns.join(' '),
-        paddingTop: `${String(padY)}px`,
-        paddingBottom: `${String(padY)}px`,
-      }}
+      // Below the fold a thumbnail sits at the top of its text block rather than centred
+      // on it, because the block is now four lines deep.
+      className={`${GRID} text-ink py-[20px] no-underline wide:py-[var(--list-pad-y)] ${
+        sparkline ? 'items-start wide:items-center' : 'items-baseline'
+      }`}
+      style={{ ...columnsVar(columns), '--list-pad-y': `${String(padY)}px` } as CSSProperties}
     >
-      <div className={sparkline ? 'h-[28px] w-[120px]' : undefined}>{lead}</div>
+      <div className={sparkline ? 'mt-[8px] h-[28px] w-[120px] wide:mt-0' : undefined}>{lead}</div>
       {/* min-w-0 is what lets anything in this column clip: a 1fr grid track will not let
           a nowrap child shrink without it. Harmless where nothing clips — the two lists
           with no description measure the same with it as without. */}
@@ -190,17 +229,41 @@ export function ListRow({
           </div>
         )}
         {description !== undefined && (
-          <div className="text-label text-muted mt-[3px] font-sans">{description}</div>
+          <div className="text-label text-muted mt-[3px] font-sans leading-[1.45] line-clamp-2 wide:max-w-[560px]">
+            {description}
+          </div>
+        )}
+        {/* Below the fold the figures live here, so the delete confirm has to replace
+            them here too — the row still becomes the question where its figures were. */}
+        {cellsOverlay !== undefined ? (
+          <div className="mt-[6px] wide:hidden">{cellsOverlay}</div>
+        ) : (
+          folded !== undefined &&
+          folded.length > 0 && (
+            <div className={`${MONO} text-label mt-[6px] flex gap-[18px] wide:hidden`}>
+              {folded.map((figure, index) => (
+                <span key={index} className={figure.muted === true ? 'text-muted' : undefined}>
+                  {figure.value}
+                  {figure.unit !== undefined && (
+                    <>
+                      {' '}
+                      <span className="text-muted">{figure.unit}</span>
+                    </>
+                  )}
+                </span>
+              ))}
+            </div>
+          )
         )}
       </div>
       {cellsOverlay === undefined ? (
         cells.map((cell, index) => (
-          <div key={index} className="text-right">
+          <div key={index} className="hidden text-right wide:block">
             {cell}
           </div>
         ))
       ) : (
-        <div className="col-span-3 text-right">{cellsOverlay}</div>
+        <div className="col-span-3 hidden text-right wide:block">{cellsOverlay}</div>
       )}
     </a>
   );

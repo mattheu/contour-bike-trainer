@@ -3,6 +3,7 @@ import { expandWorkout, type ExpandedStep } from '../../workout/expand';
 import { trainingStressScore } from '../../workout/load';
 import { WorkoutParseError, parseWorkout } from '../../workout/parse';
 import { plannedPowerSeries, workoutFtp } from '../../workout/runner';
+import type { FoldedFigure } from '../components/ListRow';
 import type { SegmentedOption } from '../components/Segmented';
 
 /**
@@ -163,6 +164,23 @@ export function lengthLabel(totalDurationS: number): string {
  * and the filter bands on the same rounding, so a row never reads 50 and filters as 49. */
 export function loadLabel(tss: number): string {
   return `${String(loadPoints(tss))} TSS`;
+}
+
+/**
+ * A workout's figures as one line, for widths too narrow to column them — length, then
+ * load. Two, not the three the routes and rides lists fold: the workouts row has only
+ * two figures and a spacer where their third column is, and inventing a third here would
+ * be inventing a figure.
+ *
+ * Nothing at all for a workout that will not parse: its figures are both absent, and a
+ * line reading "— —" says less than the parse error already under the name does.
+ */
+export function workoutFigures(row: WorkoutRow): readonly FoldedFigure[] {
+  if (row.status === 'broken') return [];
+  return [
+    { value: lengthLabel(row.totalDurationS), unit: 'min' },
+    { value: loadLabel(row.tss), muted: true },
+  ];
 }
 
 /**

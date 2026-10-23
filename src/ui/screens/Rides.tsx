@@ -27,6 +27,7 @@ import {
   periodSummary,
   raceableRouteId,
   rideDate,
+  rideFigures,
   rideTitle,
   riddenRoutes,
   riddenWorkouts,
@@ -421,6 +422,9 @@ function RideRow({
             </span>,
             <Figure key="power" value={num(ride.avgPowerW)} unit="W" />,
           ]}
+          // Below 1100 px the three columns fold into one mono line, as the routes list
+          // does: same row shape, same rule — design/mockups/routes-tablet.html.
+          folded={rideFigures(ride)}
           cellsOverlay={
             armed ? (
               <span className={`${LABEL} text-caption text-ink whitespace-nowrap`}>

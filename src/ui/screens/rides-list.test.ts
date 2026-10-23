@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Ride } from '../../storage/types';
+import { ABSENT } from '../format';
 import {
   ALL_ROUTES,
   ALL_WORKOUTS,
@@ -10,6 +11,7 @@ import {
   periodSummary,
   raceableRouteId,
   rideDate,
+  rideFigures,
   rideTitle,
   riddenRoutes,
   riddenWorkouts,
@@ -357,5 +359,20 @@ describe('raceableRouteId', () => {
 
     expect(orphan.routeName).not.toBeNull();
     expect(raceableRouteId(orphan, installed)).toBeNull();
+  });
+});
+
+describe('rideFigures', () => {
+  it('folds distance, time and average power, in the order the columns run', () => {
+    expect(rideFigures(ride({}))).toEqual([
+      { value: '38.2', unit: 'km' },
+      { value: '1:14:08' },
+      { value: '243', unit: 'W' },
+    ]);
+  });
+
+  it('keeps a missing power as the absent mark rather than a nought', () => {
+    const [, , power] = rideFigures(ride({ avgPowerW: null }));
+    expect(power).toEqual({ value: ABSENT, unit: 'W' });
   });
 });

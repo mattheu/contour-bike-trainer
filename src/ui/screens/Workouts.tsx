@@ -39,6 +39,7 @@ import {
   lengthLabel,
   loadLabel,
   workoutControls,
+  workoutFigures,
   workoutMeta,
   workoutRows,
   type LengthFilter,
@@ -358,6 +359,9 @@ function WorkoutRowView({
             </span>,
             <span key="spacer" />,
           ]}
+          // Below 1100 px length and load fold into one mono line under the name — the
+          // routes list's rule, with the two figures this row has.
+          folded={workoutFigures(row)}
           cellsOverlay={
             armed ? (
               <span className={`${LABEL} text-caption text-ink whitespace-nowrap`}>
