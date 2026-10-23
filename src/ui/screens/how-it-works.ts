@@ -97,13 +97,13 @@ export const COLUMNS: Column[] = [
          * disk is nearly full — true, rare, and more words than a column can carry, so
          * docs/getting-started.md is where that belongs.
          *
-         * "Into another browser" is the honest reach of the exports that exist: rides as
-         * an archive, routes as GPX, workouts as YAML. A single backup of everything is
-         * specified but not built.
+         * "Elsewhere" is the honest reach of the exports that exist: rides as an
+         * archive, routes as GPX, workouts as YAML, each moving on its own. A single
+         * backup of everything is specified but not built.
          */
         label: 'Your data',
         sentence:
-          'Your rides, routes and workouts stay in this browser until you clear its site data. Export them to keep a backup or import them into another browser.',
+          'Your rides, routes and workouts stay in this browser until you clear its site data. Export and import your data to back it up or move it elsewhere.',
       },
     ],
   },
