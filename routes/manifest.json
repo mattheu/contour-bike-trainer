@@ -53,6 +53,15 @@
       "description": "A circuit on the hill above Barcelona, climbing to the castle and dropping back through the park. The Volta a Catalunya has finished here every year since 2013, seven laps of it.",
       "totalDistanceM": 7833,
       "totalAscentM": 205
+    },
+    {
+      "id": "ilkley",
+      "name": "Ilkley",
+      "region": "Wharfedale, UK",
+      "file": "ilkley.gpx",
+      "description": "A town-centre circuit in Wharfedale, up Riddings Road and back down to The Grove past Bettys. The Ilkley Cycle Races run on it every July.",
+      "totalDistanceM": 1531,
+      "totalAscentM": 30
     }
   ]
 }
