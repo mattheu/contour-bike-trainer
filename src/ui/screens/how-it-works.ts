@@ -131,7 +131,7 @@ export const COLUMNS: Column[] = [
          */
         label: 'Workouts',
         sentence:
-          'Follow structured workouts with power targets based on your FTP, or create your own. Let ERG hold the target or control your effort yourself.',
+          'Train with power targets based on your FTP, or build your own sessions. Let ERG hold the target or control your effort yourself.',
       },
       {
         /*
