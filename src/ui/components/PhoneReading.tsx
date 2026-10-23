@@ -246,3 +246,109 @@ export function PhoneInlineStat({
     </div>
   );
 }
+
+/**
+ * The interval, which a phone riding a workout draws where a ride draws its clocks.
+ *
+ * Two shapes rather than one with a prop, for the reason the primaries above give: the
+ * portrait band is a row of the page with the next step opposite it, the landscape one is
+ * the fourth slot of a row of four. What they genuinely share is the track underneath,
+ * and that is the part that is a component.
+ */
+
+interface IntervalProps {
+  label: string;
+  /** The step counting down. */
+  value: string;
+  /** What it is counting down from. */
+  total: string;
+  /** How much of the step is behind the rider, 0 through 1. */
+  progress: number;
+  /** design/DESIGN.md: accent through a step's last ten seconds — see intervalTone. */
+  tone?: 'ink' | 'accent';
+  testId?: string;
+}
+
+/**
+ * The 3 px progress track: accent over hairline, the width of whatever it sits under.
+ *
+ * aria-hidden, because the countdown above it already says the same thing in words — and
+ * says it better, since "six minutes left" is what a rider acts on and a third of a bar
+ * is not. No transition either: it steps once a second with the clock, and easing a
+ * figure that is already counting is the smear design/DESIGN.md keeps off live readings.
+ */
+function ProgressTrack({ progress }: { progress: number }) {
+  return (
+    <div aria-hidden="true" className="bg-hairline relative h-[3px] w-full">
+      <div
+        className="bg-accent absolute top-0 left-0 h-[3px]"
+        style={{ width: `${(progress * 100).toFixed(2)}%` }}
+      />
+    </div>
+  );
+}
+
+/**
+ * The portrait band: the countdown at 32 px with its total inline, the next step opposite,
+ * and the track across the full width beneath both.
+ */
+export function PhoneIntervalBand({
+  label,
+  value,
+  total,
+  progress,
+  next,
+  tone = 'ink',
+  testId,
+}: IntervalProps & { next: string }) {
+  return (
+    <div data-testid={testId}>
+      <div className="flex items-end justify-between gap-[12px]">
+        <div className="flex shrink-0 flex-col gap-[6px]">
+          <Label>{label}</Label>
+          <div
+            className={`${MONO} text-stat leading-none tracking-[-0.02em] ${TONES[tone]} ${COLOUR_SHIFT}`}
+          >
+            {value}
+            <span className="text-caption text-muted tracking-normal"> / {total}</span>
+          </div>
+        </div>
+        {/* truncate, because a step's name is whatever its author wrote: without it a long
+            one wraps the band and the chart below loses the height to it. */}
+        <div className={`${MONO} text-micro text-muted min-w-0 truncate pb-[4px]`}>{next}</div>
+      </div>
+      <div className="mt-[12px]">
+        <ProgressTrack progress={progress} />
+      </div>
+    </div>
+  );
+}
+
+/** The landscape slot: a 44 px countdown beside its total, over the same track. */
+export function PhoneIntervalPrimary({
+  label,
+  value,
+  total,
+  progress,
+  tone = 'ink',
+  divided = false,
+  testId,
+}: IntervalProps & { divided?: boolean }) {
+  return (
+    <div
+      data-testid={testId}
+      className={`flex flex-col gap-[6px] ${divider(divided, 'pl-[14px]')}`}
+    >
+      <Label tight>{label}</Label>
+      <div className="flex items-baseline gap-[5px] whitespace-nowrap">
+        <div
+          className={`${MONO} text-figure leading-[0.95] tracking-[-0.03em] ${TONES[tone]} ${COLOUR_SHIFT}`}
+        >
+          {value}
+        </div>
+        <div className={`${MONO} text-micro text-muted`}>/ {total}</div>
+      </div>
+      <ProgressTrack progress={progress} />
+    </div>
+  );
+}

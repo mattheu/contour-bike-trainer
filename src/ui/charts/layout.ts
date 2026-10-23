@@ -328,6 +328,63 @@ export function planChartHeight(availableHeight: number | null): number {
   return Math.max(MIN_PLAN_HEIGHT, Math.floor(availableHeight) - chrome);
 }
 
+/**
+ * The plan chart on a phone, where it stands in for the profile and the power strip
+ * together and the Steps panel is not drawn at all.
+ *
+ * design/mockups/phone-portrait-workout.html draws it 320 wide inside a 358 px column and
+ * phone-landscape-workout.html 756 inside 796, so both keep 40 px clear to the right of
+ * the chart. That is where the Z1-Z6 figures sit: the SVG overflows its own box to draw
+ * them, and without the gutter they would be clipped by the page padding.
+ */
+export const PHONE_PLAN_LABEL_GUTTER_PX = 40;
+
+/** The heights the same two mockups draw, inside 844 px and 390 px artboards. */
+export const PHONE_PLAN_HEIGHT = 140;
+export const PHONE_LANDSCAPE_PLAN_HEIGHT = 112;
+
+/**
+ * Shallower than the desktop's floor, because a phone is not reading a target off this
+ * chart. The interval band above it carries the figures; the chart is there to show where
+ * in the session the rider is, which survives the zone bands crowding well past the point
+ * where MIN_PLAN_HEIGHT says a desktop should stop.
+ */
+export const MIN_PHONE_PLAN_HEIGHT = 88;
+
+/**
+ * Portrait keeps a `Plan` heading over the chart, where landscape has no room for one.
+ * It is inside the measured area, so it comes out of the budget before the chart does.
+ */
+export const PHONE_PLAN_HEADING_PX = 16;
+export const PHONE_PLAN_HEADING_GAP_PX = 14;
+
+/**
+ * How tall the chart is drawn in the space the readings left it.
+ *
+ * Capped at the drawn height rather than grown into whatever is there, which is the
+ * bargain phoneChartStack already makes: a plan chart stretched to fill a tall phone is
+ * the same six zone bands in a taller box, and the mockups spend that slack above the
+ * chart instead, where it costs nothing.
+ */
+function phonePlan(availableHeight: number | null, drawn: number, chrome: number): number {
+  if (availableHeight === null || !Number.isFinite(availableHeight)) return drawn;
+  const forChart = Math.floor(availableHeight) - chrome;
+  return Math.max(MIN_PHONE_PLAN_HEIGHT, Math.min(drawn, forChart));
+}
+
+export function phonePlanHeight(availableHeight: number | null): number {
+  return phonePlan(
+    availableHeight,
+    PHONE_PLAN_HEIGHT,
+    PHONE_PLAN_HEADING_PX + PHONE_PLAN_HEADING_GAP_PX,
+  );
+}
+
+/** The same chart on a phone turned sideways: wider, a good deal shorter, and unheaded. */
+export function phoneLandscapePlanHeight(availableHeight: number | null): number {
+  return phonePlan(availableHeight, PHONE_LANDSCAPE_PLAN_HEIGHT, 0);
+}
+
 export function chartRowLayout(availableWidth: number | null): ChartRowLayout {
   if (availableWidth === null || !Number.isFinite(availableWidth) || availableWidth <= 0) {
     return DEFAULT_LAYOUT;

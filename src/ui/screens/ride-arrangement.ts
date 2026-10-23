@@ -77,23 +77,3 @@ export interface RideArrangementProps {
   onDismissAlert: () => void;
   onRetryTrainer: () => void;
 }
-
-/** The arrangements that exist. Tablet portrait joins them later. */
-export type RideArrangementName = 'phone-portrait' | 'phone-landscape' | 'desktop';
-
-/**
- * Which one a set of matched queries asks for.
- *
- * Here rather than as a ternary in the render so a test can hold it to the rule: the two
- * phone queries are written to be mutually exclusive, and this is where that assumption
- * is stated — portrait first, so a browser that somehow matched both still gets one
- * arrangement rather than a different one on each render.
- */
-export function rideArrangementFor(matches: {
-  phonePortrait: boolean;
-  phoneLandscape: boolean;
-}): RideArrangementName {
-  if (matches.phonePortrait) return 'phone-portrait';
-  if (matches.phoneLandscape) return 'phone-landscape';
-  return 'desktop';
-}

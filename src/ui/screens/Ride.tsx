@@ -13,11 +13,8 @@ import {
 import type { DevicesView } from '../components/Devices';
 import type { RideSnapshot } from '../store';
 import type { PhoneView } from './phone-ride';
-import {
-  rideArrangementFor,
-  type RideArrangementName,
-  type RideArrangementProps,
-} from './ride-arrangement';
+import { arrangementFor, type ArrangementName } from './arrangement';
+import { type RideArrangementProps } from './ride-arrangement';
 import { rideReadings } from './ride-readings';
 import { primaryControlLabel, type ProfileZoom } from './ride-view';
 import { RideDesktop } from './RideDesktop';
@@ -27,8 +24,8 @@ import { RideSettings, type Targets } from './RideSettings';
 import { powerSamplesFrom } from './summary-view';
 import { PHONE_LANDSCAPE_QUERY, PHONE_PORTRAIT_QUERY, useMediaQuery } from './use-media-query';
 
-/** The component each arrangement name draws. One at a time — see rideArrangementFor. */
-const ARRANGEMENTS: Record<RideArrangementName, (props: RideArrangementProps) => ReactElement> = {
+/** The component each arrangement name draws. One at a time — see arrangementFor. */
+const ARRANGEMENTS: Record<ArrangementName, (props: RideArrangementProps) => ReactElement> = {
   'phone-portrait': RidePhonePortrait,
   'phone-landscape': RidePhoneLandscape,
   desktop: RideDesktop,
@@ -99,7 +96,7 @@ export function Ride({
    * imperatively-updated SVGs held by these refs, and a hidden second set would be built,
    * handed every tick and given handles to keep straight, all to draw nothing.
    */
-  const arrangementName = rideArrangementFor({
+  const arrangementName = arrangementFor({
     phonePortrait: useMediaQuery(PHONE_PORTRAIT_QUERY),
     phoneLandscape: useMediaQuery(PHONE_LANDSCAPE_QUERY),
   });

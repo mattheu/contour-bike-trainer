@@ -186,12 +186,21 @@ export function canSkip(workout: WorkoutSnapshot): boolean {
  */
 export function powerHero(targetW: number | null, ftpW: number): PowerHeroView {
   if (!usable(targetW) || targetW <= 0) return { target: null, note: 'no target' };
-  if (!usable(ftpW) || ftpW <= 0)
-    return { target: targetW.toFixed(0), note: `target ${targetW.toFixed(0)} W` };
-  return {
-    target: targetW.toFixed(0),
-    note: `target ${((targetW / ftpW) * 100).toFixed(0)} % FTP`,
-  };
+  const share = targetSharePercent(targetW, ftpW);
+  if (share === null) return { target: targetW.toFixed(0), note: `target ${targetW.toFixed(0)} W` };
+  return { target: targetW.toFixed(0), note: `target ${share.toFixed(0)} % FTP` };
+}
+
+/**
+ * The target as a share of the FTP it was resolved against: 239 W of 265 reads 90 %. Null
+ * where there is no usable FTP to be a share of, which is the hero's "target 239 W" case.
+ *
+ * Shared with the phone arrangements' readout line, which says the same two numbers in a
+ * narrower shape — `/ 239 · 90 %`. One sum, so the two cannot round apart.
+ */
+export function targetSharePercent(targetW: number, ftpW: number): number | null {
+  if (!usable(ftpW) || ftpW <= 0) return null;
+  return (targetW / ftpW) * 100;
 }
 
 /** `target 90 rpm`, `target 85–95 rpm`, or nothing at all where the step names no cadence. */

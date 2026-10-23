@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { rideArrangementFor, type RideArrangementName } from './ride-arrangement';
+import { arrangementFor, type ArrangementName } from './arrangement';
 import { PHONE_LANDSCAPE_QUERY, PHONE_PORTRAIT_QUERY } from './use-media-query';
 
 interface Viewport {
@@ -33,8 +33,8 @@ function matchesViewport(query: string, viewport: Viewport): boolean {
   });
 }
 
-function arrangementAt(viewport: Viewport): RideArrangementName {
-  return rideArrangementFor({
+function arrangementAt(viewport: Viewport): ArrangementName {
+  return arrangementFor({
     phonePortrait: matchesViewport(PHONE_PORTRAIT_QUERY, viewport),
     phoneLandscape: matchesViewport(PHONE_LANDSCAPE_QUERY, viewport),
   });
@@ -76,6 +76,27 @@ describe('which arrangement a viewport asks for', () => {
   });
 
   it('falls back to the widest arrangement where nothing matches', () => {
-    expect(rideArrangementFor({ phonePortrait: false, phoneLandscape: false })).toBe('desktop');
+    expect(arrangementFor({ phonePortrait: false, phoneLandscape: false })).toBe('desktop');
+  });
+});
+
+/**
+ * The workout screen asks the same question of the same two queries, which is why the
+ * answer lives in a module of its own rather than beside the ride's props.
+ *
+ * Asserted at the viewports its own mockups are drawn at — phone-portrait-workout.html
+ * at 390 × 844 and phone-landscape-workout.html at 844 × 390 — so a rule forked for that
+ * screen fails here instead of quietly handing a phone the desktop plan row.
+ */
+describe('the workout screen takes the same choice', () => {
+  it('gives each workout mockup the arrangement it was drawn at', () => {
+    expect(arrangementAt(PHONE_PORTRAIT)).toBe('phone-portrait');
+    expect(arrangementAt(PHONE_LANDSCAPE)).toBe('phone-landscape');
+  });
+
+  // The plan chart and the Steps panel are a desktop row: a tablet keeps them.
+  it('leaves a tablet and a desktop on the plan row', () => {
+    expect(arrangementAt(TABLET_PORTRAIT)).toBe('desktop');
+    expect(arrangementAt(DESKTOP)).toBe('desktop');
   });
 });
