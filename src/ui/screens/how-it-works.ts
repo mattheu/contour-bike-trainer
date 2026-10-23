@@ -83,13 +83,12 @@ export const COLUMNS: Column[] = [
          * neither — a signed-out screen that sells an unbuilt feature is how onboarding
          * starts lying.
          *
-         * Chrome alone here, where Set up says "Chrome or Edge". The shorter claim is
-         * for someone deciding whether to read on; the exact one belongs beside the
-         * other requirements.
+         * "Your browser" rather than naming one: which browsers work is a requirement,
+         * and requirements live in Set up where someone checks them.
          */
         label: 'In the browser',
         sentence:
-          'Open Contour in Chrome, connect your trainer and start riding. No installation or account needed.',
+          'Open Contour in your browser, connect your trainer and start riding. No installation or account needed.',
       },
       {
         /*
@@ -179,7 +178,7 @@ export const COLUMNS: Column[] = [
       {
         label: 'Smart trainer',
         sentence:
-          'Any trainer that speaks Bluetooth FTMS: Wahoo KICKR, Core, Snap and most others.',
+          'A trainer that supports Bluetooth FTMS, including compatible Wahoo KICKR, CORE and SNAP models.',
       },
       {
         /*
@@ -193,11 +192,11 @@ export const COLUMNS: Column[] = [
          */
         label: 'Browser',
         sentence:
-          'Chrome or Edge on a Mac, Windows or Android. Firefox, Safari and iOS are not supported.',
+          'Chrome or Edge on macOS, Windows or Android. Firefox, Safari and iOS aren’t supported.',
       },
       {
         label: 'Heart rate · optional',
-        sentence: 'A Bluetooth strap, or an Apple Watch via HeartCast.',
+        sentence: 'Connect a Bluetooth heart rate strap or an Apple Watch via HeartCast.',
       },
       {
         /*
@@ -210,9 +209,9 @@ export const COLUMNS: Column[] = [
          */
         label: 'Connect',
         steps: [
-          'Power the trainer on and turn the pedals to wake it.',
-          'Open Rider profile and press Connect.',
-          'Pick your trainer from the browser list.',
+          'Power on your trainer and pedal to wake it.',
+          'Open Rider profile and select Connect.',
+          'Choose your trainer from the browser’s device list.',
         ],
       },
     ],
