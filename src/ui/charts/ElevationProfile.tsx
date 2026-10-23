@@ -7,29 +7,70 @@ import {
   type PointerEvent as ReactPointerEvent,
   type RefObject,
 } from 'react';
+import {
+  SLOT_ORDER,
+  SLOT_SYMBOL,
+  SYMBOL_BOX,
+  SYMBOL_STROKE_WIDTH,
+  type GhostSlot,
+} from '../../ghost/slots';
+import type { ActiveGhost } from '../../ghost/state';
 import type { Climb } from '../../route/climbs';
 import type { ProfileWindow, RouteProfile } from '../../route/profile';
 import type { Route } from '../../route/types';
-import { percent } from '../format';
 import { AHEAD_BAND_OPACITY, RIDDEN_BAND_OPACITY, elevationGeometry } from './elevation';
+import {
+  LABEL_BASELINE_PX,
+  LABEL_FONT_PX,
+  LABEL_PLATE_H,
+  LABEL_PLATE_OPACITY,
+  LABEL_PLATE_W,
+  LABEL_RISE_PX,
+  LABEL_STEM_PX,
+  ghostLayer,
+} from './ghosts';
+import { FADE } from '../components/motion';
+import type { Pt } from './path';
 
 export const PROFILE_WIDTH = 944;
 export const PROFILE_HEIGHT = 220;
 
-/** The rider dot, stem, bubble and drop line, from design/mockups/ride.html. */
-const DOT_R = 3;
-const STEM_TOP = -10.2;
-const BUBBLE_CY = -28.9;
-const BUBBLE_R = 18.7;
+/**
+ * The rider's ring, sized to span the 10 px a ghost's square does inside its 14 px box:
+ * same weight and footprint as a ghost, a circle instead of a polygon, and accent where
+ * they are muted. The family carries the "who", so position needs no second ornament.
+ */
+const RIDER_RING_R = 5;
 const DROP_GAP = 4;
 const SUMMIT_STALK = 10;
 
-/** Half the hover cross, so the arms run 2 x this. Smaller than the rider's dot. */
+/** Half the hover cross, so the arms run 2 x this: a cross that spans the rider's ring
+ * reads as the same kind of mark rather than as something larger passing over it. */
 const HOVER_ARM = 5;
 
+/** The four nodes a ghost's drawing moves between ticks; the rest of it never moves. */
+interface GhostNodes {
+  group: SVGGElement | null;
+  label: SVGGElement | null;
+  plate: SVGRectElement | null;
+  text: SVGTextElement | null;
+}
+
+function emptyGhostNodes(): Record<GhostSlot, GhostNodes> {
+  return Object.fromEntries(
+    SLOT_ORDER.map((slot) => [slot, { group: null, label: null, plate: null, text: null }]),
+  ) as Record<GhostSlot, GhostNodes>;
+}
+
 export interface ElevationProfileHandle {
-  /** Called at 1 Hz. Mutates the ridden paths and the marker; never re-renders. */
-  update(distanceM: number): void;
+  /**
+   * Called at 1 Hz. Mutates the ridden paths, the marker and the ghosts; never re-renders.
+   *
+   * Ghosts arrive here rather than as a prop for the reason the rider's distance does:
+   * they move every tick, and a prop would rebuild the whole chart — bands, ticks, line
+   * and all — once a second to move four symbols.
+   */
+  update(distanceM: number, ghosts?: readonly ActiveGhost[]): void;
   /**
    * Moves or clears the hover marker. Mutates one node; never re-renders either.
    *
@@ -88,11 +129,13 @@ export function ElevationProfile({
   const riddenLine = useRef<SVGPathElement>(null);
   const riddenClip = useRef<SVGRectElement>(null);
   const aheadClip = useRef<SVGRectElement>(null);
-  const dot = useRef<SVGCircleElement>(null);
-  const markerGroup = useRef<SVGGElement>(null);
+  const riderRing = useRef<SVGCircleElement>(null);
   const dropLine = useRef<SVGLineElement>(null);
-  const gradeText = useRef<SVGTSpanElement>(null);
   const hoverGroup = useRef<SVGGElement>(null);
+  const ghostNodes = useRef<Record<GhostSlot, GhostNodes>>(emptyGhostNodes());
+  const summitLabels = useRef<(SVGTextElement | null)[]>([]);
+  /** The last set drawn, so a repaint after a resize or a zoom redraws them too. */
+  const ghosts = useRef<readonly ActiveGhost[]>([]);
   /** The marked distance, kept out of React: a mousemove must not render anything. */
   const hoveredM = useRef<number | null>(null);
   /**
@@ -102,8 +145,69 @@ export function ElevationProfile({
    */
   const pointerM = useRef<number | null>(null);
 
+  /**
+   * A ghost's lap distance to a point on the chart, or null where the window has scrolled
+   * past it. Clamping instead would pin an off-screen ghost to the edge of the chart,
+   * which reads as one riding the frame rather than one that is simply not in view.
+   */
+  const project = useMemo(() => {
+    return (distanceM: number): Pt | null => {
+      if (distanceM < geometry.startM || distanceM > geometry.endM) return null;
+      const at = geometry.marker(distanceM);
+      return { x: at.x, y: at.y };
+    };
+  }, [geometry]);
+
+  const paintGhosts = useMemo(() => {
+    return (): void => {
+      const layer = ghostLayer({
+        ghosts: ghosts.current,
+        project,
+        summits: geometry.summits.map((summit) => summit.x),
+      });
+
+      const drawn = new Set<GhostSlot>();
+      for (const placement of layer.placements) {
+        const nodes = ghostNodes.current[placement.slot];
+        drawn.add(placement.slot);
+        nodes.group?.setAttribute(
+          'transform',
+          `translate(${String(placement.x)},${String(placement.y)})`,
+        );
+        nodes.group?.setAttribute('opacity', String(placement.opacity));
+        nodes.group?.setAttribute('visibility', 'visible');
+
+        const label = placement.label;
+        if (label === null) {
+          nodes.label?.setAttribute('visibility', 'hidden');
+          continue;
+        }
+        // Everything inside the group is relative to the symbol's centre, so only the
+        // two the anchor positions are written here.
+        nodes.plate?.setAttribute('x', String(label.plateX - placement.x));
+        nodes.text?.setAttribute('x', String(label.textX - placement.x));
+        nodes.text?.setAttribute('text-anchor', label.anchor);
+        if (nodes.text !== null) nodes.text.textContent = label.text;
+        nodes.label?.setAttribute('visibility', 'visible');
+      }
+
+      for (const slot of SLOT_ORDER) {
+        if (drawn.has(slot)) continue;
+        ghostNodes.current[slot].group?.setAttribute('visibility', 'hidden');
+      }
+
+      // A summit keeps its tick and loses its figure: the mark is terrain, the figure is
+      // a label, and a ghost's gap is the one a rider is reading right now.
+      const hidden = new Set(layer.hiddenSummits);
+      summitLabels.current.forEach((node, index) => {
+        node?.setAttribute('visibility', hidden.has(index) ? 'hidden' : 'visible');
+      });
+    };
+  }, [geometry, project]);
+
   const paint = useMemo(() => {
-    return (distance: number): void => {
+    return (distance: number, next?: readonly ActiveGhost[]): void => {
+      if (next !== undefined) ghosts.current = next;
       const marker = geometry.marker(distance);
       const area = geometry.riddenAreaPath(distance);
       knockout.current?.setAttribute('d', area);
@@ -112,15 +216,14 @@ export function ElevationProfile({
       riddenClip.current?.setAttribute('width', String(marker.x));
       aheadClip.current?.setAttribute('x', String(marker.x));
       aheadClip.current?.setAttribute('width', String(Math.max(0, geometry.width - marker.x)));
-      dot.current?.setAttribute('cx', String(marker.x));
-      dot.current?.setAttribute('cy', String(marker.y));
-      markerGroup.current?.setAttribute('transform', `translate(${marker.x},${marker.y})`);
+      riderRing.current?.setAttribute('cx', String(marker.x));
+      riderRing.current?.setAttribute('cy', String(marker.y));
       dropLine.current?.setAttribute('x1', String(marker.x));
       dropLine.current?.setAttribute('x2', String(marker.x));
       dropLine.current?.setAttribute('y1', String(marker.y + DROP_GAP));
-      if (gradeText.current) gradeText.current.textContent = percent(marker.gradePercent);
+      paintGhosts();
     };
-  }, [geometry]);
+  }, [geometry, paintGhosts]);
 
   const paintHover = useMemo(() => {
     return (distance: number | null): void => {
@@ -290,7 +393,7 @@ export function ElevationProfile({
         </>
       )}
 
-      {geometry.summits.map((summit) => (
+      {geometry.summits.map((summit, index) => (
         <g key={summit.x}>
           <line
             x1={summit.x}
@@ -301,6 +404,9 @@ export function ElevationProfile({
             strokeWidth={1}
           />
           <text
+            ref={(node) => {
+              summitLabels.current[index] = node;
+            }}
             x={summit.x}
             y={summit.y - SUMMIT_STALK - 7}
             textAnchor="middle"
@@ -310,6 +416,76 @@ export function ElevationProfile({
           >
             {summit.label}
           </text>
+        </g>
+      ))}
+
+      {/* One group per slot, drawn once and then moved. The shapes never change — a slot
+          owns its symbol for the life of the app — so the only things a tick writes are
+          the group's transform and the label's own x attributes.
+
+          Symbols are muted and hollow whatever the gap says, here as everywhere: the
+          rider's marker is the screen's one accent, and a ghost that coloured itself when
+          it went ahead would take that away. DESIGN.md > Ghosts.
+
+          The weight is written per tick and eased, so a ghost reaching its end fades
+          rather than cutting: SPEC.md asks a ride that stopped short to be marked where
+          it stopped and then faded out, not to blink away unexplained. */}
+      {SLOT_ORDER.map((slot) => (
+        <g
+          key={slot}
+          ref={(node) => {
+            ghostNodes.current[slot].group = node;
+          }}
+          data-testid={`profile-ghost-${slot}`}
+          className={FADE}
+          visibility="hidden"
+        >
+          <path
+            d={SLOT_SYMBOL[slot].d}
+            transform={`translate(${String(-SYMBOL_BOX / 2)},${String(-SYMBOL_BOX / 2)})`}
+            fill="var(--color-ground)"
+            stroke="var(--color-muted)"
+            strokeWidth={SYMBOL_STROKE_WIDTH}
+            strokeLinejoin="round"
+          />
+          <g
+            ref={(node) => {
+              ghostNodes.current[slot].label = node;
+            }}
+            visibility="hidden"
+          >
+            <line
+              x1={0}
+              y1={-SYMBOL_BOX / 2}
+              x2={0}
+              y2={-SYMBOL_BOX / 2 - LABEL_STEM_PX}
+              stroke="var(--color-muted)"
+              strokeWidth="var(--stroke-hairline)"
+              strokeDasharray="2 3"
+            />
+            <rect
+              ref={(node) => {
+                ghostNodes.current[slot].plate = node;
+              }}
+              x={-LABEL_PLATE_W / 2}
+              y={-LABEL_RISE_PX - LABEL_PLATE_H / 2}
+              width={LABEL_PLATE_W}
+              height={LABEL_PLATE_H}
+              fill="var(--color-ground)"
+              opacity={LABEL_PLATE_OPACITY}
+            />
+            <text
+              ref={(node) => {
+                ghostNodes.current[slot].text = node;
+              }}
+              x={0}
+              y={-LABEL_RISE_PX + LABEL_BASELINE_PX}
+              textAnchor="middle"
+              className="font-mono"
+              fontSize={LABEL_FONT_PX}
+              fill="var(--color-ink)"
+            />
+          </g>
         </g>
       ))}
 
@@ -329,11 +505,11 @@ export function ElevationProfile({
         {geometry.endLabel}
       </text>
 
-      {/* The hover marker. Ink and an open cross, where the rider is accent and solid:
+      {/* The hover marker. Ink and an open cross, where the rider is an accent ring:
           design/DESIGN.md gives ink to marker ticks and accent to where the rider is, so
-          the colour already separates them, and the open form with no halo, stem, bubble
-          or drop line finishes the job. Drawn before the rider's marker so that on the
-          one pixel they share, the rider is the one on top. */}
+          the colour already separates them, and the cross with no drop line finishes the
+          job. Drawn before the rider's marker so that on the one pixel they share, the
+          rider is the one on top. */}
       {hoverable && (
         <g
           ref={hoverGroup}
@@ -357,54 +533,23 @@ export function ElevationProfile({
         strokeWidth={1}
         strokeDasharray="2 4"
       />
-      {/* The one handle the integration tests need: its cx is where the rider is. */}
+      {/* The rider, in the ghosts' treatment and the one accent among them. Also the one
+          handle the integration tests need: its cx is where the rider is. */}
       <circle
-        ref={dot}
+        ref={riderRing}
         data-testid="profile-rider"
         cx={0}
         cy={0}
-        r={DOT_R}
-        fill="var(--color-accent)"
+        r={RIDER_RING_R}
+        fill="var(--color-ground)"
+        stroke="var(--color-accent)"
+        strokeWidth={SYMBOL_STROKE_WIDTH}
       />
-      <g ref={markerGroup}>
-        <line
-          x1={0}
-          y1={-2}
-          x2={0}
-          y2={STEM_TOP}
-          stroke="var(--color-accent)"
-          strokeWidth="var(--stroke-chart)"
-        />
-        <g transform={`translate(0,${BUBBLE_CY})`}>
-          <circle
-            cx={0}
-            cy={0}
-            r={BUBBLE_R}
-            fill="var(--color-ground)"
-            stroke="var(--color-accent)"
-            strokeWidth={1.75}
-          />
-          <text
-            x={0}
-            y={3.8}
-            textAnchor="middle"
-            className="font-mono"
-            fontSize={11}
-            fill="var(--color-ink)"
-          >
-            <tspan ref={gradeText} />
-            <tspan fill="var(--color-muted)" fontSize={7.6}>
-              %
-            </tspan>
-          </text>
-        </g>
-      </g>
 
       {/* One surface for the whole chart rather than handlers on the shapes: the pointer
           is asking "what is at this distance", which every pixel of the frame answers.
           Last, so nothing drawn over it can swallow a move; fill none with pointerEvents
-          all, so it is hit-testable without painting anything. The overflowing gradient
-          bubble sits outside it on purpose — hovering that is not hovering the route. */}
+          all, so it is hit-testable without painting anything. */}
       {hoverable && (
         <rect
           x={0}

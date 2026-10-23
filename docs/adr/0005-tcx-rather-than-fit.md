@@ -41,3 +41,31 @@ Revisit only if Strava rejects something we actually need.
   lap, workout step metadata — is simply not exported. Nothing in v1 needs it.
 - Phase 6's Strava upload inherits this format. If a later phase does need FIT, the change is
   confined to `export/`, because nothing above it knows the file's shape.
+
+## Amended 2026-10-23: the encoder argument has expired
+
+The Context above says choosing FIT would mean writing and debugging a binary encoder, with
+every bug presenting as "Strava rejected the file". That is no longer true, and the record
+should not mislead whoever reads it next.
+
+Garmin publishes `@garmin/fitsdk` on npm. It is ECMAScript modules, runs in a browser, has an
+`Encoder` class, has no runtime dependencies, and its profile already defines the
+`virtualActivity` sub-sport. There is no encoder to write.
+
+Two costs replace it:
+
+- **Weight.** The package is 1.4 MB unpacked, of which 1.0 MB is `profile.js` — the message and
+  field schema for every FIT message type, where an export needs perhaps six. It is one large
+  object export, so it does not tree-shake. Loading it only when a rider exports would contain
+  this.
+- **Licence.** It ships under Garmin's FIT Protocol License Agreement rather than an open source
+  licence. This repository is public and MIT. Consuming the package as a dependency does not
+  redistribute its source, which is the reading taken on 2026-10-23.
+
+The decision stands, with a different reason behind it. TCX is adequate for the sync path, which
+sets the activity type through the Strava API and so never needs the file to declare itself. The
+case for FIT is the rider who downloads a file and uploads it by hand: that ride arrives as an
+ordinary Ride and can land on real-world segment leaderboards.
+
+**Revisit when the manual download path matters more than sync**, rather than when Strava rejects
+something. Strava does not reject our file. It categorises it as a ride that happened outdoors.

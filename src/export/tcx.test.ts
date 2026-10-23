@@ -55,6 +55,90 @@ describe('escapeXml', () => {
   });
 });
 
+describe('the laps of an exported ride', () => {
+  /** A lapped ride: one sample every ten seconds at 10 m/s, so a lap is 100 s and 1 km. */
+  function lapped(seconds: number): RideSample[] {
+    const samples: RideSample[] = [];
+    for (let t = 0; t <= seconds; t += 10) samples.push(sample({ t, distanceM: t * 10 }));
+    return samples;
+  }
+
+  function laps(xml: string): Record<string, unknown>[] {
+    const document = parse(xml) as {
+      TrainingCenterDatabase: { Activities: { Activity: { Lap: unknown } } };
+    };
+    const lap = document.TrainingCenterDatabase.Activities.Activity.Lap;
+    return (Array.isArray(lap) ? lap : [lap]) as Record<string, unknown>[];
+  }
+
+  it('writes one Distance-triggered lap per split, with the time the split says', () => {
+    const xml = buildTcx({
+      ride: { ...RIDE, elapsedS: 200, distanceM: 2000, lapSplits: [100, 100] },
+      samples: lapped(200),
+    });
+
+    const written = laps(xml);
+    expect(written).toHaveLength(2);
+    for (const lap of written) {
+      expect(lap.TriggerMethod).toBe('Distance');
+      expect(lap.TotalTimeSeconds).toBe(100);
+      expect(lap.DistanceMeters).toBe(1000);
+    }
+    // Each lap stamped where it began, so the splits land in the right place on Strava.
+    expect(written[0]?.StartTime).toBe('2026-09-30T07:05:00.000Z');
+    expect(written[1]?.StartTime).toBe('2026-09-30T07:06:40.000Z');
+  });
+
+  it('puts every trackpoint in the lap it was ridden in, and none in two', () => {
+    const xml = buildTcx({
+      ride: { ...RIDE, elapsedS: 200, distanceM: 2000, lapSplits: [100, 100] },
+      samples: lapped(200),
+    });
+
+    const tracks = laps(xml).map((lap) => (lap.Track as { Trackpoint: unknown[] }).Trackpoint);
+    expect(tracks[0]).toHaveLength(11);
+    expect(tracks[1]).toHaveLength(10);
+  });
+
+  it('closes a ride ended mid-lap with a Manual lap rather than dropping it', () => {
+    const xml = buildTcx({
+      ride: { ...RIDE, elapsedS: 250, distanceM: 2500, lapSplits: [100, 100] },
+      samples: lapped(250),
+    });
+
+    const written = laps(xml);
+    expect(written).toHaveLength(3);
+    expect(written[2]?.TriggerMethod).toBe('Manual');
+    expect(written[2]?.TotalTimeSeconds).toBe(50);
+    expect(written[2]?.DistanceMeters).toBe(500);
+  });
+
+  it('scores each lap from its own trackpoints', () => {
+    const samples = lapped(200).map((s) => (s.t <= 100 ? s : { ...s, powerW: 300 }));
+    const xml = buildTcx({
+      ride: { ...RIDE, elapsedS: 200, distanceM: 2000, lapSplits: [100, 100] },
+      samples,
+    });
+
+    const watts = laps(xml).map(
+      (lap) =>
+        (lap.Extensions as { 'ns3:LX': { 'ns3:AvgWatts': number } })['ns3:LX']['ns3:AvgWatts'],
+    );
+    expect(watts).toEqual([200, 300]);
+  });
+
+  it('keeps the single Manual lap for a ride that completed no length', () => {
+    const xml = buildTcx({ ride: { ...RIDE, lapSplits: [] }, samples: [sample({ t: 0 })] });
+
+    const written = laps(xml);
+    expect(written).toHaveLength(1);
+    expect(written[0]?.TriggerMethod).toBe('Manual');
+    // The record's own figures, which is what a ride with no laps has always exported.
+    expect(written[0]?.TotalTimeSeconds).toBe(2);
+    expect(written[0]?.DistanceMeters).toBe(16.9);
+  });
+});
+
 describe('buildTcx', () => {
   it('produces the known document for a known sample set', () => {
     const xml = buildTcx({

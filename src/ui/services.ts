@@ -13,10 +13,13 @@ import {
 import { buildRouteGpx } from '../export/route-gpx';
 import { buildTcx, tcxFileName } from '../export/tcx';
 import { bundleWorkoutSources, splitWorkoutDocuments } from '../export/workout-bundle';
+import { GhostTracker, type GhostSelection } from '../ghost/live';
+import type { HistorySlot } from '../ghost/resolve';
 import { Recorder } from '../instrument/recorder';
 import { TimerProbe, visibilityState, watchVisibility } from '../instrument/probe';
 import { summarise } from '../instrument/stats';
 import { VisibilityTracker } from '../instrument/verdict';
+import { RideCheckpointer, setLiveRide, writeRide } from '../ride/autosave';
 import { systemClock } from '../ride/clock';
 import { RideEngine, type EngineSnapshot } from '../ride/engine';
 import { RideRecorder } from '../ride/recorder';
@@ -27,6 +30,7 @@ import {
   storedRouteGeometry,
   type BundledRoute,
 } from '../ride/routes';
+import { backfillRides } from '../ride/metrics';
 import { builtInWorkoutIds, seedWorkouts } from '../ride/workouts';
 import { planRouteImport, routeGeometryKey } from '../route/import';
 import { isLoop } from '../route/loop';
@@ -39,7 +43,6 @@ import { guestSession, parseSession } from '../storage/session';
 import { DEFAULT_SETTINGS } from '../storage/settings';
 import {
   DEFAULT_ERG_MODE,
-  DEFAULT_WORKOUT_SCALE_PCT,
   createId,
   type ErgMode,
   type Ride,
@@ -72,7 +75,13 @@ import {
   duplicateSource,
   type SaveResult,
 } from './screens/workout-editor';
-import { experimentStore, rideStore, type RideSnapshot, type WorkoutSnapshot } from './store';
+import {
+  INITIAL_SNAPSHOT,
+  experimentStore,
+  rideStore,
+  type RideSnapshot,
+  type WorkoutSnapshot,
+} from './store';
 import { createWakeLock } from './wake-lock';
 
 /**
@@ -426,13 +435,15 @@ export async function startGuestSession(): Promise<void> {
 /**
  * Start-up work the screens await before reading storage.
  *
- * Both passes run on every boot and neither keeps a marker, because neither needs one: a
+ * Every pass runs on every boot and none keeps a marker, because none needs one: a
  * built-in route or workout cannot be deleted, so an absent record can only be one this
- * install has never written. The markers that used to live in Settings existed solely to
- * tell a deleted record from a new one, and that question no longer arises.
+ * install has never written, and a ride either carries the derived fields or predates
+ * them. The markers that used to live in Settings existed solely to tell a deleted record
+ * from a new one, and that question no longer arises.
  *
- * The two passes write by different rules, each stated where it is implemented: routes
- * also rewrite what the manifest has changed, workouts never rewrite anything.
+ * The passes write by different rules, each stated where it is implemented: routes also
+ * rewrite what the manifest has changed, workouts never rewrite anything, and rides are
+ * only ever written once, to fill in fields a later build added.
  */
 export const ready: Promise<void> = (async () => {
   try {
@@ -442,8 +453,18 @@ export const ready: Promise<void> = (async () => {
     if (seededSession !== null) await storage.session.put(seededSession);
     session = await storage.session.get();
 
+    // A marker still set is a ride the last launch was writing when it died. There is
+    // nothing to recover: autosave has already put the ride in the history, truncated at
+    // its last checkpoint, so clearing the marker is the whole of it. Picking the ride
+    // back up where it stopped is a different feature and a much larger one.
+    if (session?.liveRideId !== undefined) session = await setLiveRide(storage.session, null);
+
     await seedRoutes(storage.routes);
     const seeded = await seedWorkouts(storage.workouts);
+    // Rides written before the record carried a TSS, scored now from the samples and the
+    // FTP they were frozen at. Idempotent like the two passes above, and like them it
+    // keeps no marker: a ride already carrying the fields is left alone.
+    await backfillRides(storage.rides, storage.rideSamples);
 
     // A starter that will not parse is a bug in a file we shipped, not in anything the
     // rider did — but it is theirs that is missing, so it says so rather than going quiet.
@@ -627,6 +648,15 @@ export async function disconnectHrm(): Promise<void> {
 
 let engine: RideEngine | null = null;
 let recorder: RideRecorder | null = null;
+/** Rebuilt per ride by armRide, so no two rides share a cadence or an in-flight write. */
+let checkpointer: RideCheckpointer | null = null;
+/** The race, for the length of one ride. Null on a workout: nothing to race round. */
+let ghostTracker: GhostTracker | null = null;
+/**
+ * The ride in the picked slot. Session-scoped where the other three slots are settings:
+ * the rides list names one ride to race, and that choice belongs to the ride it starts.
+ */
+let chosenGhostRideId: string | null = null;
 
 /** Riding means not touching the machine for an hour, so the display would otherwise
  * sleep mid-climb. Held only while actually running — a paused ride should be allowed
@@ -771,6 +801,16 @@ function bridge(snapshot: EngineSnapshot): void {
     heartRateBpm: snapshot.heartRateBpm,
     avgPowerW: recorder?.avgPowerW ?? null,
     workout: workoutSnapshot(snapshot.workout),
+    // Recomputed per tick like the other live readings, and derived from the engine's own
+    // elapsed and distance rather than recorded again: the race is a reading of the ride,
+    // not a second record of it.
+    ghosts: ghostTracker?.update({
+      elapsedS: snapshot.elapsedS,
+      distanceM: snapshot.distanceM,
+    }),
+    // Held by identity between resolutions, so a tick that changed no slot republishes
+    // nothing on this key.
+    ghostSlots: ghostTracker?.slots(),
   });
 
   if (snapshot.state === 'finished') void saveRide();
@@ -781,6 +821,13 @@ function teardown(): void {
   engineOff = [];
   engine?.dispose();
   engine = null;
+  ghostTracker = null;
+  // The picked slot goes with the ride it was picked for; the three toggles persist.
+  chosenGhostRideId = null;
+  rideStore.update({
+    ghosts: INITIAL_SNAPSHOT.ghosts,
+    ghostSlots: INITIAL_SNAPSHOT.ghostSlots,
+  });
 }
 
 /**
@@ -831,26 +878,49 @@ function frozenSettings(ftp: number = settings.ftp) {
 }
 
 /** Everything a new ride resets, whether it has a route under it or a workout in it. */
-function armRide(next: RideEngine): void {
+function armRide(next: RideEngine, active: RideRecorder): void {
   saved = null;
   powerReadings = [];
   displayGradePercent = null;
   lastBridgeAtMs = 0;
   publishedWorkout = null;
 
+  const checkpoint = new RideCheckpointer({
+    storage,
+    recorder: active,
+    progress: () => next.getSnapshot(),
+    // Reported rather than shown, like a BLE packet that would not parse: the rider is on
+    // the bike, an alert strip mid-climb helps nobody, and the next checkpoint is thirty
+    // seconds away anyway.
+    onFailure: (error) => console.warn(`Could not checkpoint this ride: ${errorMessage(error)}`),
+  });
+  checkpointer = checkpoint;
+
   // The recorder owns the 1 Hz series; publishing a copy of it per second is what lets
   // the power strip read the real samples rather than rebuild them from snapshots.
   engineOff.push(
     next.onSample((sample) => {
-      recorder?.add(sample);
-      if (recorder !== null) rideStore.update({ samples: [...recorder.samples] });
+      active.add(sample);
+      rideStore.update({ samples: [...active.samples] });
+      // Ride time, not wall clock: the checkpoint cadence is driven by the samples that
+      // reach it, so a paused ride writes nothing.
+      checkpoint.onSample(sample.t);
     }),
   );
   engineOff.push(next.subscribe(bridge));
   engine = next;
 }
 
-export async function startRide(routeId: string): Promise<void> {
+/**
+ * How a ride is started with a ghost already in the picked slot: the rides list's Race
+ * button names the ride to race, and the route it was ridden on is the route being
+ * started. Absent means the three resolved slots and nothing else.
+ */
+export interface StartRideOptions {
+  ghostRideId?: string | null;
+}
+
+export async function startRide(routeId: string, options: StartRideOptions = {}): Promise<void> {
   await ready;
   teardown();
   // A ride with no workout is ridden at full scale, which is the only honest default —
@@ -881,14 +951,39 @@ export async function startRide(routeId: string): Promise<void> {
     settings: engineSettings(),
   });
 
-  recorder = new RideRecorder({
+  const startedAt = new Date().toISOString();
+  const active = new RideRecorder({
     routeId,
     routeName: stored?.name ?? null,
-    startedAt: new Date().toISOString(),
+    // The geometry the engine is riding, not the figure on the record: the lap counter
+    // and the lap splits have to be measuring the same route.
+    routeLengthM: geometry.totalDistanceM,
+    startedAt,
     settings: frozenSettings(),
   });
+  recorder = active;
 
-  armRide(next);
+  armRide(next, active);
+
+  chosenGhostRideId = options.ghostRideId ?? null;
+  const tracker = new GhostTracker({
+    storage,
+    routeId,
+    rideId: active.id,
+    startedAt,
+    routeLengthM: geometry.totalDistanceM,
+    loops: isLoop(geometry),
+    // The recorder's own array, read when a lap of this ride is raced: slicing it beats
+    // waiting for the checkpoint that would otherwise be the only copy.
+    samples: () => active.samples,
+    now: () => Date.now(),
+    selection: ghostSelection(),
+    onFailure: (error) => console.warn(`Could not load that ghost: ${errorMessage(error)}`),
+  });
+  ghostTracker = tracker;
+  // Not awaited: a ride starts whether or not its history has been read yet, and the
+  // first ghosts arrive a moment later the same way a chart's geometry does.
+  void tracker.start();
 
   rideStore.update({
     routeId,
@@ -963,7 +1058,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
     settings: frozenSettings(ftp),
   });
 
-  armRide(next);
+  armRide(next, recorder);
 
   rideStore.update({
     routeId: null,
@@ -1025,6 +1120,7 @@ export type EndRideOutcome =
 export async function endRide(): Promise<EndRideOutcome> {
   if (nothingRecorded()) {
     engine?.end();
+    await discardCheckpoints();
     return { status: 'discarded' };
   }
   engine?.end();
@@ -1041,6 +1137,38 @@ function nothingRecorded(): boolean {
   const snapshot = engine?.getSnapshot();
   if (snapshot === undefined) return true;
   return snapshot.elapsedS <= 0;
+}
+
+/**
+ * Takes a discarded ride back out of the history, where autosave had already put it. The
+ * two clocks disagreeing is what makes this reachable at all — the engine's says nothing
+ * was ridden, the samples say thirty seconds were — and without it the rider is left with
+ * a ride they were told had been thrown away.
+ *
+ * Deleting the Ride takes its samples with it; see CascadingRideRepository.
+ */
+async function discardCheckpoints(): Promise<void> {
+  if (checkpointer?.written !== true || recorder === null) return;
+  try {
+    await storage.rides.delete(recorder.id);
+  } catch (error) {
+    console.warn(`Could not discard that ride: ${errorMessage(error)}`);
+  }
+  await clearLiveRide();
+}
+
+/**
+ * Stops the next launch reading the last ride as a crash. Non-fatal on its own: by the
+ * time this runs the ride is either saved or gone, and all a marker left behind costs is
+ * one pointless clear at boot.
+ */
+async function clearLiveRide(): Promise<void> {
+  try {
+    const next = await setLiveRide(storage.session, null);
+    if (next !== null) session = next;
+  } catch (error) {
+    console.warn(`Could not clear the live-ride marker: ${errorMessage(error)}`);
+  }
 }
 
 /**
@@ -1061,25 +1189,20 @@ async function persistRide(): Promise<string | null> {
   const activeRecorder = recorder;
   if (active === null || activeRecorder === null) return null;
 
-  const snapshot = active.getSnapshot();
-  const { ride, samples } = activeRecorder.build({
-    pausedS: snapshot.pausedS,
-    // Taken from the engine as the ride ended rather than from what it started with: the
-    // rider settled somewhere, and that is what the session was.
-    workoutScalePct: snapshot.workout?.scalePct ?? DEFAULT_WORKOUT_SCALE_PCT,
-    // Likewise, and from the engine for the same reason: the mode is switchable mid-ride,
-    // so what the session was is what it was when it ended.
-    ergMode: snapshot.workout?.ergMode ?? DEFAULT_ERG_MODE,
-  });
-
+  // The same write the checkpoints have been making all ride, so the ride the rider ends
+  // up with and the one a crash would have left cannot differ in shape.
+  let rideId: string;
   try {
-    await storage.rides.put(ride);
-    await storage.rideSamples.put(samples);
+    rideId = await writeRide(storage, activeRecorder, active.getSnapshot());
   } catch (error) {
     fault(`Could not save that ride: ${errorMessage(error)}`);
     return null;
   }
-  return ride.id;
+
+  // After the ride is safely down, and deliberately not inside the try: a ride that is
+  // written is saved, whatever the marker then does.
+  await clearLiveRide();
+  return rideId;
 }
 
 // --- settings actions ---------------------------------------------------------
@@ -1090,6 +1213,61 @@ export async function setTrainerDifficulty(percent: number): Promise<void> {
   rideStore.update({ trainerDifficulty: value });
   engine?.setTrainerDifficulty(value);
   await storage.settings.put({ trainerDifficulty: value });
+}
+
+/** Which Settings key holds each resolved slot, so the two can never drift apart. */
+const GHOST_SETTING: Record<HistorySlot, 'ghostBest' | 'ghostYear' | 'ghostLast'> = {
+  best: 'ghostBest',
+  year: 'ghostYear',
+  last: 'ghostLast',
+};
+
+/**
+ * What the ride settings panel reads: the three persisted toggles, and the ride the
+ * picked slot is racing. One shape, so a panel never assembles the selection itself.
+ */
+export function ghostSelection(): GhostSelection {
+  return {
+    best: settings[GHOST_SETTING.best],
+    year: settings[GHOST_SETTING.year],
+    last: settings[GHOST_SETTING.last],
+    chosenRideId: chosenGhostRideId,
+  };
+}
+
+/**
+ * Switches one of the three resolved slots on or off. Persists, so it is a preference
+ * rather than something the rider sets again every ride, and takes effect on the ride in
+ * progress at once — a toggle that waited for the start line would read as broken.
+ */
+export async function setGhostSlot(slot: HistorySlot, on: boolean): Promise<void> {
+  const key = GHOST_SETTING[slot];
+  if (settings[key] === on) return;
+  settings = { ...settings, [key]: on };
+  ghostTracker?.setSelection(ghostSelection());
+  // Published here rather than waited for on the next tick, as the difficulty slider is:
+  // a checkbox that takes a second to move reads as one that did not take.
+  publishGhostSlots();
+  await storage.settings.put({ [key]: on });
+}
+
+/**
+ * Puts a ride in the picked slot, or empties it. Not persisted and not awaited: it names
+ * one ride for one session, and the ride it names is already in storage.
+ *
+ * The rides list starts a ride and picks in one move through startRide; this is the same
+ * choice made from inside a ride that is already running.
+ */
+export function setChosenGhostRide(rideId: string | null): void {
+  if (chosenGhostRideId === rideId) return;
+  chosenGhostRideId = rideId;
+  ghostTracker?.setSelection(ghostSelection());
+  publishGhostSlots();
+}
+
+/** The panel's own view of the four slots, republished the moment one of them moves. */
+function publishGhostSlots(): void {
+  rideStore.update({ ghostSlots: ghostTracker?.slots() ?? INITIAL_SNAPSHOT.ghostSlots });
 }
 
 /**

@@ -66,36 +66,44 @@ export const COLUMNS: Column[] = [
          * all call this. What it does leads and the nos follow, so the first thing a
          * reader gets is the thing they would come for rather than a list of what is
          * missing — and the nos name no one: a screen that defines itself against a
-         * rival ages the day the rival changes. "No nonsense" then hands straight to
-         * them: the three that follow are what the nonsense would have been.
+         * rival ages the day the rival changes.
+         *
+         * "Real-world routes" is claimed once, here, where a reader meets the app. The
+         * Routes entry does not repeat it: by then the question is which route, not
+         * what kind.
          */
         label: 'Why it exists',
         sentence:
-          'A simple indoor cycling app: real routes and structured workouts, no nonsense. No subscription, no virtual world, no chat.',
+          'A simple indoor cycling app for real-world routes and structured workouts. No subscription, no virtual world, no chat.',
       },
       {
         /*
-         * "For now" is doing real work, and it is in the sentence rather than tucked
-         * into the label where a reader skimming the prose would miss it. Accounts and a
-         * mirror to a second screen are both on the table — SPEC.md already has the
-         * phone mirror in phase 5 — so this says what is true now rather than what will
-         * always be true. It stops short of announcing either: a signed-out screen that
-         * sells an unbuilt feature is how onboarding starts lying.
+         * Three steps in one line, which is what a reader at this point wants: what do
+         * I do. Accounts and a phone mirror are both on the roadmap, and this claims
+         * neither — a signed-out screen that sells an unbuilt feature is how onboarding
+         * starts lying.
+         *
+         * "Your browser" rather than naming one: which browsers work is a requirement,
+         * and requirements live in Set up where someone checks them.
          */
         label: 'In the browser',
         sentence:
-          'For now, Contour is a browser app and nothing more. There is no account to make, and no ride leaves your machine.',
+          'Open Contour in your browser, connect your trainer and start riding. No installation or account needed.',
       },
       {
         /*
-         * Chrome's default storage tier is best-effort: no time limit on it, and in
-         * practice the data goes when the rider clears site data. It can also be evicted
-         * when the disk is nearly full — true, rare, and more words than a column can
-         * carry, so docs/getting-started.md is where that belongs.
+         * The default storage tier is best-effort: no time limit on it, and in practice
+         * the data goes when the rider clears site data. It can also be evicted when the
+         * disk is nearly full — true, rare, and more words than a column can carry, so
+         * docs/getting-started.md is where that belongs.
+         *
+         * "Elsewhere" is the honest reach of the exports that exist: rides as an
+         * archive, routes as GPX, workouts as YAML, each moving on its own. A single
+         * backup of everything is specified but not built.
          */
         label: 'Your data',
         sentence:
-          'Everything is stored in this browser, and Chrome keeps it until you clear the site data. You can export your rides, routes and workouts, and import them back.',
+          'Your rides, routes and workouts stay in this browser until you clear its site data. Export and import your data to back it up or move it elsewhere.',
       },
     ],
   },
@@ -109,26 +117,29 @@ export const COLUMNS: Column[] = [
       {
         /*
          * Import rather than upload: the file never leaves the machine, and "Import
-         * routes" is what the button a rider will go looking for actually says. One GPX
-         * can carry several routes — see routes-import.ts — but a rider arrives with one
-         * ride in mind, so the singular is what the sentence promises.
+         * routes" is what the button a rider will go looking for actually says. One GPX can
+         * carry several routes and the importer reads them all — see routes-import.ts —
+         * which is why the plural is honest here.
          */
         label: 'Routes',
         sentence:
-          'Choose a route and press Start. Your trainer simulates the gradient. Import a GPX file to ride roads you know.',
+          'Choose a route and start riding. Your trainer simulates the gradient. Import GPX files to ride roads you know.',
       },
       {
         /*
-         * Three claims, all checked: targets carry a unit of ftpPercent or watts
-         * (workout/types.ts), ERG is a control the rider can switch off mid-step
-         * (Workout.tsx > ErgControl, and e2e/workout.spec.ts drives it), and New workout
-         * is the Workouts screen's accent control. YAML is named rather than softened
-         * into "easily" — ADR-0006 chose it, docs/writing-a-workout.md explains it, and
-         * for the rider this app is for, the format is the feature.
+         * Targets carry a unit of ftpPercent or watts (workout/types.ts), and the
+         * trainer holding them is a control the rider can switch off mid-step
+         * (Workout.tsx > ErgControl, driven by e2e/workout.spec.ts).
+         *
+         * Neither ERG nor YAML is named. Both are jargon to someone reading this before
+         * signing in, and both are met in the app: ERG as a labelled control on the ride
+         * screen, YAML when you open the editor, with docs/writing-a-workout.md behind
+         * it and ADR-0006 behind that. Saying what the trainer does beats naming the
+         * mode that does it.
          */
         label: 'Workouts',
         sentence:
-          'Structured rides with power targets set from your FTP. ERG holds each one, or switch it off and hold them yourself. Write your own in YAML.',
+          'Choose a workout or build your own with FTP-based power targets for each step. Your trainer adjusts resistance to keep you on target, or you can control your effort yourself.',
       },
       {
         /*
@@ -138,8 +149,25 @@ export const COLUMNS: Column[] = [
          * is what docs/exporting-to-strava.md walks through.
          */
         label: 'Rides',
-        sentence:
-          'Every ride is saved when it ends. Open one to see its summary, or download it as a TCX file for Strava.',
+        sentence: 'Save your rides, browse your history and export TCX files to upload to Strava.',
+      },
+      {
+        /*
+         * Last in the column rather than beside Routes, because it is the one entry that
+         * needs what the entry above it just established: there is nothing to race until
+         * a ride has been saved. It also leaves the column ending on the reason to come
+         * back rather than on a file format.
+         *
+         * The first sentence is the author's own. Two drafts before it missed: one
+         * named all three slots and ran to forty words, the next sold the feature and
+         * read as copy written from the docs.
+         *
+         * One sentence, and the shortest entry in the column. Lap-relative racing on a
+         * loop is the part a rider would not guess, but the place to meet it is the
+         * ride screen rather than a page read before signing in.
+         */
+        label: 'Ghosts',
+        sentence: 'Race against ghosts of your previous rides and see how you compare.',
       },
     ],
   },
@@ -153,7 +181,7 @@ export const COLUMNS: Column[] = [
       {
         label: 'Smart trainer',
         sentence:
-          'Any trainer that speaks Bluetooth FTMS: Wahoo KICKR, Core, Snap and most others.',
+          'A trainer that supports Bluetooth FTMS, including compatible Wahoo KICKR, CORE and SNAP models.',
       },
       {
         /*
@@ -167,11 +195,11 @@ export const COLUMNS: Column[] = [
          */
         label: 'Browser',
         sentence:
-          'Chrome or Edge on a Mac, Windows or Android. Firefox, Safari and iOS are not supported.',
+          'Chrome or Edge on macOS, Windows or Android. Firefox, Safari and iOS aren’t supported.',
       },
       {
         label: 'Heart rate · optional',
-        sentence: 'A Bluetooth strap, or an Apple Watch via HeartCast.',
+        sentence: 'Connect a Bluetooth heart rate strap or an Apple Watch via HeartCast.',
       },
       {
         /*
@@ -184,9 +212,9 @@ export const COLUMNS: Column[] = [
          */
         label: 'Connect',
         steps: [
-          'Power the trainer on and turn the pedals to wake it.',
-          'Open Rider profile and press Connect.',
-          'Pick your trainer from the browser list.',
+          'Power on your trainer and pedal to wake it.',
+          'Open Rider profile and select Connect.',
+          'Choose your trainer from the browser’s device list.',
         ],
       },
     ],

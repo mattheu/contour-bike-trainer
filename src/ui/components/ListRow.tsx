@@ -22,7 +22,9 @@ const GRID = 'grid gap-[32px]';
  * came to sit 4 px from the load figure.
  *
  * The widest today is a workouts row's three controls at 252 px, measured rather than
- * estimated. Adding a control to any row means measuring again.
+ * estimated. Adding a control to any row means measuring again — the rides list's Race
+ * button took its group to three 48 px icons, 142 px with their shared edges, which this
+ * already holds.
  */
 export const ACTIONS_WIDTH = 280;
 

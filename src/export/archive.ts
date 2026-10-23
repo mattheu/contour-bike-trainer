@@ -1,5 +1,6 @@
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
 
+import { rideTss } from '../ride/metrics';
 import {
   DEFAULT_ERG_MODE,
   DEFAULT_WORKOUT_SCALE_PCT,
@@ -208,6 +209,10 @@ function rideProblem(value: unknown): string | null {
   }
   if (!finiteOrNull(value.avgPowerW)) return 'its avgPowerW is unusable';
   if (!finiteOrNull(value.avgHeartRateBpm)) return 'its avgHeartRateBpm is unusable';
+  if (!absentOr(value.tss, finiteOrNull)) return 'its tss is unusable';
+  if (!absentOr(value.lapSplits, (v) => Array.isArray(v) && v.every(finite))) {
+    return 'its lapSplits are unusable';
+  }
   return settingsProblem(value.settings);
 }
 
@@ -232,6 +237,18 @@ export function validateRecord(value: unknown): { record: ArchiveRecord } | { re
   const ride = value.ride as Shape;
   const settings = ride.settings as Shape;
 
+  const samples: RideSample[] = (value.samples as Shape[]).map((sample) => ({
+    t: sample.t as number,
+    distanceM: sample.distanceM as number,
+    speedKmh: sample.speedKmh as number | null,
+    powerW: sample.powerW as number | null,
+    cadenceRpm: sample.cadenceRpm as number | null,
+    heartRateBpm: sample.heartRateBpm as number | null,
+    lat: sample.lat as number | null,
+    lon: sample.lon as number | null,
+    eleM: sample.eleM as number | null,
+  }));
+
   return {
     record: {
       ride: {
@@ -250,6 +267,14 @@ export function validateRecord(value: unknown): { record: ArchiveRecord } | { re
         ascentM: ride.ascentM as number,
         avgPowerW: ride.avgPowerW as number | null,
         avgHeartRateBpm: ride.avgHeartRateBpm as number | null,
+        // Absent in an archive written before these existed. The score is computed here
+        // rather than left null, for the same reason boot backfills one: the file carries
+        // the samples and the FTP the ride was frozen at, so the figure is exact. The
+        // splits are not recovered — see Ride in storage/types.ts for why that is the
+        // answer and not an omission.
+        tss: (ride.tss ?? rideTss(samples, ride.elapsedS as number, settings.ftp as number)) as
+          number | null,
+        lapSplits: [...((ride.lapSplits ?? []) as number[])],
         // An archive written while Ride carried a `finished` flag has one here. It is
         // read by nothing now, so it is dropped rather than migrated: the record is
         // rebuilt field by field, which is what lets an older file in without a check.
@@ -265,17 +290,7 @@ export function validateRecord(value: unknown): { record: ArchiveRecord } | { re
           bikeMassKg: settings.bikeMassKg as number,
         } satisfies RideSettings,
       } satisfies Ride,
-      samples: (value.samples as Shape[]).map((sample) => ({
-        t: sample.t as number,
-        distanceM: sample.distanceM as number,
-        speedKmh: sample.speedKmh as number | null,
-        powerW: sample.powerW as number | null,
-        cadenceRpm: sample.cadenceRpm as number | null,
-        heartRateBpm: sample.heartRateBpm as number | null,
-        lat: sample.lat as number | null,
-        lon: sample.lon as number | null,
-        eleM: sample.eleM as number | null,
-      })),
+      samples,
     },
   };
 }

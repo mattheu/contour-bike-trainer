@@ -3,8 +3,9 @@ import type { RideState } from '../ride/types';
 /**
  * Whether a reload would destroy a ride.
  *
- * The recorder holds its samples in memory until the ride ends and `endRide` writes
- * them, so until that write lands the only copy of the ride is in this tab.
+ * Autosave checkpoints the ride every half-minute, so a reload no longer costs all of
+ * it — but the seconds since the last checkpoint are still only in this tab, and until
+ * `endRide` writes the ride the rider has no summary to come back to.
  */
 export interface GuardedRide {
   state: RideState;

@@ -73,6 +73,8 @@ function ride(patch: Partial<Ride> = {}, settings: Partial<Ride['settings']> = {
     ascentM: 0,
     avgPowerW: 210,
     avgHeartRateBpm: 150,
+    tss: 91.3,
+    lapSplits: [],
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,

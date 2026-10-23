@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { AlertState } from '../../ride/types';
-import type { Ride } from '../../storage/types';
+import type { Ride, Route } from '../../storage/types';
 import { AppHeader } from '../components/AppHeader';
 import { Button } from '../components/Button';
 import { ButtonGroup } from '../components/ButtonGroup';
@@ -25,6 +25,7 @@ import {
   RIDE_TYPES,
   filterRides,
   periodSummary,
+  raceableRouteId,
   rideDate,
   rideTitle,
   riddenRoutes,
@@ -49,7 +50,11 @@ const LABELS = ['Date', 'Route', 'Distance', 'Time', 'Avg power'] as const;
 
 interface RidesProps {
   rides: readonly Ride[];
+  /** The routes still installed, which is what decides whether a ride can be raced. */
+  routes: readonly Route[];
   onOpen: (rideId: string) => void;
+  /** Starts that route with that ride in the picked slot: see services.startRide. */
+  onRace: (routeId: string, rideId: string) => void;
   onExport: (rideId: string) => void;
   /** The whole history as one ZIP. */
   onExportAll: () => Promise<void>;
@@ -70,7 +75,9 @@ interface RidesProps {
  */
 export function Rides({
   rides,
+  routes,
   onOpen,
+  onRace,
   onExport,
   onExportAll,
   onImport,
@@ -85,7 +92,9 @@ export function Rides({
   // Stable: AlertStrip's five-second info timer restarts whenever this identity changes.
   const clearAlert = useCallback(() => setAlert(null), []);
 
-  const routes = useMemo(() => riddenRoutes(rides), [rides]);
+  const routeFilter = useMemo(() => riddenRoutes(rides), [rides]);
+  /** Rebuilt only when a route is added or removed, so the per-row check is a lookup. */
+  const installed = useMemo(() => new Set(routes.map((route) => route.id)), [routes]);
   const workouts = useMemo(() => riddenWorkouts(rides), [rides]);
   const shown = useMemo(() => filterRides(rides, filter), [rides, filter]);
   // Totals whatever is on screen, under every combination of the four.
@@ -146,7 +155,7 @@ export function Rides({
             label="Route"
             allValue={ALL_ROUTES}
             allLabel="All routes"
-            options={routes}
+            options={routeFilter}
             value={filter.routeId}
             onChange={(routeId) => setFilter({ ...filter, routeId })}
           />
@@ -186,7 +195,9 @@ export function Rides({
               key={ride.id}
               ride={ride}
               armed={isArmed(armed, ride.id)}
+              raceRouteId={raceableRouteId(ride, installed)}
               onOpen={onOpen}
+              onRace={onRace}
               onExport={onExport}
               onPressDelete={() => press(ride)}
               onCancelDelete={() => setRequested(cancelDelete())}
@@ -316,14 +327,19 @@ function Footer({
 function RideRow({
   ride,
   armed,
+  raceRouteId,
   onOpen,
+  onRace,
   onExport,
   onPressDelete,
   onCancelDelete,
 }: {
   ride: Ride;
   armed: boolean;
+  /** The route to race this ride over, or null where there is none to race it over. */
+  raceRouteId: string | null;
   onOpen: (rideId: string) => void;
+  onRace: (routeId: string, rideId: string) => void;
   onExport: (rideId: string) => void;
   onPressDelete: () => void;
   onCancelDelete: () => void;
@@ -337,6 +353,30 @@ function RideRow({
           <DeleteButtons title={title} onConfirm={onPressDelete} onCancel={onCancelDelete} />
         ) : (
           <ButtonGroup label={`${title} actions`}>
+            {/* Two riders: a filled dot for you beside a hollow one for the ghost, which
+                is the hollow-muted treatment every ghost symbol carries. First in the
+                group because it is the only one of the three that starts something.
+                DESIGN.md > Ghosts; the glyph is design/mockups/rides.html's. */}
+            {raceRouteId !== null && (
+              <IconButton
+                label="Race this ride"
+                title="Race this ride"
+                onClick={() => onRace(raceRouteId, ride.id)}
+              >
+                <svg
+                  width="22"
+                  height="14"
+                  viewBox="0 0 22 14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.25"
+                  aria-hidden="true"
+                >
+                  <circle cx="7" cy="7" r="4" fill="currentColor" stroke="none" />
+                  <circle cx="15" cy="7" r="4" />
+                </svg>
+              </IconButton>
+            )}
             <IconButton label={`Download ${title} as TCX`} onClick={() => onExport(ride.id)}>
               <svg
                 width="16"

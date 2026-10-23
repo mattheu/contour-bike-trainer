@@ -31,6 +31,9 @@ describe('DEFAULT_SETTINGS', () => {
       crr: 0.004,
       gradeLookaheadM: 30,
       units: 'metric',
+      ghostBest: true,
+      ghostYear: true,
+      ghostLast: true,
     });
   });
 });

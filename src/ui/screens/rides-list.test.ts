@@ -8,6 +8,7 @@ import {
   matchesType,
   periodStart,
   periodSummary,
+  raceableRouteId,
   rideDate,
   rideTitle,
   riddenRoutes,
@@ -31,6 +32,8 @@ function ride(patch: Partial<Ride>): Ride {
     ascentM: 512,
     avgPowerW: 243,
     avgHeartRateBpm: 148,
+    tss: 82.5,
+    lapSplits: [],
     settings: {
       trainerDifficulty: 50,
       workoutScalePct: 100,
@@ -335,5 +338,24 @@ describe('rideTitle', () => {
       title: 'Ditchling Beacon Loop',
       meta: 'Openers',
     });
+  });
+});
+
+describe('raceableRouteId', () => {
+  const installed = new Set(['ditchling']);
+
+  it('names the route a ride can be raced over', () => {
+    expect(raceableRouteId(ride({}), installed)).toBe('ditchling');
+  });
+
+  it('offers nothing for a workout ride, which has no road to lay a ghost over', () => {
+    expect(raceableRouteId(workoutRide({}), installed)).toBeNull();
+  });
+
+  it('offers nothing once the route has been removed, though the ride keeps its name', () => {
+    const orphan = ride({ routeId: 'gone' });
+
+    expect(orphan.routeName).not.toBeNull();
+    expect(raceableRouteId(orphan, installed)).toBeNull();
   });
 });

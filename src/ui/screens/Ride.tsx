@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import type { HistorySlot } from '../../ghost/resolve';
 import type { Climb } from '../../route/climbs';
 import { detectClimbs } from '../../route/climbs';
 import { lapLabel, lapStartM } from '../../route/loop';
@@ -19,6 +20,7 @@ import {
   chartStackHeights,
 } from '../charts';
 import type { DevicesView } from '../components/Devices';
+import { GhostKey } from '../components/GhostKey';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
 import { LoopTag } from '../components/LoopTag';
@@ -68,6 +70,8 @@ export interface RideProps {
   onPauseToggle: () => void;
   onEnd: () => void;
   onDifficultyChange: (percent: number) => void;
+  onGhostSlot: (slot: HistorySlot, on: boolean) => void;
+  onClearGhostRide: () => void;
   onDismissAlert: () => void;
   onRetryTrainer: () => void;
   onConnectTrainer: () => void;
@@ -88,6 +92,8 @@ export function Ride({
   onPauseToggle,
   onEnd,
   onDifficultyChange,
+  onGhostSlot,
+  onClearGhostRide,
   onDismissAlert,
   onRetryTrainer,
   onConnectTrainer,
@@ -168,8 +174,8 @@ export function Ride({
   // The one place the charts are told the time has moved. They mutate their own SVG
   // through these handles; nothing here puts a chart's geometry into React state.
   useEffect(() => {
-    profileRef.current?.update(routePositionM);
-    mapRef.current?.update(routePositionM);
+    profileRef.current?.update(routePositionM, snapshot.ghosts);
+    mapRef.current?.update(routePositionM, snapshot.ghosts);
     stripRef.current?.update(routePositionM);
   });
 
@@ -425,6 +431,7 @@ export function Ride({
           <div className={`${LABEL} text-micro ml-[26px]`}>Difficulty</div>
           <div className={`${MONO} text-micro text-ink`}>{snapshot.trainerDifficulty}</div>
         </div>
+        <GhostKey ghosts={snapshot.ghosts} />
       </div>
 
       {settingsOpen && (
@@ -432,6 +439,11 @@ export function Ride({
           devices={devices}
           difficulty={snapshot.trainerDifficulty}
           targets={targets}
+          ghosts={{
+            slots: snapshot.ghostSlots,
+            onSlot: onGhostSlot,
+            onClearPicked: onClearGhostRide,
+          }}
           onDifficultyChange={onDifficultyChange}
           onTargetsChange={onTargetsChange}
           onEnd={onEnd}

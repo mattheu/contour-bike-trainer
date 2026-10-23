@@ -46,8 +46,8 @@ export function trainerGrade(routeGradePercent: number, difficultyPercent: numbe
  * On a loop it does not shrink, it wraps: the road ahead of the last thirty metres is
  * the first thirty, and a rider rolling through the start line onto another lap must not
  * feel the trainer released to flat for the length of the lookahead. Detected from the
- * geometry here rather than passed in, so no caller can forget it and the chart's
- * gradient bubble and the resistance under the wheels cannot disagree.
+ * geometry here rather than passed in, so no caller can forget it and the gradient on
+ * screen and the resistance under the wheels cannot disagree.
  */
 export function gradeAt(route: Route, distM: number, lookaheadM = DEFAULT_LOOKAHEAD_M): number {
   if (!Number.isFinite(lookaheadM) || lookaheadM <= 0) {

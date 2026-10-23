@@ -143,6 +143,33 @@ export interface Ride extends StoredRecord {
   avgPowerW: number | null;
   avgHeartRateBpm: number | null;
   /**
+   * Coggan's training stress score for the power actually recorded, against the FTP in
+   * settings below. Null where the ride recorded no power at all, exactly as avgPowerW
+   * is: nought would be a claim that the rider did no work.
+   *
+   * Stored rather than computed on read for the same reason every aggregate here is —
+   * it needs the samples, and the history list does not load them.
+   */
+  tss: number | null;
+  /**
+   * How long each completed route length took, in ride seconds, in the order they were
+   * ridden. Ten entries for ten laps of a loop, one for a point-to-point ridden to its
+   * finish, none for a ride that never got round once — which is the whole of what says
+   * a ride is not eligible to be anybody's best, and why there is no flag beside it.
+   *
+   * The rule that keeps it an array rather than a number: store the expensive derivation
+   * and derive the cheap one from it. Splitting a ride into laps needs the 1 Hz series,
+   * which is a separate record the rides list deliberately does not load; taking the
+   * smallest of a dozen numbers needs nothing. A stored `bestLapS` would also throw away
+   * the index, and the index is the point — racing your best lap means replaying *that*
+   * lap's samples, which a scalar cannot tell you where to find.
+   *
+   * Not backfilled, and deliberately so rather than by oversight: loops shipped days
+   * before this field, so there is no history of lapped rides to recover. Rides written
+   * before it read as empty, which is the correct answer for them.
+   */
+  lapSplits: number[];
+  /**
    * No `finished` flag. It recorded whether the route ran out under the rider, and the
    * only thing that ever read it was a `· ended early` label on the summary — a binary
    * standing in for a comparison the screen never showed. The summary draws distance
@@ -195,6 +222,15 @@ export interface Settings {
   crr: number;
   gradeLookaheadM: number;
   units: Units;
+  /**
+   * Which of the three ghosts resolved from your own history ride with you: Best, Best
+   * this year, Most recent. A preference rather than session state, so a rider who races
+   * their best lap does so on every route until they say otherwise. The picked slot is
+   * deliberately absent — it names one ride, which is a decision about one ride.
+   */
+  ghostBest: boolean;
+  ghostYear: boolean;
+  ghostLast: boolean;
 }
 
 /**
@@ -220,6 +256,16 @@ export type SessionMode = 'guest';
 export interface Session {
   mode: SessionMode;
   startedAt: string; // ISO 8601
+  /**
+   * The ride autosave is part-way through writing, absent when none is. Set when a ride's
+   * first checkpoint lands and cleared when it is saved or discarded, so a launch that
+   * finds it set is one the previous launch did not survive — the ride is already in the
+   * history, truncated at its last checkpoint.
+   *
+   * Here rather than in Settings for the same reason mode and startedAt are: this is
+   * state belonging to the install, not a preference belonging to the rider.
+   */
+  liveRideId?: string;
 }
 
 /**
