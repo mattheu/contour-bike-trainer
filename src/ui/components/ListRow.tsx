@@ -282,27 +282,20 @@ export function ListRow({
             {description}
           </div>
         )}
-        {/* Below the fold the figures live here, so the delete confirm has to replace
-            them here too — the row still becomes the question where its figures were. */}
-        {cellsOverlay !== undefined ? (
-          <div className="mt-[6px] wide:hidden">{cellsOverlay}</div>
-        ) : (
-          folded !== undefined &&
-          folded.length > 0 && (
-            <div className={`${MONO} text-label mt-[6px] flex gap-[18px] wide:hidden`}>
-              {folded.map((figure, index) => (
-                <span key={index} className={figure.muted === true ? 'text-muted' : undefined}>
-                  {figure.value}
-                  {figure.unit !== undefined && (
-                    <>
-                      {' '}
-                      <span className="text-muted">{figure.unit}</span>
-                    </>
-                  )}
-                </span>
-              ))}
-            </div>
-          )
+        {cellsOverlay === undefined && folded !== undefined && folded.length > 0 && (
+          <div className={`${MONO} text-label mt-[6px] flex gap-[18px] wide:hidden`}>
+            {folded.map((figure, index) => (
+              <span key={index} className={figure.muted === true ? 'text-muted' : undefined}>
+                {figure.value}
+                {figure.unit !== undefined && (
+                  <>
+                    {' '}
+                    <span className="text-muted">{figure.unit}</span>
+                  </>
+                )}
+              </span>
+            ))}
+          </div>
         )}
       </div>
       {cellsOverlay === undefined ? (
@@ -312,8 +305,12 @@ export function ListRow({
           </div>
         ))
       ) : (
+        /* One node, placed rather than duplicated. Below the fold it falls under the text
+           block where the folded figures sit; above it, onto the first row across the
+           three figure columns. Rendering it twice and hiding one put the question in the
+           document twice, which a locator sees even when a reader cannot. */
         <div
-          className="col-span-3 hidden text-right wide:block"
+          className="col-start-2 mt-[6px] wide:col-span-3 wide:col-start-3 wide:row-start-1 wide:mt-0 wide:text-right"
           style={
             overlayInset === undefined ? undefined : { paddingRight: `${String(overlayInset)}px` }
           }
