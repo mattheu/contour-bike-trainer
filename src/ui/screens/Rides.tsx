@@ -127,7 +127,7 @@ export function Rides({
   );
 
   return (
-    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden px-[16px] sm:px-[40px] wide:px-[64px] py-[24px] sm:py-[44px]">
+    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden page-gutter py-[24px] sm:py-[44px]">
       <AppHeader
         nav={<Nav value="rides" onChange={onNavigate} />}
         action={<div className={`${MONO} text-label text-muted`}>{summary}</div>}

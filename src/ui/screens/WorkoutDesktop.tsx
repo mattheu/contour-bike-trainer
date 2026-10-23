@@ -86,7 +86,7 @@ export function WorkoutDesktop({
 
   return (
     <div className="flex min-h-0 grow flex-col">
-      <div className="px-[16px] sm:px-[40px] wide:px-[64px] pt-[36px]">
+      <div className="page-gutter pt-[36px]">
         <RideHeader
           title={workout.name}
           pauseLabel={pauseLabel}
@@ -106,7 +106,7 @@ export function WorkoutDesktop({
 
       <AlertStrip alert={snapshot.alert} onDismiss={onDismissAlert} onRetry={onRetryTrainer} />
 
-      <div className="grid grid-cols-3 gap-[48px] px-[16px] sm:px-[40px] wide:px-[64px] pt-[28px]">
+      <div className="grid grid-cols-3 gap-[48px] page-gutter pt-[28px]">
         <Primary>
           <Hero
             testId={readings.power.testId}
@@ -172,7 +172,7 @@ export function WorkoutDesktop({
 
       {/* Four, not five: with no route under the session the gradient is zero all the way
           through, and a readout that never moves is worse than an absent one. */}
-      <div className="grid grid-cols-4 gap-[32px] px-[16px] sm:px-[40px] wide:px-[64px] pt-[28px]">
+      <div className="grid grid-cols-4 gap-[32px] page-gutter pt-[28px]">
         <Secondary>
           {/* Accent through the last ten seconds of a step. The one part of the step
               change that is colour rather than motion, so it reads the same under
@@ -215,10 +215,7 @@ export function WorkoutDesktop({
 
       {/* min-h-0: a grow child will not shrink below its content without it, so the area
           would measure what it contains rather than the space that content has. */}
-      <div
-        ref={chartAreaRef}
-        className="mt-[32px] flex min-h-0 grow flex-col px-[16px] sm:px-[40px] wide:px-[64px]"
-      >
+      <div ref={chartAreaRef} className="mt-[32px] flex min-h-0 grow flex-col page-gutter">
         <div
           ref={rowRef}
           className="grid min-h-0 grow"
@@ -274,7 +271,7 @@ export function WorkoutDesktop({
       {/* A gap as well as justify-between: with three items in the band, spacing them apart
           leaves nothing between them once the next line is long, and the key would be read
           as a continuation of it. The gap is what the truncation above gives way to. */}
-      <div className="mt-[24px] flex items-end justify-between gap-[32px] px-[16px] sm:px-[40px] wide:px-[64px] pb-[36px]">
+      <div className="mt-[24px] flex items-end justify-between gap-[32px] page-gutter pb-[36px]">
         {/* truncate, because a step's name is whatever its author wrote: without it a long
             one wraps the band to two lines and the charts above lose the height to it. */}
         <div className={`${MONO} text-label text-muted min-w-0 truncate`}>

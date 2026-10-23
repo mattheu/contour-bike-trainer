@@ -1,12 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react';
 import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
 import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
-import {
-  PowerStrip,
-  TABLET_CHART_GAP_PX,
-  TABLET_STACK_GAP_PX,
-  tabletChartStack,
-} from '../charts';
+import { PowerStrip, TABLET_CHART_GAP_PX, TABLET_STACK_GAP_PX, tabletChartStack } from '../charts';
 import { GhostKey } from '../components/GhostKey';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
