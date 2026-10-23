@@ -115,7 +115,7 @@ export const COLUMNS: Column[] = [
          */
         label: 'Routes',
         sentence:
-          'Choose a route and start riding. Your trainer simulates the gradient. Import GPX files to ride roads you know.',
+          'Choose a real-world route and start riding. Your trainer simulates the gradient. Import GPX files to ride roads you know.',
       },
       {
         /*
