@@ -356,11 +356,15 @@ function Steps({
   // the panel is for is showing what is behind and what is coming either side of now,
   // which a row scrolled just into the bottom edge does not do.
   //
-  // Smooth where the container allows it, which is the "transition to the next row": the
-  // scroll is the movement, so motion-reduce turns it into a cut on the container below
-  // rather than being decided here.
+  // A cut, not a slide. The screen re-renders every second for its clocks, and a smooth
+  // scroll does not survive that: the animation is cancelled by the next tick long before
+  // it arrives, so the row simply stays where it was. Measured on the phone panel, which
+  // had the identical call and moved by nothing at all across six consecutive skips.
+  //
+  // So the container's scroll-smooth is overridden here rather than relied on. At one
+  // move per step there is no travel worth smoothing anyway.
   useEffect(() => {
-    currentRow.current?.scrollIntoView({ block: 'center' });
+    currentRow.current?.scrollIntoView({ block: 'center', behavior: 'instant' });
   }, [current]);
 
   return (
@@ -382,10 +386,9 @@ function Steps({
         }
       />
       {/* bg-ground/60 rather than solid ground, because the contour field runs behind it.
-          scroll-smooth is what carries the panel to the next row when the step changes;
-          motion-reduce makes that a cut, which is the whole of DESIGN.md's reduced-motion
-          rule. Declarative, so the wheel is untouched: scroll-behavior governs programmatic
-          scrolls only. */}
+          scroll-smooth is kept for any scrolling the rider starts, but it no longer carries
+          the panel to the next row: a smooth programmatic scroll never survives this
+          screen's one-per-second re-render, so the step effect above asks for a cut. */}
       <div
         className="bg-ground/60 min-h-0 grow overflow-y-auto scroll-smooth motion-reduce:scroll-auto"
         data-testid="workout-steps"
