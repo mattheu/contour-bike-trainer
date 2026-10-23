@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import type { HistorySlot } from '../../ghost/resolve';
 import { detectClimbs } from '../../route/climbs';
 import { lapLabel, lapStartM } from '../../route/loop';
@@ -13,14 +13,26 @@ import {
 import type { DevicesView } from '../components/Devices';
 import type { RideSnapshot } from '../store';
 import type { PhoneView } from './phone-ride';
-import type { RideArrangementProps } from './ride-arrangement';
+import {
+  rideArrangementFor,
+  type RideArrangementName,
+  type RideArrangementProps,
+} from './ride-arrangement';
 import { rideReadings } from './ride-readings';
 import { primaryControlLabel, type ProfileZoom } from './ride-view';
 import { RideDesktop } from './RideDesktop';
+import { RidePhoneLandscape } from './RidePhoneLandscape';
 import { RidePhonePortrait } from './RidePhonePortrait';
 import { RideSettings, type Targets } from './RideSettings';
 import { powerSamplesFrom } from './summary-view';
-import { PHONE_PORTRAIT_QUERY, useMediaQuery } from './use-media-query';
+import { PHONE_LANDSCAPE_QUERY, PHONE_PORTRAIT_QUERY, useMediaQuery } from './use-media-query';
+
+/** The component each arrangement name draws. One at a time — see rideArrangementFor. */
+const ARRANGEMENTS: Record<RideArrangementName, (props: RideArrangementProps) => ReactElement> = {
+  'phone-portrait': RidePhonePortrait,
+  'phone-landscape': RidePhoneLandscape,
+  desktop: RideDesktop,
+};
 
 export interface RideProps {
   snapshot: RideSnapshot;
@@ -87,7 +99,10 @@ export function Ride({
    * imperatively-updated SVGs held by these refs, and a hidden second set would be built,
    * handed every tick and given handles to keep straight, all to draw nothing.
    */
-  const phonePortrait = useMediaQuery(PHONE_PORTRAIT_QUERY);
+  const arrangementName = rideArrangementFor({
+    phonePortrait: useMediaQuery(PHONE_PORTRAIT_QUERY),
+    phoneLandscape: useMediaQuery(PHONE_LANDSCAPE_QUERY),
+  });
 
   const profile = useMemo(() => buildProfile(route), [route]);
   const climbs = useMemo(() => detectClimbs(route), [route]);
@@ -234,12 +249,14 @@ export function Ride({
     onRetryTrainer,
   };
 
+  const Arrangement = ARRANGEMENTS[arrangementName];
+
   return (
     // h-dvh rather than h-screen: on a phone the viewport is whatever the browser's
     // toolbars have left, and design/DESIGN.md asks every screen to fit one without
     // scrolling. The same height as h-screen anywhere the toolbars do not move.
     <div className="text-ink relative flex h-dvh flex-col overflow-hidden">
-      {phonePortrait ? <RidePhonePortrait {...arrangement} /> : <RideDesktop {...arrangement} />}
+      <Arrangement {...arrangement} />
 
       {settingsOpen && (
         <RideSettings

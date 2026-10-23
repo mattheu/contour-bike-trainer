@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   CHART_HEADING_GAP_PX,
+  MIN_PHONE_LANDSCAPE_VIEW_HEIGHT,
   MIN_PHONE_STRIP_HEIGHT,
   MIN_PHONE_VIEW_HEIGHT,
   PHONE_CHART_GAP_PX,
+  PHONE_LANDSCAPE_CHART_GAP_PX,
+  PHONE_LANDSCAPE_STRIP_HEIGHT,
+  PHONE_LANDSCAPE_VIEW_HEIGHT,
+  phoneLandscapeChartStack,
   PHONE_STRIP_HEIGHT,
   PHONE_VIEW_HEIGHT,
   phoneChartStack,
@@ -296,6 +301,55 @@ describe('phoneChartStack', () => {
   it('holds both floors on a screen too short for either', () => {
     const stack = phoneChartStack(100);
     expect(stack.viewHeight).toBe(MIN_PHONE_VIEW_HEIGHT);
+    expect(stack.stripHeight).toBe(MIN_PHONE_STRIP_HEIGHT);
+  });
+});
+
+/**
+ * What a phone on its side has left for the charts: design/mockups/phone-landscape.html
+ * draws 844 x 390 with 16 + 14 of page padding, a 44 px header, the four-slot row 18
+ * below it and 64 tall, and the stats line 4 below that at the 32 px button height.
+ * Measured against the built screen at that viewport, not only read off the mockup.
+ */
+const LANDSCAPE_CHART_AREA = 390 - (16 + 14) - 44 - (18 + 64) - (4 + 32);
+
+describe('phoneLandscapeChartStack', () => {
+  it('draws the mockup before the area has been measured', () => {
+    expect(phoneLandscapeChartStack(null)).toEqual({
+      viewHeight: PHONE_LANDSCAPE_VIEW_HEIGHT,
+      stripHeight: PHONE_LANDSCAPE_STRIP_HEIGHT,
+    });
+  });
+
+  it('fits both charts at their drawn heights on the 844 x 390 screen it is for', () => {
+    const stack = phoneLandscapeChartStack(LANDSCAPE_CHART_AREA);
+    expect(stack.viewHeight).toBe(PHONE_LANDSCAPE_VIEW_HEIGHT);
+    expect(stack.stripHeight).toBe(PHONE_LANDSCAPE_STRIP_HEIGHT);
+    expect(stack.viewHeight + PHONE_LANDSCAPE_CHART_GAP_PX + stack.stripHeight).toBeLessThanOrEqual(
+      LANDSCAPE_CHART_AREA,
+    );
+  });
+
+  it('is shallower than the portrait stack, which is the point of the arrangement', () => {
+    expect(PHONE_LANDSCAPE_VIEW_HEIGHT).toBeLessThan(PHONE_VIEW_HEIGHT);
+    expect(PHONE_LANDSCAPE_CHART_GAP_PX).toBeLessThan(PHONE_CHART_GAP_PX);
+  });
+
+  it('spends a taller screen above the chart rather than on it', () => {
+    expect(phoneLandscapeChartStack(300).viewHeight).toBe(PHONE_LANDSCAPE_VIEW_HEIGHT);
+  });
+
+  it('takes it off the view first on a shorter one', () => {
+    const stack = phoneLandscapeChartStack(180);
+    expect(stack.viewHeight).toBe(
+      180 - PHONE_LANDSCAPE_CHART_GAP_PX - PHONE_LANDSCAPE_STRIP_HEIGHT,
+    );
+    expect(stack.stripHeight).toBe(PHONE_LANDSCAPE_STRIP_HEIGHT);
+  });
+
+  it('holds both floors on a screen too short for either', () => {
+    const stack = phoneLandscapeChartStack(80);
+    expect(stack.viewHeight).toBe(MIN_PHONE_LANDSCAPE_VIEW_HEIGHT);
     expect(stack.stripHeight).toBe(MIN_PHONE_STRIP_HEIGHT);
   });
 });

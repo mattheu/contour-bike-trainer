@@ -154,3 +154,95 @@ export function PhoneStat({
     </div>
   );
 }
+
+/**
+ * The same three readings as a phone draws them on its side, after
+ * design/mockups/phone-landscape.html. The sizes are unchanged — 44 px for a primary,
+ * 11 px for a clock — and what moves is where the second number sits: landscape has
+ * height to protect and width to spare, so the readout goes beside the figure rather
+ * than under it, and a label sits in front of its value rather than above it.
+ */
+
+/** Power, cadence or heart rate at 44 px, readout inline after the unit: "287 W 108 % FTP". */
+export function PhoneInlinePrimary({
+  label,
+  value,
+  unit,
+  figure,
+  figureUnit,
+  tone = 'ink',
+  divided = false,
+  testId,
+}: PrimaryProps) {
+  const readout = [figure, figureUnit].filter((part) => part !== undefined).join(' ');
+  return (
+    <div
+      data-testid={testId}
+      className={`flex flex-col gap-[6px] ${divider(divided, 'pl-[14px]')}`}
+    >
+      <Label tight>{label}</Label>
+      <div className="flex items-baseline gap-[5px] whitespace-nowrap">
+        <div
+          className={`${MONO} text-figure leading-[0.95] tracking-[-0.03em] ${TONES[tone]} ${COLOUR_SHIFT}`}
+        >
+          {value}
+        </div>
+        {unit !== undefined && <div className={`${MONO} text-micro text-muted`}>{unit}</div>}
+        {readout !== '' && (
+          <div className={`${MONO} text-micro text-muted ml-[8px]`}>{readout}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+interface RowReadingProps {
+  label: string;
+  value: string;
+  unit?: string;
+  tone?: Tone;
+  testId?: string;
+}
+
+/** Speed or gradient as one row of the fourth slot: label left, 20 px figure right. */
+export function PhoneRowReading({ label, value, unit, tone = 'ink', testId }: RowReadingProps) {
+  return (
+    <div
+      data-testid={testId}
+      className="flex items-baseline justify-between gap-[10px] whitespace-nowrap"
+    >
+      <Label>{label}</Label>
+      <div className={`${MONO} text-sub leading-none ${TONES[tone]} ${COLOUR_SHIFT}`}>
+        {value}
+        {unit !== undefined && <span className="text-micro text-muted font-normal"> {unit}</span>}
+      </div>
+    </div>
+  );
+}
+
+/** Elapsed, distance or climbed as an 11 px pair on one line, label in front of value. */
+export function PhoneInlineStat({
+  label,
+  value,
+  total,
+  unit,
+  tone = 'ink',
+  divided = false,
+  testId,
+}: StatProps) {
+  return (
+    <div
+      data-testid={testId}
+      className={`flex items-baseline gap-[8px] whitespace-nowrap ${divider(divided, 'pl-[14px]')}`}
+    >
+      <Label>{label}</Label>
+      <div className={`${MONO} text-micro ${TONES[tone]} ${COLOUR_SHIFT}`}>
+        {value}
+        <span className="text-muted">
+          {total !== undefined && ` / ${total}`}
+          {unit !== undefined && ` ${unit}`}
+        </span>
+      </div>
+    </div>
+  );
+}

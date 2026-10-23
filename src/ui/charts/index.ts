@@ -49,6 +49,9 @@ export type { MapZoom } from './map';
 export {
   CHART_ROW_GAP_PX,
   PHONE_CHART_GAP_PX,
+  PHONE_LANDSCAPE_CHART_GAP_PX,
+  PHONE_LANDSCAPE_STRIP_HEIGHT,
+  PHONE_LANDSCAPE_VIEW_HEIGHT,
   PHONE_STRIP_HEIGHT,
   PHONE_VIEW_HEIGHT,
   PLAN_HEADING_GAP_PX,
@@ -57,7 +60,8 @@ export {
   chartRowLayout,
   chartStackHeights,
   phoneChartStack,
+  phoneLandscapeChartStack,
   planChartHeight,
   planRowLayout,
 } from './layout';
-export type { ChartRowLayout, PlanRowLayout } from './layout';
+export type { ChartRowLayout, PhoneChartStack, PlanRowLayout } from './layout';

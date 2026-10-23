@@ -1,4 +1,4 @@
-import { useMemo, useRef, type PointerEvent as ReactPointerEvent } from 'react';
+import { useMemo, useRef } from 'react';
 import { PHONE_METRICS, PowerStrip, phoneChartStack } from '../charts';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
@@ -15,18 +15,11 @@ import { PhoneFigure, PhonePrimary, PhoneStat } from '../components/PhoneReading
 import { LABEL } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
-import {
-  nextMapZoom,
-  nextProfileZoom,
-  swipeDirection,
-  viewAfterSwipe,
-  viewToggle,
-  zoomToggle,
-  type SwipePoint,
-} from './phone-ride';
+import { nextMapZoom, nextProfileZoom, viewToggle, zoomToggle } from './phone-ride';
 import type { RideArrangementProps } from './ride-arrangement';
 import { MapChart, ProfileChart } from './RideCharts';
 import { useElementHeight, useElementWidth } from './use-element-width';
+import { useViewSwipe } from './use-view-swipe';
 
 /**
  * The ride screen on a phone held upright, after
@@ -83,34 +76,7 @@ export function RidePhonePortrait({
     else onMapZoom(nextMapZoom(mapZoom));
   }
 
-  /**
-   * Where a finger went down, so the gesture can be judged when it comes up.
-   *
-   * Touch and pen only. The charts' own hover is mouse-only by the same bargain — see
-   * moveHover in ElevationProfile — so the two gestures never arrive from the same
-   * device and a swipe can never drag the crosshair across the chart behind it.
-   *
-   * And nothing is decided until the pointer is released: a tap goes down and up in the
-   * same place, produces no direction, and reaches the chart underneath untouched.
-   */
-  const from = useRef<SwipePoint | null>(null);
-
-  function onPointerDown(event: ReactPointerEvent<HTMLDivElement>): void {
-    if (event.pointerType === 'mouse') return;
-    from.current = { x: event.clientX, y: event.clientY };
-  }
-
-  function onPointerUp(event: ReactPointerEvent<HTMLDivElement>): void {
-    const start = from.current;
-    from.current = null;
-    if (start === null) return;
-    const direction = swipeDirection(start, { x: event.clientX, y: event.clientY });
-    if (direction !== null) onView(viewAfterSwipe(direction));
-  }
-
-  function onPointerCancel(): void {
-    from.current = null;
-  }
+  const swipe = useViewSwipe(onView);
 
   return (
     <div className="flex min-h-0 grow flex-col px-[16px] pt-[28px] pb-[28px]">
@@ -163,9 +129,7 @@ export function RidePhonePortrait({
           // pan-y so a vertical gesture still belongs to the browser, and the horizontal
           // one the view wants is not spent on the back-swipe.
           style={{ touchAction: 'pan-y' }}
-          onPointerDown={onPointerDown}
-          onPointerUp={onPointerUp}
-          onPointerCancel={onPointerCancel}
+          {...swipe}
         >
           {view === 'profile' ? (
             <ProfileChart

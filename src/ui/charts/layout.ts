@@ -167,25 +167,63 @@ export const MIN_PHONE_STRIP_HEIGHT = 48;
  * box rather than more of it. design/mockups/phone-portrait-profile.html spends the
  * slack above the chart instead, where it costs nothing.
  */
-export function phoneChartStack(availableHeight: number | null): {
+export function phoneChartStack(availableHeight: number | null): PhoneChartStack {
+  return phoneStack(availableHeight, {
+    view: PHONE_VIEW_HEIGHT,
+    strip: PHONE_STRIP_HEIGHT,
+    gap: PHONE_CHART_GAP_PX,
+    minView: MIN_PHONE_VIEW_HEIGHT,
+  });
+}
+
+/**
+ * design/mockups/phone-landscape.html draws the view at 124 and the strip at 52 inside a
+ * 390 px artboard, 14 px apart — the map at the same 124, so one height serves whichever
+ * chart is showing. Shallower than portrait's because the four-slot row and the stats
+ * line have already taken the top half of a short screen.
+ */
+export const PHONE_LANDSCAPE_VIEW_HEIGHT = 124;
+export const PHONE_LANDSCAPE_STRIP_HEIGHT = 52;
+export const PHONE_LANDSCAPE_CHART_GAP_PX = 14;
+
+/**
+ * Lower than the portrait floor because the box is a different shape: at 796 px wide a
+ * 96 px profile is still a 8:1 band of terrain, where the same height at 358 px wide is
+ * the squashed chart MIN_PHONE_VIEW_HEIGHT exists to prevent.
+ */
+export const MIN_PHONE_LANDSCAPE_VIEW_HEIGHT = 96;
+
+/** The same division on a phone turned sideways. */
+export function phoneLandscapeChartStack(availableHeight: number | null): PhoneChartStack {
+  return phoneStack(availableHeight, {
+    view: PHONE_LANDSCAPE_VIEW_HEIGHT,
+    strip: PHONE_LANDSCAPE_STRIP_HEIGHT,
+    gap: PHONE_LANDSCAPE_CHART_GAP_PX,
+    minView: MIN_PHONE_LANDSCAPE_VIEW_HEIGHT,
+  });
+}
+
+export interface PhoneChartStack {
   viewHeight: number;
   stripHeight: number;
-} {
+}
+
+function phoneStack(
+  availableHeight: number | null,
+  drawn: { view: number; strip: number; gap: number; minView: number },
+): PhoneChartStack {
   if (availableHeight === null || !Number.isFinite(availableHeight)) {
-    return { viewHeight: PHONE_VIEW_HEIGHT, stripHeight: PHONE_STRIP_HEIGHT };
+    return { viewHeight: drawn.view, stripHeight: drawn.strip };
   }
 
-  const forCharts = Math.floor(availableHeight) - PHONE_CHART_GAP_PX;
-  const viewHeight = Math.min(
-    PHONE_VIEW_HEIGHT,
-    Math.max(MIN_PHONE_VIEW_HEIGHT, forCharts - PHONE_STRIP_HEIGHT),
-  );
+  const forCharts = Math.floor(availableHeight) - drawn.gap;
+  const viewHeight = Math.min(drawn.view, Math.max(drawn.minView, forCharts - drawn.strip));
   // Only once the view is already at its floor does the strip start giving height up,
   // and it stops at its own: two charts too short to read is worse than one that
   // overflows a screen nobody should be riding on.
   const stripHeight = Math.max(
     MIN_PHONE_STRIP_HEIGHT,
-    Math.min(PHONE_STRIP_HEIGHT, forCharts - viewHeight),
+    Math.min(drawn.strip, forCharts - viewHeight),
   );
 
   return { viewHeight, stripHeight };

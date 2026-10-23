@@ -20,6 +20,15 @@ import { useCallback, useMemo, useSyncExternalStore } from 'react';
  */
 export const PHONE_PORTRAIT_QUERY = '(max-width: 560px) and (orientation: portrait)';
 
+/**
+ * The same phone on its side: four reading slots and one line, to keep height for the
+ * profile. The threshold moves to the height because that is the short axis now — the
+ * same 560 px, so a phone matches one of the two whichever way it is turned, and a
+ * tablet in either orientation matches neither. A desktop window dragged shorter than
+ * this gets it too, which is the point: it is the arrangement for a short viewport.
+ */
+export const PHONE_LANDSCAPE_QUERY = '(max-height: 560px) and (orientation: landscape)';
+
 export function useMediaQuery(query: string): boolean {
   const list = useMemo(
     () => (typeof globalThis.matchMedia === 'function' ? globalThis.matchMedia(query) : null),
