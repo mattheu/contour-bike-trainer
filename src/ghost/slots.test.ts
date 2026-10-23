@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { SLOT_ORDER, SLOT_SYMBOL, shortDate, slotName } from './slots';
 
 describe('slots', () => {
-  it('gives every slot its own symbol, and never a hexagon', () => {
+  it('gives every slot its own symbol, and never the reserved one', () => {
     const shapes = SLOT_ORDER.map((slot) => SLOT_SYMBOL[slot].shape);
 
-    // Star for Best: it is the one shape that already carries rank.
-    expect(shapes).toEqual(['star', 'triangle', 'square', 'diamond']);
+    // No shape implies rank; the slots answer different questions, not graded ones.
+    expect(shapes).toEqual(['square', 'triangle', 'diamond', 'pentagon']);
     expect(new Set(SLOT_ORDER.map((slot) => SLOT_SYMBOL[slot].d)).size).toBe(4);
   });
 

@@ -2,12 +2,16 @@
  * The four ghost slots and the symbol each one owns.
  *
  * The symbol belongs to the slot and never to the ride filling it, which is the whole
- * reason several ghosts can share a screen with no legend on the map: a star is Best
+ * reason several ghosts can share a screen with no legend on the map: a square is Best
  * today and Best next winter, so a rider learns four shapes once rather than reading a
- * key every lap. The star carries rank already, which is why it holds Best. DESIGN.md > Ghosts.
+ * key every lap.
  *
- * The hexagon in the mockup is a friend's ride, and is deliberately absent here rather
- * than stubbed: nothing shares rides yet, and a member of this union that no code path
+ * None of the four implies an order. A star was tried for Best and dropped: it reads as
+ * a ranking, which makes the other three look like lesser versions of it when they
+ * answer different questions. DESIGN.md > Ghosts.
+ *
+ * The fifth symbol, a semicircle on a flat base, is a friend's ride. It is deliberately
+ * absent here rather than stubbed: nothing shares rides yet, and a member of this union that no code path
  * can produce is a slot the renderer has to handle and the resolver has to skip.
  */
 
@@ -15,7 +19,7 @@
  * all four the same muted hollow treatment, so none of that varies per slot. */
 export interface GhostSymbol {
   /** The shape, for a renderer that wants to name what it is drawing. */
-  shape: 'square' | 'triangle' | 'star' | 'diamond';
+  shape: 'square' | 'triangle' | 'diamond' | 'pentagon';
   /** SVG path data, drawn on a 14 × 14 box with its origin top-left. */
   d: string;
 }
@@ -42,13 +46,13 @@ export const SLOT_ORDER: readonly GhostSlot[] = ['best', 'year', 'last', 'chosen
  * kind of thing and a renderer draws them with one element.
  */
 export const SLOT_SYMBOL: Record<GhostSlot, GhostSymbol> = {
-  best: {
-    shape: 'star',
-    d: 'M7.0,0.8 L8.6,4.8 L12.9,5.1 L9.6,7.8 L10.7,12.1 L7.0,9.8 L3.3,12.1 L4.4,7.8 L1.1,5.1 L5.4,4.8 Z',
-  },
+  best: { shape: 'square', d: 'M2.0,2.0 L12.0,2.0 L12.0,12.0 L2.0,12.0 Z' },
   year: { shape: 'triangle', d: 'M7.0,1.2 L12.5,11.2 L1.5,11.2 Z' },
-  last: { shape: 'square', d: 'M2.0,2.0 L12.0,2.0 L12.0,12.0 L2.0,12.0 Z' },
-  chosen: { shape: 'diamond', d: 'M7.0,0.5 L12.5,7.0 L7.0,13.5 L1.5,7.0 Z' },
+  // A square turned 45 degrees: both diagonals are 12, so it reads as a square on its
+  // point rather than a lozenge. The earlier path was 11 wide and 13 tall.
+  last: { shape: 'diamond', d: 'M7.0,1.0 L13.0,7.0 L7.0,13.0 L1.0,7.0 Z' },
+  // Regular, point up, circumradius 6 on the same 14 box.
+  chosen: { shape: 'pentagon', d: 'M7.0,1.0 L12.7,5.1 L10.5,11.9 L3.5,11.9 L1.3,5.1 Z' },
 };
 
 /** What the key band prints for the three slots resolved from history. The picked slot
