@@ -148,15 +148,21 @@ export const COLUMNS: Column[] = [
          * a ride has been saved. It also leaves the column ending on the reason to come
          * back rather than on a file format.
          *
-         * Every claim checked against src/ghost/: the three resolved slots are Best, a
-         * rolling 365 days and the last completed route length (resolve.ts), and a lap
-         * from the ride in progress is a candidate as soon as it is finished (live.ts >
-         * candidatePool). "Of the same route" carries the one limit worth stating here —
-         * a workout has no route, so it has no ghost.
+         * Sells the feature rather than listing its slots. The first draft named all
+         * three — best, best this year, most recent — and ran to forty words beside
+         * neighbours of twenty: a specification where the column wants a reason.
+         *
+         * "Replays the real ride" is the claim worth making, and it is literally true:
+         * ghost/lap.ts interpolates between the recorded samples, so an effort that
+         * faded fades in the same place. A pace line is what a rider would otherwise
+         * assume, and it is the duller thing.
+         *
+         * The loop sentence is last because it is the surprise — lap.ts re-resolves at
+         * each crossing, so the lap just ridden becomes the next thing to chase.
          */
         label: 'Ghosts',
         sentence:
-          'Race a previous ride of the same route: your best, your best of the last year, or the last time you were here. On a loop you race lap by lap, including laps from the ride you are on.',
+          'Race your own fastest time up the same road. The ghost replays the real ride, so if you went out too hard, it does too. On a loop, a fresh race every lap.',
       },
     ],
   },
