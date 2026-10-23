@@ -5,22 +5,13 @@
 The **Routes** tab lists what you can ride. Each row shows a thumbnail of the route's profile, its
 name, distance, elevation gain, and how many times you have ridden it.
 
-Seven real routes ship with the app — no synthetic ones, because an app about riding real roads
-should not open on a test fixture:
+Real routes ship with the app, and no synthetic ones, because an app about riding real roads
+should not open on a test fixture. They run from a 1.5 km town-centre race circuit to Alpe
+d'Huez, and most of them are loops.
 
-- **Rosedale Chimney**, North York Moors, UK. 19 km, 346 m — a moor loop over one of the steepest
-  surfaced roads in England, ramping past 21 %.
-- **Box Hill**, Surrey, UK. 16 km, 236 m — the Olympic circuit, and a true loop.
-- **Sa Calobra**, Mallorca, Spain. 13 km, 702 m — relentlessly consistent, which makes it the honest test
-  of whether you can hold a number.
-- **Alpe d'Huez**, Oisans, France. 16 km, 1,259 m — trimmed to finish at the top rather than
-  running on through the village.
-- **Montjuïc**, Barcelona, Spain. 8 km, 205 m — the Volta a Catalunya's finishing circuit, which
-  the race laps seven times. Two climbs and a long descent, so it settles into a rhythm.
-- **Ilkley**, Wharfedale, UK. 1.5 km, 30 m — a town-centre race circuit, and the shortest here
-  by a long way: a lap is about two minutes.
-- **Koppenberg**, Flanders, Belgium. 7 km, 72 m — the shortest here, and a lap turns on one
-  cobbled wall: 600 m averaging 10 % and pitching to 22 %.
+`routes/manifest.json` is the list — name, region, distance, gain and a sentence each. This page
+does not repeat it. A set that gains and loses a route most weeks would leave two lists to keep
+in step, and the one here is the one that would quietly go wrong.
 
 Clicking a row starts the ride immediately. There is no confirmation step — the row _is_ the
 button.
@@ -75,10 +66,9 @@ reading that is no longer live, not a reading of nought.
 ## Finishing
 
 Reaching the end of a point-to-point route ends the ride on its own. **A loop does not stop you at
-the start line**: it rolls through onto the next lap, and keeps going until you end it. Five of the
-seven — Rosedale Chimney, Box Hill, the Koppenberg, Montjuïc and Ilkley — start and finish in the same
-place, and the app works that out from the route itself rather than being told, so a loop you
-import laps too.
+the start line**: it rolls through onto the next lap, and keeps going until you end it. Most of
+the bundled routes start and finish in the same place, and the app works that out from the route
+itself rather than being told, so a loop you import laps too.
 
 A loop is marked **LOOP** beside its name, and once you come round it reads **LAP 2**. The profile
 and the map show the lap you are on, filling again each time; the distance beside them is your
