@@ -38,7 +38,7 @@ interface HowItWorksProps {
 
 export function HowItWorks({ backTo, start }: HowItWorksProps) {
   return (
-    <div className="text-ink flex min-h-screen flex-col gap-[24px] px-[24px] py-[20px] sm:h-screen sm:gap-[28px] sm:overflow-hidden sm:px-[64px] sm:py-[36px]">
+    <div className="text-ink flex min-h-screen flex-col gap-[24px] px-[16px] py-[20px] sm:h-screen sm:gap-[28px] sm:overflow-hidden sm:px-[64px] sm:py-[36px]">
       <AppHeader
         // The screen's name, so it is a heading rather than a caption on the logo. 11 px
         // on a phone, where the logo beside it leaves the label a third of the row.
