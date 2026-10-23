@@ -2,9 +2,8 @@
  * Where a ghost's symbol and its gap label land on a chart.
  *
  * Pure over whatever projection it is handed, so the profile and the map share one set of
- * rules: the profile supplies a route-to-pixel mapping and a rider marker, the map
- * supplies a projection and no labels at all. Every number below is read off
- * design/mockups/ride.html rather than invented.
+ * rules: both supply a route-to-pixel mapping, and the map asks for no labels at all.
+ * Every number below is read off design/mockups/ride.html rather than invented.
  *
  * Placement is here and not in the renderer because collision is a decision with a right
  * answer — which of two overlapping labels survives — and a decision taken inside a paint
@@ -54,9 +53,6 @@ export const LABEL_GAP_Y = 18;
  * stable. The tick survives — what is dropped is the `+188 m`, not the mark it names.
  */
 export const SUMMIT_CLEAR_PX = 48;
-
-/** Within this of the rider's marker the label swings clear of the gradient bubble. */
-export const RIDER_CLEAR_PX = 44;
 
 /** A ghost that has finished waits at the route end at this weight. DESIGN.md > Ghosts. */
 export const DONE_OPACITY = 0.6;
@@ -197,8 +193,6 @@ export type GhostProjection = (distanceM: number) => Pt | null;
 export interface GhostLayerInput {
   ghosts: readonly ActiveGhost[];
   project: GhostProjection;
-  /** The rider's own marker, for the anchor flip. Null on a chart that draws none. */
-  rider?: Pt | null;
   /** Summit gain labels by their x, in the order the caller draws them. */
   summits?: readonly number[];
   /** Desktop unless a phone chart says otherwise. */
@@ -254,12 +248,12 @@ function besideAnchor(gapS: number | null): LabelAnchor {
 /**
  * Everything a ghost layer draws, with the labels already fought over.
  *
- * Three rules, applied in this order because each reads the result of the one before:
- * overlapping labels are settled between symbols, the survivors swing clear of the rider,
- * and whatever is left takes a summit's figure out of its way.
+ * Two rules, in this order because the second reads the result of the first: overlapping
+ * labels are settled between symbols, and whatever survives takes a summit's figure out
+ * of its way.
  */
 export function ghostLayer(input: GhostLayerInput): GhostLayer {
-  const { ghosts, project, rider = null, summits = [], metrics = DESKTOP_METRICS } = input;
+  const { ghosts, project, summits = [], metrics = DESKTOP_METRICS } = input;
   const beside = metrics.side === 'beside';
 
   const placed: { placement: GhostPlacement; gapS: number }[] = [];
@@ -307,27 +301,6 @@ export function ghostLayer(input: GhostLayerInput): GhostLayer {
         Math.abs(a.placement.y - b.placement.y) < metrics.gapY,
     );
     if (beaten) a.placement.label = null;
-  }
-
-  // Skipped where the label already sits beside its symbol: there the side carries the
-  // sign of the gap, and swinging it for the rider's sake would make a ghost you had
-  // overtaken read as one still up the road.
-  if (rider !== null && !beside) {
-    for (const { placement } of placed) {
-      if (placement.label === null) continue;
-      const dx = placement.x - rider.x;
-      const dy = placement.y - rider.y;
-      if (Math.hypot(dx, dy) >= RIDER_CLEAR_PX) continue;
-      // Away from the rider, so the plate leaves the gradient bubble alone. A ghost
-      // exactly on the rider's x goes left, which is the mockup's case.
-      placement.label = label(
-        metrics,
-        placement.x,
-        placement.y,
-        placement.label.text,
-        dx > 0 ? 'start' : 'end',
-      );
-    }
   }
 
   const hiddenSummits: number[] = [];

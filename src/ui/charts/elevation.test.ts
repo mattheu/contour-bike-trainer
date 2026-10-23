@@ -242,12 +242,11 @@ describe('elevationGeometry, route view', () => {
     expect(whole.endsWith(`L0,${HEIGHT} Z`)).toBe(true);
   });
 
-  it('places the rider on the profile with the gradient it is about to meet', () => {
+  it('places the rider on the ground at the distance it is given', () => {
     expect(geometry.marker(0).x).toBe(0);
     expect(geometry.marker(varied.totalDistanceM).x).toBeCloseTo(WIDTH, 9);
 
     const onTheClimb = geometry.marker(ON_THE_CLIMB_M);
-    expect(onTheClimb.gradePercent).toBeGreaterThan(2);
     expect(onTheClimb.y).toBeCloseTo(geometry.yFor(elevationAt(varied, ON_THE_CLIMB_M)), 9);
     expect(onTheClimb.x).toBeCloseTo((ON_THE_CLIMB_M / varied.totalDistanceM) * WIDTH, 6);
   });

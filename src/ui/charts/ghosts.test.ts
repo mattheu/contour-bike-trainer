@@ -12,7 +12,6 @@ import {
   LABEL_RISE_PX,
   LABEL_STEM_PX,
   PHONE_METRICS,
-  RIDER_CLEAR_PX,
   STOPPED_OPACITY,
   SUMMIT_CLEAR_PX,
   ghostLayer,
@@ -126,32 +125,6 @@ describe('ghostLayer', () => {
     expect(layer.hiddenSummits).toEqual([0]);
   });
 
-  it('swings a label clear of the rider, to the side away from the marker', () => {
-    const near = ghostLayer({
-      ghosts: [ghost('best', 480, 18)],
-      project: flat(100),
-      rider: { x: 500, y: 100 },
-    });
-    expect(bySlot(near.placements, 'best').label?.anchor).toBe('end');
-
-    const beyond = ghostLayer({
-      ghosts: [ghost('best', 520, 18)],
-      project: flat(100),
-      rider: { x: 500, y: 100 },
-    });
-    expect(bySlot(beyond.placements, 'best').label?.anchor).toBe('start');
-  });
-
-  it('leaves the anchor alone once the rider is further off than the clearance', () => {
-    const { placements } = ghostLayer({
-      ghosts: [ghost('best', 500 + RIDER_CLEAR_PX, 18)],
-      project: flat(100),
-      rider: { x: 500, y: 100 },
-    });
-
-    expect(bySlot(placements, 'best').label?.anchor).toBe('middle');
-  });
-
   it('hangs every stem from the symbol box, so none is longer than another', () => {
     // A square, a triangle and a star: three glyphs of three different heights.
     const { placements } = ghostLayer({
@@ -250,18 +223,6 @@ describe('ghostLayer on a phone', () => {
     expect(label?.plateX).toBe(400 - PHONE_METRICS.clearPx - PHONE_METRICS.plateW);
   });
 
-  it('leaves the side alone for the rider, which the sign has already decided', () => {
-    const { placements } = ghostLayer({
-      ghosts: [ghost('best', 480, 18)],
-      project: flat(100),
-      rider: { x: 500, y: 100 },
-      metrics: PHONE_METRICS,
-    });
-
-    // The desktop rule would swing this one to 'end' to clear the gradient bubble.
-    expect(bySlot(placements, 'best').label?.anchor).toBe('start');
-  });
-
   it('gives the nearest ghost in time the label inside the 60 x 16 box', () => {
     const { placements } = ghostLayer({
       // 50 px apart and 8 high: inside the phone box, outside the desktop one.
@@ -343,13 +304,12 @@ describe('over the real profile geometry', () => {
 });
 
 /**
- * design/mockups/ride.html draws three ghosts around a rider at (530, 164.4): a square
- * above the road, a diamond higher still, and a triangle tucked under the rider's own
- * gradient bubble. Reproducing all three to the decimal is the strongest statement that
- * the rules above are the design's and not an approximation of it.
+ * design/mockups/ride.html draws three ghosts around the rider's marker: a square above
+ * the road, a diamond higher still, and a triangle tucked under it. Reproducing their
+ * plates and stems to the decimal is the strongest statement that the rules above are the
+ * design's and not an approximation of it.
  */
 describe('the mockup’s own ghosts', () => {
-  const RIDER = { x: 530.0, y: 164.4 };
   const AT: Record<string, { x: number; y: number }> = {
     best: { x: 553.6, y: 80.0 },
     year: { x: 520.5, y: 185.9 },
@@ -361,7 +321,6 @@ describe('the mockup’s own ghosts', () => {
       ghosts: [ghost('best', 1, 18), ghost('year', 2, -5), ghost('chosen', 3, 41)],
       project: (distanceM) =>
         AT[distanceM === 1 ? 'best' : distanceM === 2 ? 'year' : 'chosen'] ?? null,
-      rider: RIDER,
     });
   }
 
@@ -371,15 +330,6 @@ describe('the mockup’s own ghosts', () => {
     expect(label?.textY).toBeCloseTo(58.0, 5);
     expect(label?.stemY).toBeCloseTo(73.0, 5);
     expect(label?.stemTopY).toBeCloseTo(62.0, 5);
-  });
-
-  it('swings the triangle’s label left, clear of the gradient bubble', () => {
-    const label = bySlot(mockupLayer().placements, 'year').label;
-    expect(label?.anchor).toBe('end');
-    expect(label?.plateX).toBeCloseTo(472.5, 5);
-    expect(label?.plateY).toBeCloseTo(150.9, 5);
-    expect(label?.textX).toBeCloseTo(514.5, 5);
-    expect(label?.textY).toBeCloseTo(163.9, 5);
   });
 
   it('leaves the diamond centred, and keeps all three labels', () => {

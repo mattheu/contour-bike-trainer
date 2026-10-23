@@ -6,7 +6,6 @@ export {
   LABEL_GAP_Y,
   LABEL_PLATE_H,
   LABEL_PLATE_W,
-  RIDER_CLEAR_PX,
   SUMMIT_CLEAR_PX,
   ghostLayer,
   ghostMarks,

@@ -6,7 +6,6 @@
  */
 
 import type { Climb } from '../../route/climbs';
-import { gradeAt } from '../../route/grade';
 import { elevationAt, interpolateAt } from '../../route/position';
 import {
   WINDOW_NARROW_M,
@@ -37,8 +36,9 @@ import { areaPath, smoothPath, type Pt } from './path';
  * - Floor, 10 % of the chart height. The rolling route would otherwise occupy 8 px
  *   and read as a ruled line. At the floor it occupies 22 px: still unmistakably
  *   seven times flatter than the mixed route, but with visible shape.
- * - Ceiling, 80 % of the chart height, leaving room for summit labels and the
- *   rider's gradient bubble. An alpine route (1 000 m in 15 km) would want 630 px.
+ * - Ceiling, 80 % of the chart height, leaving room for summit labels and the gap
+ *   figures ghosts hang above the line. An alpine route (1 000 m in 15 km) would
+ *   want 630 px.
  *
  * The scale is recomputed per visible window, so zooming to 5 km or 500 m
  * re-exaggerates against the new horizontal scale. That is deliberate and matches
@@ -162,7 +162,6 @@ export interface SummitTick {
 export interface RiderMarker {
   x: number;
   y: number;
-  gradePercent: number;
 }
 
 export interface ElevationGeometry {
@@ -316,11 +315,7 @@ export function elevationGeometry(input: ElevationInput): ElevationGeometry {
     riddenAreaPath: (distM) => areaPath(prefix(distM), scale.baselineY),
     marker: (distM) => {
       const d = clamp(distM, 0, route.totalDistanceM);
-      return {
-        x: xFor(d),
-        y: yFor(elevationAt(route, d)),
-        gradePercent: gradeAt(route, d),
-      };
+      return { x: xFor(d), y: yFor(elevationAt(route, d)) };
     },
   };
 }
