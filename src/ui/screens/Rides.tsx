@@ -10,6 +10,8 @@ import {
   ListHeaderFrame,
   ListRow,
   ListRowFrame,
+  RIDES_ACTIONS,
+  RIDES_ARMED_INSET,
   RIDES_COLUMNS,
 } from '../components/ListRow';
 import { Segmented } from '../components/Segmented';
@@ -187,7 +189,7 @@ export function Rides({
       </div>
 
       <div className="flex min-h-0 grow flex-col">
-        <ListHeaderFrame>
+        <ListHeaderFrame actionsWidth={RIDES_ACTIONS}>
           <ListHeader columns={RIDES_COLUMNS} labels={LABELS} />
         </ListHeaderFrame>
         <div className="min-h-0 overflow-y-auto">
@@ -349,6 +351,7 @@ function RideRow({
 
   return (
     <ListRowFrame
+      actionsWidth={RIDES_ACTIONS}
       actions={
         armed ? (
           <DeleteButtons title={title} onConfirm={onPressDelete} onCancel={onCancelDelete} />
@@ -432,6 +435,9 @@ function RideRow({
               </span>
             ) : undefined
           }
+          // Delete and Keep are wider than the three icons the gutter is cut for, so
+          // they reach back over the figures; this keeps them off the question.
+          overlayInset={RIDES_ARMED_INSET}
         />
       </Selectable>
     </ListRowFrame>

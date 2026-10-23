@@ -1,11 +1,21 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { LABEL, MONO, SERIF } from './styles';
 
-/** One five-column grid, two sets of widths: the lead and last columns differ per screen. */
+/** One five-column grid, its own widths per screen: each list's figures are different. */
 export type ListColumns = readonly [string, string, string, string, string];
 
-export const RIDES_COLUMNS: ListColumns = ['160px', '1fr', '140px', '140px', '140px'];
-export const ROUTES_COLUMNS: ListColumns = ['160px', '1fr', '140px', '140px', '120px'];
+/**
+ * The number columns, sized to the widest figure each actually holds at text-title in
+ * JetBrains Mono, plus a little air — measured, not estimated. Distance tops out at
+ * "999.9 km" (104 px), elapsed time at "12:34:56" (116 px), gain at "4812 m" (81 px),
+ * average power at "1024 W" (81 px), and Ridden at "Not ridden" (67 px, sans). Each is
+ * wider than its column label, which is the other thing that has to fit.
+ *
+ * They used to be 140/140/120 on every list, which left the figures adrift in their
+ * cells and the description with less width than the actions gutter beside it.
+ */
+export const RIDES_COLUMNS: ListColumns = ['160px', '1fr', '112px', '120px', '88px'];
+export const ROUTES_COLUMNS: ListColumns = ['160px', '1fr', '112px', '88px', '72px'];
 
 /**
  * The grid, both ways round. Above the fold it is the screen's five columns; below it the
@@ -36,24 +46,47 @@ export interface FoldedFigure {
   muted?: boolean;
 }
 
+/** Between the last figure and the first control. */
+const ACTIONS_GAP = 24;
+
 /**
- * The width reserved for a row's actions, gap included, on every row and on the column
- * labels above them. One number for all three lists, so their columns line up as the rider
- * moves between tabs.
+ * The width a list reserves for a row's actions, from the measured width of the group
+ * that row shows at rest — three 48 px icons sharing their edges is 142 px, two is 95.
  *
- * Sized for the widest row rather than the common one, on two counts. A row that changed
- * width when you armed its delete would make the list jump under the cursor at exactly the
- * moment someone is about to confirm something they cannot undo. And the gutter is a fixed
- * width with its contents right-aligned, so a group too wide for it does not clip or wrap —
- * it overflows leftwards into the figures, which is how three controls on a workouts row
- * came to sit 4 px from the load figure.
+ * At rest, not armed. One width for all three lists sized to the armed confirm pair used
+ * to cost every row of every list the space for a state one row briefly enters, and on
+ * the routes list that left the description narrower than the gutter beside it. The
+ * no-jump property that bought still holds where it matters: nothing moves while the
+ * rider reads a list, because a resting row is the only row the gutter is cut for.
  *
- * The widest today is a workouts row's three controls at 252 px, measured rather than
- * estimated. Adding a control to any row means measuring again — the rides list's Race
- * button took its group to three 48 px icons, 142 px with their shared edges, which this
- * already holds.
+ * The gutter is fixed and right-aligned, so the armed pair simply overflows leftwards
+ * over the figures — see armedOverflow, which is what keeps it off the question it is
+ * answering. Add a control to a row and both numbers need measuring again.
  */
-export const ACTIONS_WIDTH = 280;
+export function actionsGutter(restingGroupPx: number): number {
+  return Math.ceil(restingGroupPx) + ACTIONS_GAP;
+}
+
+/** Delete, Download, Race: three icons. */
+export const RIDES_ACTIONS = actionsGutter(142);
+/** Download and, where the route is the rider's to remove, Remove: two icons. */
+export const ROUTES_ACTIONS = actionsGutter(95);
+
+/**
+ * How far an armed row's confirm pair reaches back over the figures, which is how much
+ * room the prompt in their place has to give up on its right.
+ *
+ * Both are right-aligned to the row's right edge, so without this the buttons would land
+ * on the last words of the question. Zero where the resting group is the wider of the two
+ * — the workouts list, whose rows rest on text buttons.
+ */
+export function armedOverflow(gutter: number, armedGroupPx: number): number {
+  return Math.max(0, Math.ceil(armedGroupPx) - (gutter - ACTIONS_GAP));
+}
+
+/** Delete and Keep, 177 px as a pair. The routes list's Remove and Keep is 183. */
+export const RIDES_ARMED_INSET = armedOverflow(RIDES_ACTIONS, 177);
+export const ROUTES_ARMED_INSET = armedOverflow(ROUTES_ACTIONS, 183);
 
 interface ListRowFrameProps {
   /** The row itself — a ListRow, usually inside a Selectable. */
@@ -64,6 +97,8 @@ interface ListRowFrameProps {
    * the row's own navigation on the way up.
    */
   actions?: ReactNode;
+  /** This list's gutter: see actionsGutter. The header above it reserves the same. */
+  actionsWidth: number;
 }
 
 /**
@@ -71,14 +106,14 @@ interface ListRowFrameProps {
  * contains a ride's figures and the things you can do to it alike — one object, not a row
  * with controls parked beside it.
  */
-export function ListRowFrame({ children, actions }: ListRowFrameProps) {
+export function ListRowFrame({ children, actions, actionsWidth }: ListRowFrameProps) {
   return (
     <div className="border-hairline flex items-center border-t">
       <div className="min-w-0 grow">{children}</div>
       {actions !== undefined && (
         <div
-          className="flex shrink-0 justify-end pl-[24px]"
-          style={{ width: `${String(ACTIONS_WIDTH)}px` }}
+          className="flex shrink-0 justify-end"
+          style={{ width: `${String(actionsWidth)}px`, paddingLeft: `${String(ACTIONS_GAP)}px` }}
         >
           {actions}
         </div>
@@ -88,12 +123,19 @@ export function ListRowFrame({ children, actions }: ListRowFrameProps) {
 }
 
 /** Holds the actions gutter open above the rows, which is the only thing keeping the
- * column labels over their figures. */
-export function ListHeaderFrame({ children }: { children: ReactNode }) {
+ * column labels over their figures. Takes the width rather than reading it, because each
+ * list cuts its own and a header a few pixels out is a column of labels off its figures. */
+export function ListHeaderFrame({
+  children,
+  actionsWidth,
+}: {
+  children: ReactNode;
+  actionsWidth: number;
+}) {
   return (
     <div className="flex items-center">
       <div className="min-w-0 grow">{children}</div>
-      <div className="shrink-0" style={{ width: `${String(ACTIONS_WIDTH)}px` }} />
+      <div className="shrink-0" style={{ width: `${String(actionsWidth)}px` }} />
     </div>
   );
 }
@@ -186,6 +228,12 @@ interface ListRowProps {
    * second line, so nothing on screen moves while someone is deciding.
    */
   cellsOverlay?: ReactNode;
+  /**
+   * Pixels of room the overlay gives up on its right, for a confirm pair too wide for
+   * its gutter that reaches back over these columns — see armedOverflow. The folded line
+   * below the fold never needs it: there is no gutter beside it down there.
+   */
+  overlayInset?: number;
 }
 
 export function ListRow({
@@ -200,6 +248,7 @@ export function ListRow({
   paddingY,
   cells,
   cellsOverlay,
+  overlayInset,
   folded,
 }: ListRowProps) {
   const sparkline = leadVariant === 'sparkline';
@@ -263,7 +312,14 @@ export function ListRow({
           </div>
         ))
       ) : (
-        <div className="col-span-3 hidden text-right wide:block">{cellsOverlay}</div>
+        <div
+          className="col-span-3 hidden text-right wide:block"
+          style={
+            overlayInset === undefined ? undefined : { paddingRight: `${String(overlayInset)}px` }
+          }
+        >
+          {cellsOverlay}
+        </div>
       )}
     </a>
   );

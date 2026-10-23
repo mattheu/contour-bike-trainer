@@ -11,6 +11,8 @@ import {
   ListHeaderFrame,
   ListRow,
   ListRowFrame,
+  actionsGutter,
+  armedOverflow,
   type ListColumns,
 } from '../components/ListRow';
 import { Segmented } from '../components/Segmented';
@@ -51,11 +53,28 @@ import {
 /**
  * Four columns, not five: the mockup draws plan, workout, length and load, and the fifth
  * slot the other two lists use for a date or a ride count has nothing to put in it. Held
- * at zero rather than given a label, so the grid and the actions gutter still line up
- * with the rides and routes lists above and below it in the nav.
+ * at zero rather than given a label, so a row still has three cells and the armed prompt
+ * still has three to span.
+ *
+ * Length holds "120 min" (83 px) and load "188 TSS" (59 px, a size down from the other
+ * lists' figures), both measured at the type in use rather than guessed at.
  */
-const WORKOUTS_COLUMNS: ListColumns = ['160px', '1fr', '140px', '140px', '0px'];
+const WORKOUTS_COLUMNS: ListColumns = ['160px', '1fr', '88px', '72px', '0px'];
 const LABELS = ['Plan', 'Workout', 'Length', 'Load', ''] as const;
+
+/**
+ * This list is the outlier of the three: its rows rest on named buttons rather than
+ * glyphs, and a starter's View, Duplicate and Download is 253 px of controls. So it keeps
+ * roughly the gutter all three lists once shared, while the rides and routes lists — two
+ * and three icons — cut theirs to the width they actually need.
+ *
+ * Converting Edit and Duplicate to icons would free about 100 px here, and is the single
+ * largest win left on this screen. It is not taken because neither mockup draws row
+ * actions on this list at all, so both glyphs would have to be invented.
+ */
+const WORKOUTS_ACTIONS = actionsGutter(253);
+/** Zero: Delete and Keep are narrower than the resting group, so nothing overflows. */
+const WORKOUTS_ARMED_INSET = armedOverflow(WORKOUTS_ACTIONS, 177);
 
 interface WorkoutsProps {
   workouts: readonly StoredWorkout[];
@@ -169,7 +188,7 @@ export function Workouts({
       </div>
 
       <div className="flex min-h-0 grow flex-col">
-        <ListHeaderFrame>
+        <ListHeaderFrame actionsWidth={WORKOUTS_ACTIONS}>
           <ListHeader columns={WORKOUTS_COLUMNS} labels={LABELS} />
         </ListHeaderFrame>
         <div className="min-h-0 overflow-y-auto">
@@ -276,6 +295,7 @@ function WorkoutRowView({
 
   return (
     <ListRowFrame
+      actionsWidth={WORKOUTS_ACTIONS}
       actions={
         armed ? (
           <ButtonGroup label={`Delete ${row.name}?`}>
@@ -369,6 +389,7 @@ function WorkoutRowView({
               </span>
             ) : undefined
           }
+          overlayInset={WORKOUTS_ARMED_INSET}
         />
       </Selectable>
     </ListRowFrame>

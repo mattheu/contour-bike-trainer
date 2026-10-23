@@ -13,6 +13,8 @@ import {
   ListHeaderFrame,
   ListRow,
   ListRowFrame,
+  ROUTES_ACTIONS,
+  ROUTES_ARMED_INSET,
   ROUTES_COLUMNS,
 } from '../components/ListRow';
 import { RouteKindMark } from '../components/RouteKindMark';
@@ -144,7 +146,7 @@ export function Routes({
       )}
 
       <div className="flex min-h-0 grow flex-col">
-        <ListHeaderFrame>
+        <ListHeaderFrame actionsWidth={ROUTES_ACTIONS}>
           <ListHeader columns={ROUTES_COLUMNS} labels={LABELS} />
         </ListHeaderFrame>
         <div className="min-h-0 overflow-y-auto">
@@ -268,6 +270,7 @@ function RouteRow({
 
   return (
     <ListRowFrame
+      actionsWidth={ROUTES_ACTIONS}
       actions={
         armed ? (
           <ButtonGroup label={`${ROUTE_DELETE_WORDING.action} ${route.name}?`}>
@@ -363,6 +366,9 @@ function RouteRow({
               </span>
             ) : undefined
           }
+          // Remove and Keep are wider than the two icons the gutter is cut for, so they
+          // reach back over the figures; this keeps them off the end of the question.
+          overlayInset={ROUTES_ARMED_INSET}
         />
       </Selectable>
     </ListRowFrame>
