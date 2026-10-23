@@ -663,7 +663,7 @@ A route can be raced against up to five ghosts. Each slot has a fixed symbol.
 | Slot | Symbol | Contents |
 | --- | --- | --- |
 | Best | Square | Your fastest lap of this route. |
-| Best this year | Triangle | Your fastest lap of the last 365 days. Where that is the lap already in Best, the next fastest inside the window. |
+| Best this year | Triangle | Your fastest lap of the last 365 days. Where that is the lap already in Best, the next fastest inside the window — **and the slot says so**, because a rider offered two slots and given one answer twice would be right to think it broken. |
 | Most recent | Diamond | The last route length you completed here. Where that is already shown, the one before it. |
 | Picked ride | Pentagon | A ride you chose with **Race this ride**. |
 | Friend | Semicircle | Reserved. Not built. |
@@ -807,6 +807,28 @@ A workout can be ridden with the trainer holding the target, or with the rider h
 5. **Everything else is unchanged.** Steps still advance on time, the scale still applies to the displayed target, a `free` step is simply a no-op, and TSS still comes from recorded power.
 
    One thing improves. With ERG on, a ride's actual TSS is close to the planned figure by construction, because the trainer made it so. With ERG off the recorded figure measures the rider, and the plan chart's accent-over-grey stops being a formality.
+
+## The summary screen
+
+Unscheduled, and the next thing worth building. Today the summary says whether you beat your
+ghost and by how much. A ride on a loop now carries far more than that and shows none of it.
+
+**Lap times as a list.** A ride stores `lapSplits`, so the figures already exist — the summary
+is where they belong rather than the ride screen, which has nothing to spare and a rider who is
+busy. Show each lap's time, and the ghost's lap beside it where one was raced, so the comparison
+is the point of the table rather than an afterthought.
+
+The two-lap ride on 2026-10-23 is the case to design against: 17:22 then 15:17, where almost all
+of the two minutes came on the flat and eight seconds came on the climb. A list of two numbers
+would not have shown that; a split by section would. Whether the summary goes that far is a
+design question, but the data supports it and the lap list alone does not answer "where did it
+go".
+
+**TSS has nowhere to appear.** It is computed and stored at save, deliberately, because it needs
+the samples. Nothing displays it. The summary is the obvious home.
+
+**The screen has no phone layout**, and no mockup at any size. It is the one screen a rider meets
+at the end of every ride, and on a phone it is still the desktop arrangement.
 
 ## Phase 5 — Usage and errors
 
