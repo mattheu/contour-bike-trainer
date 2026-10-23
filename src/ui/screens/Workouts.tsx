@@ -212,16 +212,15 @@ export function Workouts({
               {workouts.length === 0 ? 'No workouts yet' : 'No workouts match these filters'}
             </div>
           )}
+          <Footer
+            empty={workouts.length === 0}
+            onExportAll={() => void onExportAll()}
+            onImport={(file) =>
+              void onImport(file).then((result) => setAlert(workoutImportAlert(result)))
+            }
+          />
         </div>
       </div>
-
-      <Footer
-        empty={workouts.length === 0}
-        onExportAll={() => void onExportAll()}
-        onImport={(file) =>
-          void onImport(file).then((result) => setAlert(workoutImportAlert(result)))
-        }
-      />
     </div>
   );
 }
@@ -246,7 +245,7 @@ function Footer({
   const input = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="border-hairline bg-ground/60 flex shrink-0 items-center gap-[16px] border-t pt-[24px]">
+    <div className="flex items-center gap-[16px] pt-[24px] pb-[8px]">
       <Button onClick={onExportAll} disabled={empty}>
         Download all workouts
       </Button>

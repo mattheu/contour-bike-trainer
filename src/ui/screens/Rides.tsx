@@ -210,14 +210,13 @@ export function Rides({
           {shown.length === 0 && (
             <div className={`${LABEL} text-micro pt-[26px]`}>No rides match these filters</div>
           )}
+          <Footer
+            empty={rides.length === 0}
+            onExportAll={() => void onExportAll()}
+            onImport={(file) => void onImport(file).then((result) => setAlert(importAlert(result)))}
+          />
         </div>
       </div>
-
-      <Footer
-        empty={rides.length === 0}
-        onExportAll={() => void onExportAll()}
-        onImport={(file) => void onImport(file).then((result) => setAlert(importAlert(result)))}
-      />
     </div>
   );
 }
@@ -300,7 +299,7 @@ function Footer({
   const input = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="border-hairline bg-ground/60 flex shrink-0 items-center gap-[16px] border-t pt-[24px]">
+    <div className="flex items-center gap-[16px] pt-[24px] pb-[8px]">
       <Button onClick={onExportAll} disabled={empty}>
         Download all rides
       </Button>
