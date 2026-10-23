@@ -100,7 +100,7 @@ test.describe('the hash', () => {
 
     // There is no engine behind this URL: a bookmark, or a reload after the ride ended.
     // Nothing resolves the label, so nothing starts.
-    await page.goto(`${COLD}#/ride?route=greenhow-hill`);
+    await page.goto(`${COLD}#/ride?route=box-hill`);
     await expect(page).toHaveURL(/#\/routes$/);
     await expect(page.getByRole('link', { name: RIDE_ROUTE_NAME })).toBeVisible();
   });

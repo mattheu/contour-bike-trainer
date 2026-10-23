@@ -43,7 +43,7 @@ export const FIXTURE_ROUTE: SeedRoute = {
 export const RIDE_ROUTE_NAME = 'Rosedale Chimney';
 
 /** A second one, for the specs that check the list has more than a single route on it. */
-export const OTHER_ROUTE_NAME = 'Greenhow Hill';
+export const OTHER_ROUTE_NAME = 'Box Hill';
 
 export interface OpenOptions {
   fake?: FakeScript;

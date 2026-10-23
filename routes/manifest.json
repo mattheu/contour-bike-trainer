@@ -1,15 +1,6 @@
 {
   "routes": [
     {
-      "id": "greenhow-hill",
-      "name": "Greenhow Hill",
-      "region": "Yorkshire Dales, UK",
-      "file": "greenhow-hill.gpx",
-      "description": "A climb out of Pateley Bridge in Nidderdale, to one of the highest villages in England. This route takes in four more Dales climbs.",
-      "totalDistanceM": 66622,
-      "totalAscentM": 1104
-    },
-    {
       "id": "sa-calobra",
       "name": "Sa Calobra",
       "region": "Mallorca, Spain",
@@ -35,15 +26,6 @@
       "description": "One of the steepest surfaced roads in England, climbing out of Rosedale onto the moor. Named after the ironstone kiln chimney that stood at the top until 1972.",
       "totalDistanceM": 18907,
       "totalAscentM": 346
-    },
-    {
-      "id": "settle-grassington",
-      "name": "Settle to Grassington",
-      "region": "Yorkshire Dales, UK",
-      "file": "settle-grassington.gpx",
-      "description": "A route between Ribblesdale and Wharfedale over Malham Moor. It climbs out of Settle and drops fast into Grassington.",
-      "totalDistanceM": 31710,
-      "totalAscentM": 552
     },
     {
       "id": "box-hill",

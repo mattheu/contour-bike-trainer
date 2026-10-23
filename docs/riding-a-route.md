@@ -8,10 +8,6 @@ name, distance, elevation gain, and how many times you have ridden it.
 Six real routes ship with the app — no synthetic ones, because an app about riding real roads
 should not open on a test fixture:
 
-- **Greenhow Hill**, Yorkshire Dales, UK. 67 km, 1,104 m — the long one, and the only route here
-  where the climbing is spread rather than stacked.
-- **Settle to Grassington**, Yorkshire Dales, UK. 32 km, 552 m across the limestone, climbing out
-  of both dales and dropping to −17 % on the way over.
 - **Rosedale Chimney**, North York Moors, UK. 19 km, 346 m — a moor loop over one of the steepest
   surfaced roads in England, ramping past 21 %.
 - **Box Hill**, Surrey, UK. 16 km, 236 m — the Olympic circuit, and a true loop.
@@ -19,6 +15,10 @@ should not open on a test fixture:
   of whether you can hold a number.
 - **Alpe d'Huez**, Oisans, France. 16 km, 1,259 m — trimmed to finish at the top rather than
   running on through the village.
+- **Montjuïc**, Barcelona, Spain. 8 km, 205 m — the Volta a Catalunya's finishing circuit, which
+  the race laps seven times. Two climbs and a long descent, so it settles into a rhythm.
+- **Koppenberg**, Flanders, Belgium. 7 km, 72 m — the shortest here, and a lap turns on one
+  cobbled wall: 600 m averaging 10 % and pitching to 22 %.
 
 Clicking a row starts the ride immediately. There is no confirmation step — the row _is_ the
 button.
@@ -73,9 +73,10 @@ reading that is no longer live, not a reading of nought.
 ## Finishing
 
 Reaching the end of a point-to-point route ends the ride on its own. **A loop does not stop you at
-the start line**: it rolls through onto the next lap, and keeps going until you end it. Three of the
-six — Greenhow Hill, Rosedale Chimney and Box Hill — start and finish in the same place, and the
-app works that out from the route itself rather than being told, so a loop you import laps too.
+the start line**: it rolls through onto the next lap, and keeps going until you end it. Four of the
+six — Rosedale Chimney, Box Hill, the Koppenberg and Montjuïc — start and finish in the same
+place, and the app works that out from the route itself rather than being told, so a loop you
+import laps too.
 
 A loop is marked **LOOP** beside its name, and once you come round it reads **LAP 2**. The profile
 and the map show the lap you are on, filling again each time; the distance beside them is your
