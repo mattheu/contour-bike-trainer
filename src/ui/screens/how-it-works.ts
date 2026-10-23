@@ -66,12 +66,15 @@ export const COLUMNS: Column[] = [
          * all call this. What it does leads and the nos follow, so the first thing a
          * reader gets is the thing they would come for rather than a list of what is
          * missing — and the nos name no one: a screen that defines itself against a
-         * rival ages the day the rival changes. "No nonsense" then hands straight to
-         * them: the three that follow are what the nonsense would have been.
+         * rival ages the day the rival changes.
+         *
+         * "Real-world routes" is the same phrase the Routes entry opens with, and the
+         * nos pay it off: no virtual world is the one a reader would otherwise wonder
+         * about.
          */
         label: 'Why it exists',
         sentence:
-          'A simple indoor cycling app: real routes and structured workouts, no nonsense. No subscription, no virtual world, no chat.',
+          'A simple indoor cycling app for real-world routes and structured workouts. No subscription, no virtual world, no chat.',
       },
       {
         /*
