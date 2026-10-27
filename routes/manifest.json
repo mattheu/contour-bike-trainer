@@ -55,15 +55,6 @@
       "totalAscentM": 205
     },
     {
-      "id": "ilkley",
-      "name": "Ilkley",
-      "region": "Wharfedale, UK",
-      "file": "ilkley.gpx",
-      "description": "A town-centre circuit in Wharfedale, up Riddings Road and back down to The Grove past Bettys. The Ilkley Cycle Races run on it every July.",
-      "totalDistanceM": 1531,
-      "totalAscentM": 30
-    },
-    {
       "id": "harrogate",
       "name": "Harrogate",
       "region": "North Yorkshire, UK",
