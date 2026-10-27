@@ -62,6 +62,33 @@
       "description": "A town-centre circuit in Wharfedale, up Riddings Road and back down to The Grove past Bettys. The Ilkley Cycle Races run on it every July.",
       "totalDistanceM": 1531,
       "totalAscentM": 30
+    },
+    {
+      "id": "harrogate",
+      "name": "Harrogate",
+      "region": "North Yorkshire, UK",
+      "file": "harrogate.gpx",
+      "description": "A circuit through Harrogate, rolling until it sharpens: Cornwall Road climbs 700 m to 11 % after eight kilometres. The 2019 World Championships were decided on it.",
+      "totalDistanceM": 14012,
+      "totalAscentM": 225
+    },
+    {
+      "id": "zurich",
+      "name": "Zürich",
+      "region": "Zürich, Switzerland",
+      "file": "zurich.gpx",
+      "description": "A circuit east of the city over two climbs — the Zürichbergstrasse at 8 %, then Witikon, longer and shallower. The 2024 World Championships lapped it seven times.",
+      "totalDistanceM": 26854,
+      "totalAscentM": 474
+    },
+    {
+      "id": "otley",
+      "name": "Otley",
+      "region": "Wharfedale, UK",
+      "file": "otley.gpx",
+      "description": "A town-centre circuit in Wharfedale, up Burras Lane and then a long drag to the top. The Otley Cycle Races have run on it since the 1980s.",
+      "totalDistanceM": 2321,
+      "totalAscentM": 24
     }
   ]
 }
