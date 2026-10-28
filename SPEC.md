@@ -663,7 +663,7 @@ A route can be raced against up to five ghosts. Each slot has a fixed symbol.
 | Slot | Symbol | Contents |
 | --- | --- | --- |
 | Best | Square | Your fastest lap of this route. |
-| Best this year | Triangle | Your fastest lap of the last 365 days. Where that is the lap already in Best, the next fastest inside the window. |
+| Best this year | Triangle | Your fastest lap of the last 365 days. Where that is the lap already in Best, the next fastest inside the window — **and the slot says so**, because a rider offered two slots and given one answer twice would be right to think it broken. |
 | Most recent | Diamond | The last route length you completed here. Where that is already shown, the one before it. |
 | Picked ride | Pentagon | A ride you chose with **Race this ride**. |
 | Friend | Semicircle | Reserved. Not built. |
@@ -807,6 +807,69 @@ A workout can be ridden with the trainer holding the target, or with the rider h
 5. **Everything else is unchanged.** Steps still advance on time, the scale still applies to the displayed target, a `free` step is simply a no-op, and TSS still comes from recorded power.
 
    One thing improves. With ERG on, a ride's actual TSS is close to the planned figure by construction, because the trainer made it so. With ERG off the recorded figure measures the rider, and the plan chart's accent-over-grey stops being a formality.
+
+## The summary screen
+
+Unscheduled, and the next thing worth building. Today the summary says whether you beat your
+ghost and by how much. A ride on a loop now carries far more than that and shows none of it.
+
+**Lap times as a list.** A ride stores `lapSplits`, so the figures already exist — the summary
+is where they belong rather than the ride screen, which has nothing to spare and a rider who is
+busy. Show each lap's time, and the ghost's lap beside it where one was raced, so the comparison
+is the point of the table rather than an afterthought.
+
+The two-lap ride on 2026-10-23 is the case to design against: 17:22 then 15:17, where almost all
+of the two minutes came on the flat and eight seconds came on the climb. A list of two numbers
+would not have shown that; a split by section would. Whether the summary goes that far is a
+design question, but the data supports it and the lap list alone does not answer "where did it
+go".
+
+**TSS has nowhere to appear.** It is computed and stored at save, deliberately, because it needs
+the samples. Nothing displays it. The summary is the obvious home.
+
+**The screen has no phone layout**, and no mockup at any size. It is the one screen a rider meets
+at the end of every ride, and on a phone it is still the desktop arrangement.
+
+## Laps are recorded and barely shown
+
+Unscheduled. A ride stores its lap splits, the engine knows which lap you are on, and the ghost
+knows its own lap times. Almost none of it reaches a screen.
+
+**The rides list does not say how many laps a loop took.** A row shows distance, time and average
+power, so eight laps of the Koppenberg and one lap of something 54 km long read alike. The lap
+count is `lapSplits.length` and needs no new data.
+
+**The ride screen shows totals only.** Elapsed and distance count the whole session, so on a loop
+the figures a rider is actually racing — this lap's time and this lap's distance — are the two
+that are missing. The engine already derives both for the ghost's lap-relative clock.
+
+**Ghosts have no list.** Up to four can be racing and the only readout is a gap beside each
+symbol. There is nowhere to see their lap times, or yours against them, while riding. This is the
+same want as the summary's lap table and may be the same component shown in two places — but a
+rider mid-effort has different attention from one reading a summary, so it is not obviously the
+same design.
+
+## The power strip clips hard efforts
+
+Its ceiling is 160 % of FTP — the top of zone 5 — and anything above is drawn flat against it.
+
+Zone 6 has no upper bound. A sprint is routinely three times FTP, and a steep ramp out of a corner
+is more. On the two-lap Koppenberg ride of 2026-10-23, ridden at an FTP of 200, the ceiling sat at
+320 W while the second lap peaked at 566: every effort that mattered arrived as a flat top.
+
+The fix is not simply a higher number. A fixed ceiling high enough for a sprint leaves endurance
+riding squashed into the bottom third, which is the reason the current one is low. Options worth
+drawing before choosing: a ceiling that takes the ride's own maximum, a soft ceiling that
+compresses above zone 5 rather than clipping, or a log scale. The figures are recorded correctly
+either way — this is a drawing fault, not a recording one.
+
+## A heart rate sparkline
+
+Unscheduled, and the open question is where it goes rather than how to draw it.
+
+The power strip owns the band under the profile, and a second strip costs height the phone
+layouts have none of. Three shapes worth drawing: a toggle on the existing strip, heart rate as a
+second muted line inside it, or desktop and tablet only.
 
 ## Phase 5 — Usage and errors
 
