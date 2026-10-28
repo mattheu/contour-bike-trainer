@@ -830,6 +830,47 @@ the samples. Nothing displays it. The summary is the obvious home.
 **The screen has no phone layout**, and no mockup at any size. It is the one screen a rider meets
 at the end of every ride, and on a phone it is still the desktop arrangement.
 
+## Laps are recorded and barely shown
+
+Unscheduled. A ride stores its lap splits, the engine knows which lap you are on, and the ghost
+knows its own lap times. Almost none of it reaches a screen.
+
+**The rides list does not say how many laps a loop took.** A row shows distance, time and average
+power, so eight laps of the Koppenberg and one lap of something 54 km long read alike. The lap
+count is `lapSplits.length` and needs no new data.
+
+**The ride screen shows totals only.** Elapsed and distance count the whole session, so on a loop
+the figures a rider is actually racing — this lap's time and this lap's distance — are the two
+that are missing. The engine already derives both for the ghost's lap-relative clock.
+
+**Ghosts have no list.** Up to four can be racing and the only readout is a gap beside each
+symbol. There is nowhere to see their lap times, or yours against them, while riding. This is the
+same want as the summary's lap table and may be the same component shown in two places — but a
+rider mid-effort has different attention from one reading a summary, so it is not obviously the
+same design.
+
+## The power strip clips hard efforts
+
+Its ceiling is 160 % of FTP — the top of zone 5 — and anything above is drawn flat against it.
+
+Zone 6 has no upper bound. A sprint is routinely three times FTP, and a steep ramp out of a corner
+is more. On the two-lap Koppenberg ride of 2026-10-23, ridden at an FTP of 200, the ceiling sat at
+320 W while the second lap peaked at 566: every effort that mattered arrived as a flat top.
+
+The fix is not simply a higher number. A fixed ceiling high enough for a sprint leaves endurance
+riding squashed into the bottom third, which is the reason the current one is low. Options worth
+drawing before choosing: a ceiling that takes the ride's own maximum, a soft ceiling that
+compresses above zone 5 rather than clipping, or a log scale. The figures are recorded correctly
+either way — this is a drawing fault, not a recording one.
+
+## A heart rate sparkline
+
+Unscheduled, and the open question is where it goes rather than how to draw it.
+
+The power strip owns the band under the profile, and a second strip costs height the phone
+layouts have none of. Three shapes worth drawing: a toggle on the existing strip, heart rate as a
+second muted line inside it, or desktop and tablet only.
+
 ## Phase 5 — Usage and errors
 
 It is in other people's hands now, and nothing comes back. This is the phase that fixes that, and it is **not** the training statistics ruled out of phase 4 — that is a rider learning about themselves, which Strava does better. This is the author learning whether anyone rides the thing and what breaks when they do.
