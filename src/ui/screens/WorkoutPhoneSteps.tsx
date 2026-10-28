@@ -34,8 +34,15 @@ export function WorkoutPhoneSteps({
 
   // The desktop panel's scroll, keyed and centred for the reasons given there: a step is
   // minutes long, so the list moves once when the plan advances and then sits still.
+  //
+  // `instant`, and the container carries no scroll-behavior to be smooth with. The screen
+  // re-renders every second for its clocks, and a smooth scroll does not survive it: the
+  // animation is cancelled by the next tick long before it arrives, so the row the rider
+  // is riding simply stays off screen. Measured on a 24-step session at 390 x 844, where
+  // six consecutive skips moved the list by nothing at all. A cut that lands beats a
+  // slide that is interrupted — and at one move per step there is no travel to smooth.
   useEffect(() => {
-    currentRow.current?.scrollIntoView({ block: 'center' });
+    currentRow.current?.scrollIntoView({ block: 'center', behavior: 'instant' });
   }, [current]);
 
   return (
@@ -45,7 +52,7 @@ export function WorkoutPhoneSteps({
        on a row that clips its own name draws a scrollbar along the foot of the list for
        an overflow nothing can reach. */
     <div
-      className="min-h-0 grow overflow-x-hidden overflow-y-auto overscroll-contain scroll-smooth motion-reduce:scroll-auto"
+      className="min-h-0 grow overflow-x-hidden overflow-y-auto overscroll-contain"
       data-testid="workout-phone-steps"
     >
       {rows.map((row) => (

@@ -11,6 +11,7 @@ import {
   ListHeaderFrame,
   ListRow,
   ListRowFrame,
+  ListSort,
   actionsGutter,
   armedOverflow,
   type ListColumns,
@@ -19,6 +20,7 @@ import { Segmented } from '../components/Segmented';
 import { LABEL, MONO } from '../components/styles';
 import { ABSENT } from '../format';
 import { AlertStrip } from './AlertStrip';
+import { listHeaders, pressSort, sortOptions, sortRows, type SortState } from './list-sort';
 import { Nav, type ListScreen } from './Nav';
 import {
   cancelDelete,
@@ -36,6 +38,8 @@ import {
   DELETE_WORDING,
   LENGTHS,
   LOADS,
+  WORKOUT_SORT,
+  WORKOUT_SORT_INITIAL,
   canDeleteWorkout,
   filterWorkouts,
   lengthLabel,
@@ -48,6 +52,7 @@ import {
   type LoadFilter,
   type WorkoutControls,
   type WorkoutRow,
+  type WorkoutSortKey,
 } from './workouts-list';
 
 /**
@@ -60,7 +65,6 @@ import {
  * lists' figures), both measured at the type in use rather than guessed at.
  */
 const WORKOUTS_COLUMNS: ListColumns = ['160px', '1fr', '88px', '72px', '0px'];
-const LABELS = ['Plan', 'Workout', 'Length', 'Load', ''] as const;
 
 /**
  * This list is the outlier of the three: its rows rest on named buttons rather than
@@ -131,7 +135,16 @@ export function Workouts({
   // One parse per workout per render of the list, which is where the sparkline, the
   // length and the load all come from. Memoised because the plan is parsed from YAML.
   const rows = useMemo(() => workoutRows(workouts, ftpW), [workouts, ftpW]);
-  const shown = useMemo(() => filterWorkouts(rows, { length, load }), [rows, length, load]);
+  // Per list and per visit: a sort is how the rider is reading this screen now, not a
+  // preference, and nothing in the mockups says it outlives a reload.
+  const [sort, setSort] = useState<SortState<WorkoutSortKey>>(WORKOUT_SORT_INITIAL);
+  const onSort = useCallback((key: WorkoutSortKey) => {
+    setSort((state) => pressSort(WORKOUT_SORT, state, key));
+  }, []);
+  const shown = useMemo(
+    () => sortRows(WORKOUT_SORT, filterWorkouts(rows, { length, load }), sort),
+    [rows, length, load, sort],
+  );
 
   // The confirm state machine is ride-delete.ts, which is about an id and two presses
   // rather than about rides. Narrowed to the rows that actually offer Delete, so changing
@@ -157,7 +170,7 @@ export function Workouts({
   );
 
   return (
-    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden page-gutter page-gutter-y">
+    <div className="text-ink flex h-screen flex-col gap-[40px] overflow-hidden max-sm:gap-[18px] page-gutter page-gutter-y">
       <AppHeader
         nav={<Nav value="workouts" onChange={onNavigate} />}
         action={
@@ -166,15 +179,18 @@ export function Workouts({
           </Button>
         }
         onSettings={onOpenProfile}
+        stacked
       />
 
       {/* Cancels the column gap the strip would otherwise sit below, so an alert lands
           directly under the header as it does on the other list screens. */}
       {alert !== null && (
-        <div className="-mt-[40px]">
+        <div className="-mt-[40px] max-sm:-mt-[18px]">
           <AlertStrip alert={alert} onDismiss={clearAlert} onRetry={clearAlert} />
         </div>
       )}
+
+      <ListSort options={sortOptions(WORKOUT_SORT, sort)} value={sort.key} onChange={onSort} />
 
       <div className="-mt-[8px] flex items-end gap-[40px]">
         <div className="flex flex-col gap-[8px]">
@@ -189,7 +205,7 @@ export function Workouts({
 
       <div className="flex min-h-0 grow flex-col">
         <ListHeaderFrame actionsWidth={WORKOUTS_ACTIONS}>
-          <ListHeader columns={WORKOUTS_COLUMNS} labels={LABELS} />
+          <ListHeader columns={WORKOUTS_COLUMNS} cells={listHeaders(WORKOUT_SORT, sort, onSort)} />
         </ListHeaderFrame>
         <div className="min-h-0 overflow-y-auto">
           {shown.map((row) => (

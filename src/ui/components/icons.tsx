@@ -2,7 +2,7 @@
  * The ride controls' glyphs.
  *
  * design/DESIGN.md > Screen rules: on a phone every ride control is an icon — pause, end,
- * view, zoom, steps, settings — drawn at 1.25 px on a 16 px box. The paths are read off
+ * view, zoom, steps, skip, settings — drawn at 1.25 px on a 16 px box. The paths are read off
  * design/mockups/icons.html rather than redrawn, so a glyph means the same thing in the
  * build as it does in the design. That guide is the one source: a screen mockup drawing
  * an older version of a glyph is the screen being out of date, not a second opinion.
@@ -63,11 +63,11 @@ export function MapIcon({ size }: { size?: IconSize }) {
 }
 
 /**
- * A ridge over its baseline, shown while the map is up.
+ * A line chart over its baseline, shown while the map is up.
  *
- * An open line and a separate rule rather than one closed shape: the profile chart draws
- * a ridge against an axis, and a glyph that closed the ridge into a silhouette was a
- * mountain rather than the chart it stands for.
+ * design/DESIGN.md > Screen rules names this one a line chart rather than a profile: an
+ * open line that falls as well as rises, over a separate rule. A closed silhouette that
+ * only climbed would be a mountain, which is a place rather than a reading.
  */
 export function ProfileIcon({ size }: { size?: IconSize }) {
   return (
@@ -125,12 +125,28 @@ export function PlanIcon({ size }: { size?: IconSize }) {
 }
 
 /**
- * A gear: a toothed outline round a hub, not a hub with spokes. Drawn on its own 18 px
- * box rather than the 16 the rest share, because the teeth run to the corners and the
- * same shape inside a 16 px viewBox loses them to the edge.
+ * A play triangle against a bar: skip to the next step.
+ *
+ * The bar is what makes it a skip rather than a start — a triangle on its own is the
+ * control this screen does not have, because a workout is already running.
+ */
+export function SkipIcon({ size }: { size?: IconSize }) {
+  return (
+    <Glyph size={size}>
+      <path d="M3,3 L10.5,8 L3,13 Z" />
+      <path d="M13,3 V13" />
+    </Glyph>
+  );
+}
+
+/**
+ * A six-tooth cog outline round a hub, never rays: design/DESIGN.md > Screen rules draws
+ * the line there because a hub with spokes reads as a sun. Drawn on its own 18 px box
+ * rather than the 16 the rest share, because the teeth run to the corners and the same
+ * shape inside a 16 px viewBox loses them to the edge.
  *
  * No round cap, since the outline is closed and has no ends to cap — only the join, which
- * is what keeps twelve teeth from coming to twelve points.
+ * is what keeps six teeth from coming to six points.
  */
 export function SettingsIcon({ size = 18 }: { size?: IconSize }) {
   return (

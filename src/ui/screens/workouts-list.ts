@@ -5,6 +5,7 @@ import { WorkoutParseError, parseWorkout } from '../../workout/parse';
 import { plannedPowerSeries, workoutFtp } from '../../workout/runner';
 import type { FoldedFigure } from '../components/ListRow';
 import type { SegmentedOption } from '../components/Segmented';
+import type { SortSpec, SortState } from './list-sort';
 
 /**
  * The workouts list's derived figures and its two filters.
@@ -89,12 +90,39 @@ export function workoutRow(stored: StoredWorkout, riderFtpW: number): WorkoutRow
   }
 }
 
-/** Alphabetical, as the routes list is: a small set with no meaningful intrinsic order. */
+/** Every record as a row, in no particular order: WORKOUT_SORT below decides that. */
 export function workoutRows(workouts: readonly StoredWorkout[], riderFtpW: number): WorkoutRow[] {
-  return [...workouts]
-    .sort((a, b) => a.name.localeCompare(b.name))
-    .map((workout) => workoutRow(workout, riderFtpW));
+  return workouts.map((workout) => workoutRow(workout, riderFtpW));
 }
+
+export type WorkoutSortKey = 'name' | 'length' | 'load';
+
+/** Alphabetical, as the routes list is: a small set with no meaningful intrinsic order. */
+export const WORKOUT_SORT_INITIAL: SortState<WorkoutSortKey> = { key: 'name', direction: 'asc' };
+
+/**
+ * The three columns a workout sorts by, in the order they are drawn. Plan leads the grid
+ * and the fifth slot is empty, and neither is one of them.
+ *
+ * A workout whose plan will not parse has no length and no load — not a nought, nothing
+ * at all — so both are null and the row sorts last whichever way the arrow points. It
+ * stays in the list under every sort for the reason it survives every filter: the thing
+ * that fixes it is opening it, and a row nobody can find is a row nobody can fix.
+ */
+export const WORKOUT_SORT: SortSpec<WorkoutSortKey, WorkoutRow> = {
+  slots: [
+    'Plan',
+    { key: 'name', label: 'Workout', short: 'Name', value: (row) => row.name },
+    {
+      key: 'length',
+      label: 'Length',
+      value: (row) => (row.status === 'ok' ? row.totalDurationS : null),
+    },
+    { key: 'load', label: 'Load', value: (row) => (row.status === 'ok' ? row.tss : null) },
+    '',
+  ],
+  tiebreak: (row) => row.name,
+};
 
 export type LengthFilter = 'any' | 'short' | 'medium' | 'long';
 export type LoadFilter = 'any' | 'light' | 'moderate' | 'hard';

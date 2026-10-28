@@ -2,6 +2,7 @@ import type { Ride } from '../../storage/types';
 import type { FoldedFigure } from '../components/ListRow';
 import type { SegmentedOption } from '../components/Segmented';
 import { ABSENT, distance, duration, num } from '../format';
+import type { SortSpec, SortState } from './list-sort';
 
 /**
  * Filtering, grouping and the period header for the rides list. Storage deliberately
@@ -137,7 +138,11 @@ export function selectType(filter: RideFilter, type: RideType): RideFilter {
   };
 }
 
-/** Newest first, which is the only order the list is ever shown in. */
+/**
+ * What the four filters leave, in no particular order: the screen sorts what comes back,
+ * and since the columns became sortable there is exactly one place that decides an order
+ * — see RIDE_SORT below.
+ */
 export function filterRides(
   rides: readonly Ride[],
   filter: RideFilter,
@@ -148,8 +153,7 @@ export function filterRides(
     .filter((ride) => matchesType(ride, filter.type))
     .filter((ride) => filter.routeId === ALL_ROUTES || ride.routeId === filter.routeId)
     .filter((ride) => filter.workoutId === ALL_WORKOUTS || ride.workoutId === filter.workoutId)
-    .filter((ride) => from === null || new Date(ride.startedAt) >= from)
-    .sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+    .filter((ride) => from === null || new Date(ride.startedAt) >= from);
 }
 
 /** The routes that actually appear in the history, for the filter select. */
@@ -232,3 +236,31 @@ export function rideTitle(ride: Ride): { title: string; meta: string | null } {
   if (ride.workoutName !== null) return { title: ride.workoutName, meta: 'Workout' };
   return { title: 'Free ride', meta: 'No route' };
 }
+
+export type RideSortKey = 'date' | 'route' | 'distance' | 'time' | 'power';
+
+/** Newest first, which is how a history is read and what this list always opened on. */
+export const RIDE_SORT_INITIAL: SortState<RideSortKey> = { key: 'date', direction: 'desc' };
+
+/**
+ * The five columns a ride sorts by, in the order they are drawn. All five, where the
+ * routes and workouts lists have a column that does not sort: this list's lead column is
+ * a date rather than a thumbnail, and a date is the thing most worth ordering by.
+ *
+ * Date is the one column whose first press is descending. Every other starts ascending,
+ * because a measurement reads up and a history reads back.
+ *
+ * Power is null on a ride that recorded none, which is the absent case: it sorts last
+ * whichever way the arrow points rather than claiming nought watts.
+ */
+export const RIDE_SORT: SortSpec<RideSortKey, Ride> = {
+  slots: [
+    { key: 'date', label: 'Date', initial: 'desc', value: (ride) => ride.startedAt },
+    { key: 'route', label: 'Route', short: 'Name', value: (ride) => rideTitle(ride).title },
+    { key: 'distance', label: 'Distance', value: (ride) => ride.distanceM },
+    { key: 'time', label: 'Time', value: (ride) => ride.elapsedS },
+    { key: 'power', label: 'Avg power', short: 'Power', value: (ride) => ride.avgPowerW },
+  ],
+  // The one field every ride has and no two share: ISO, so it reads oldest first.
+  tiebreak: (ride) => ride.startedAt,
+};

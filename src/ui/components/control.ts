@@ -76,6 +76,14 @@ export const ICON = `${CONTROL_BOX} z-[1] border-hairline text-ink ${HOVER_INK}`
  */
 export const SELECTED = `${BASE} z-[2] cursor-default border-ink text-ink bg-ink/10`;
 
+/**
+ * An icon button that is on — the phone workout's ERG toggle. SELECTED's faint fill and
+ * ink edge, but still pressable: this is a two-state control a rider turns off again,
+ * where a Segmented member can only be left by choosing its neighbour. So it keeps the
+ * cursor and the hover, and aria-pressed rather than the group's one-of-N semantic.
+ */
+export const ICON_PRESSED = `${CONTROL_BOX} z-[2] border-ink text-ink bg-ink/10 ${HOVER_INK}`;
+
 /** 48 px tall on desktop and tablet, 44 on phones. */
 export const CONTROL_SIZE = 'text-label min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px]';
 

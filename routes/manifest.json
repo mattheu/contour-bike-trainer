@@ -53,6 +53,33 @@
       "description": "A circuit on the hill above Barcelona, climbing to the castle and dropping back through the park. The Volta a Catalunya has finished here every year since 2013, seven laps of it.",
       "totalDistanceM": 7833,
       "totalAscentM": 205
+    },
+    {
+      "id": "harrogate",
+      "name": "Harrogate",
+      "region": "North Yorkshire, UK",
+      "file": "harrogate.gpx",
+      "description": "A circuit through Harrogate, rolling until it sharpens: Cornwall Road climbs 700 m to 11 % after eight kilometres. The 2019 World Championships were decided on it.",
+      "totalDistanceM": 14012,
+      "totalAscentM": 225
+    },
+    {
+      "id": "zurich",
+      "name": "Zürich",
+      "region": "Zürich, Switzerland",
+      "file": "zurich.gpx",
+      "description": "A circuit east of the city over two climbs — the Zürichbergstrasse at 8 %, then Witikon, longer and shallower. The 2024 World Championships lapped it seven times.",
+      "totalDistanceM": 26854,
+      "totalAscentM": 474
+    },
+    {
+      "id": "otley",
+      "name": "Otley",
+      "region": "Wharfedale, UK",
+      "file": "otley.gpx",
+      "description": "Short town-centre circuit used for the annual crit race held in the Yorkshire market town of Otley.",
+      "totalDistanceM": 2321,
+      "totalAscentM": 24
     }
   ]
 }

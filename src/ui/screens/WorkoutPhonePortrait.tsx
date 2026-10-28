@@ -2,16 +2,23 @@ import { useMemo, useRef } from 'react';
 import { PHONE_PLAN_LABEL_GUTTER_PX, PlanChart, phonePlanHeight } from '../charts';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
-import { EndIcon, PauseIcon, PlanIcon, SettingsIcon, StepsIcon } from '../components/icons';
+import {
+  EndIcon,
+  PauseIcon,
+  PlanIcon,
+  SettingsIcon,
+  SkipIcon,
+  StepsIcon,
+} from '../components/icons';
 import { PhoneIntervalBand, PhonePrimary, PhoneStat } from '../components/PhoneReading';
 import { LABEL, MONO } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
 import { useViewSwipe } from './use-view-swipe';
-import { workoutViewAfterSwipe, workoutViewToggle } from './phone-workout';
+import { ergToggle, workoutViewAfterSwipe, workoutViewToggle } from './phone-workout';
 import { useElementHeight, useElementWidth } from './use-element-width';
 import type { WorkoutArrangementProps } from './workout-arrangement';
-import { stepsHeading } from './workout-view';
+import { canSkip, stepsHeading } from './workout-view';
 import { WorkoutPhoneSteps } from './WorkoutPhoneSteps';
 
 /**
@@ -38,6 +45,8 @@ export function WorkoutPhonePortrait({
   onPause,
   onEnd,
   onSettings,
+  onErgModeChange,
+  onSkipStep,
   onDismissAlert,
   onRetryTrainer,
 }: WorkoutArrangementProps) {
@@ -53,6 +62,7 @@ export function WorkoutPhonePortrait({
   const chartWidth = (width ?? 358) - PHONE_PLAN_LABEL_GUTTER_PX;
 
   const toggle = workoutViewToggle(view);
+  const erg = ergToggle(workout.ergMode);
   const swipe = useViewSwipe(workoutViewAfterSwipe, onView);
 
   return (
@@ -134,22 +144,52 @@ export function WorkoutPhonePortrait({
         )}
       </div>
 
-      {/* The view toggle takes the slot the ride screen gives its view and zoom icons —
-          what you are looking at on the left, what the session is doing on the right.
+      {/* The foot reads left to right as what you are looking at, what you are asking the
+          plan to do, and what the session is doing — the ride screen's view-and-zoom slot
+          with the plan's own two controls between it and Pause | End. The 12 px gap is the
+          one distance DESIGN.md allows between controls that are not in a group, which is
+          what keeps ERG | Skip from reading as a third member of the view toggle.
 
-          Pause and End as glyphs, and grey: design/DESIGN.md takes the accent off a
-          control once the session is under way — the data owns the colour from then on. */}
+          Everything here is grey: design/DESIGN.md takes the accent off a control once the
+          session is under way — the data owns the colour from then on. ERG says it is on
+          with the ink edge and faint fill a chosen control carries, never with accent. */}
       <div className="mt-[18px] flex shrink-0 items-center justify-between">
-        <IconButton
-          label={toggle.label}
-          title={toggle.label}
-          size={44}
-          onClick={() => {
-            onView(toggle.next);
-          }}
-        >
-          {toggle.glyph === 'steps' ? <StepsIcon /> : <PlanIcon />}
-        </IconButton>
+        <div className="flex items-center gap-[12px]">
+          <IconButton
+            label={toggle.label}
+            title={toggle.label}
+            size={44}
+            onClick={() => {
+              onView(toggle.next);
+            }}
+          >
+            {toggle.glyph === 'steps' ? <StepsIcon /> : <PlanIcon />}
+          </IconButton>
+          <ButtonGroup label="Plan">
+            <IconButton
+              label={erg.label}
+              title={erg.label}
+              size={44}
+              pressed={erg.pressed}
+              onClick={() => {
+                onErgModeChange(erg.next);
+              }}
+            >
+              {/* A word rather than a glyph: ERG is what the mode is called, and no
+                  drawing of it would be read faster than the three letters. */}
+              <span className="text-micro tracking-[0.08em]">ERG</span>
+            </IconButton>
+            <IconButton
+              label="Skip step"
+              title="Skip step"
+              size={44}
+              disabled={!canSkip(workout)}
+              onClick={onSkipStep}
+            >
+              <SkipIcon />
+            </IconButton>
+          </ButtonGroup>
+        </div>
         <ButtonGroup label="Workout">
           <IconButton label={pauseLabel} size={44} onClick={onPause}>
             <PauseIcon />

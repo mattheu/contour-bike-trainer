@@ -65,8 +65,14 @@
 
   /* design/DESIGN.md > Routes: the width a list row's three number columns need. Below
      it they fold into one line under the description — design/mockups/routes-tablet.html.
-     A named breakpoint rather than an arbitrary one, because three screens fold on it. */
-  --breakpoint-wide: 1100px;
+     A named breakpoint rather than an arbitrary one, because three screens fold on it.
+
+     In rem, not px, and that is load-bearing: Tailwind's own breakpoints are rem, and it
+     cannot order a px one against them. Declared as 1100px this sorted ahead of sm, so
+     every `wide:` rule was emitted before every `sm:` rule and an `sm:` utility silently
+     beat the `wide:` one it was meant to yield to. 68.75rem is the same 1100 px at the
+     default root size, and sorts where it belongs. */
+  --breakpoint-wide: 68.75rem;
 
   /* design/DESIGN.md: ten sizes, nothing in between. */
   --text-hero: 108px;
