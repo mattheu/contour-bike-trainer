@@ -30,10 +30,19 @@ import { areaPath, polylinePath, type Pt } from './path';
  *
  * That is the trade the design makes on purpose: the strip shows shape, the hero figures
  * carry the watts, and an over-the-top effort reads as a needle rather than rescaling
- * everything under it. If hard efforts start reading as flat tops in practice, this is the
- * dial — nothing else in the strip needs to move with it.
+ * everything under it.
+ *
+ * **Tuned to 130 %, up from the design's 110 %, on a measured ride rather than a guess.**
+ * Two laps of the Koppenberg at FTP 200: the climb held 218-223 W for five and a half
+ * minutes a lap, so at 110 % eleven of the ride's thirty-three minutes sat on the rule —
+ * the part of the lap the rider cares about was the part the strip stopped resolving. The
+ * climb needs about 115 % to sit inside the trace at all and 125-130 % to sit near its top
+ * with headroom. At 130 % an endurance ride at 150 W still uses 58 % of the depth, which
+ * is the thing 110 % was protecting, and a genuine sprint still needles and pins.
+ *
+ * Still the dial, and nothing else in the strip moves with it.
  */
-export const POWER_CEILING_FRACTION_OF_FTP = 1.1;
+export const POWER_CEILING_FRACTION_OF_FTP = 1.3;
 
 /** design/DESIGN.md: heart rate runs 80 to 200 bpm, fixed. */
 export const HEART_RATE_FLOOR_BPM = 80;

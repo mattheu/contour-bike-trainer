@@ -22,6 +22,9 @@ import {
 
 const WIDTH = 944;
 const FTP = 200;
+/** Derived, never typed in: the ceiling is a declared dial, so the suite has to survive
+ * it moving. Only the behaviour either side of it is fixed. */
+const CEILING_W = FTP * POWER_CEILING_FRACTION_OF_FTP;
 const END = 10_000;
 
 function strip(
@@ -73,14 +76,16 @@ describe('strip metrics', () => {
 });
 
 describe('the power scale', () => {
-  it('runs nought to 110 % of FTP over the trace, fixed', () => {
+  it('runs nought to the ceiling fraction of FTP over the trace, fixed', () => {
     const geometry = strip([0, 100]);
-    expect(POWER_CEILING_FRACTION_OF_FTP).toBe(1.1);
-    expect(geometry.ceiling).toBeCloseTo(220, 9);
+    expect(geometry.ceiling).toBeCloseTo(CEILING_W, 9);
     expect(geometry.floor).toBe(0);
     expect(geometry.yFor(0)).toBeCloseTo(geometry.baselineY, 9);
-    expect(geometry.yFor(220)).toBeCloseTo(geometry.traceTopY, 9);
-    expect(geometry.yFor(110)).toBeCloseTo(geometry.baselineY - DESKTOP_STRIP.tracePx / 2, 9);
+    expect(geometry.yFor(CEILING_W)).toBeCloseTo(geometry.traceTopY, 9);
+    expect(geometry.yFor(CEILING_W / 2)).toBeCloseTo(
+      geometry.baselineY - DESKTOP_STRIP.tracePx / 2,
+      9,
+    );
   });
 
   it('is never fitted to the data, so a flat ride draws flat', () => {
@@ -95,23 +100,23 @@ describe('the power scale', () => {
 
   it('needles up through the caption band above the ceiling rather than flattening at it', () => {
     const geometry = strip([0, 100]);
-    const over = geometry.yFor(260);
+    const overBy = 40;
+    const over = geometry.yFor(CEILING_W + overBy);
     expect(over).toBeLessThan(geometry.traceTopY);
     expect(over).toBeGreaterThan(0);
     // The same watt is the same height either side of the ceiling: one linear scale.
-    const perWatt = DESKTOP_STRIP.tracePx / 220;
-    expect(geometry.traceTopY - over).toBeCloseTo(40 * perWatt, 9);
+    const perWatt = DESKTOP_STRIP.tracePx / CEILING_W;
+    expect(geometry.traceTopY - over).toBeCloseTo(overBy * perWatt, 9);
   });
 
   it('clips a sprint at the top rule rather than rescaling the strip', () => {
     const geometry = strip([0, 100]);
     // 22 px of band on 28 px of trace: the rule is reached a little under twice the ceiling.
-    const pinsAt = 220 * (1 + DESKTOP_STRIP.bandPx / DESKTOP_STRIP.tracePx);
-    expect(pinsAt).toBeCloseTo(392.86, 1);
+    const pinsAt = CEILING_W * (1 + DESKTOP_STRIP.bandPx / DESKTOP_STRIP.tracePx);
     expect(geometry.yFor(pinsAt)).toBeCloseTo(0, 6);
-    expect(geometry.yFor(1000)).toBe(0);
+    expect(geometry.yFor(pinsAt * 2)).toBe(0);
     expect(geometry.yFor(2000)).toBe(0);
-    expect(geometry.ceiling).toBeCloseTo(220, 9);
+    expect(geometry.ceiling).toBeCloseTo(CEILING_W, 9);
   });
 
   it('puts a trainer reporting nought watts on the baseline, not off the bottom', () => {
