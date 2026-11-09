@@ -115,12 +115,19 @@ export interface RideFilter {
   period: Period;
 }
 
-/** What the screen opens on: everything ridden this month. */
+/**
+ * What the screen opens on: everything, unfiltered.
+ *
+ * The period opened on the month while every other field opened on all, so a rider whose
+ * last ride was five weeks ago met an empty history. A filter that hides the thing you
+ * came to look at is a worse first impression than a long list, and the list is sorted
+ * newest first anyway — this month's rides are already at the top of it.
+ */
 export const INITIAL_RIDE_FILTER: RideFilter = {
   type: 'all',
   routeId: ALL_ROUTES,
   workoutId: ALL_WORKOUTS,
-  period: 'month',
+  period: 'all',
 };
 
 /**
