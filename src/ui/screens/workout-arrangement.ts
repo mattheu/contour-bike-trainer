@@ -1,4 +1,5 @@
 import type { ErgMode } from '../../storage/types';
+import type { TrendSamples } from '../charts';
 import type { RideSnapshot, WorkoutSnapshot } from '../store';
 import type { WorkoutView } from './phone-workout';
 import type { LadderView } from './ride-view';
@@ -41,6 +42,15 @@ export interface WorkoutArrangementProps {
 
   /** Every step the session will ride, as the Steps panel and the phone list show them. */
   rows: readonly StepRow[];
+
+  /**
+   * How long the session will actually be ridden for, in seconds: the plan chart's x-axis
+   * and the trend strips' both, so the three charts in the block cannot disagree about
+   * where the session ends.
+   */
+  planS: number;
+  /** What the rider actually produced, on that same time axis. See trendSamplesByTime. */
+  trends: TrendSamples;
 
   /**
    * The plan chart or the step list. A phone has room for one, and the desktop

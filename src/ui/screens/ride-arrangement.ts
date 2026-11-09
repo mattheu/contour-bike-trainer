@@ -5,9 +5,9 @@ import type { Route } from '../../route/types';
 import type {
   ElevationProfileHandle,
   MapZoom,
-  PowerSample,
-  PowerStripHandle,
   RouteMapHandle,
+  TrendSamples,
+  TrendStripsHandle,
 } from '../charts';
 import type { RideSnapshot } from '../store';
 import type { PhoneView } from './phone-ride';
@@ -37,8 +37,8 @@ export interface RideArrangementProps {
   climbs: readonly Climb[];
   /** The projected zoom window, or null on the whole-route view. */
   window: ProfileWindow | null;
-  /** The recorder's series, offset to the current lap. */
-  samples: readonly PowerSample[];
+  /** The recorder's power and heart rate, offset to the current lap. */
+  samples: TrendSamples;
   ftpW: number;
 
   /** The route name, or the workout's. */
@@ -66,7 +66,7 @@ export interface RideArrangementProps {
   /** The handles the ride screen's clock writes to. Shared, never duplicated. */
   profileRef: RefObject<ElevationProfileHandle | null>;
   mapRef: RefObject<RouteMapHandle | null>;
-  stripRef: RefObject<PowerStripHandle | null>;
+  stripRef: RefObject<TrendStripsHandle | null>;
 
   onProfileHover: (distanceM: number | null) => void;
   onMapHover: (distanceM: number | null) => void;

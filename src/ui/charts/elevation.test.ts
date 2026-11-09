@@ -7,6 +7,7 @@ import {
   MAX_RELIEF_FRACTION,
   MIN_RELIEF_FRACTION,
   VERTICAL_EXAGGERATION,
+  distanceTicks,
   elevationGeometry,
   elevationScale,
   tickStepM,
@@ -196,11 +197,14 @@ describe('elevationGeometry, route view', () => {
     expect(geometry.baselineY).toBe(HEIGHT);
   });
 
+  // The ticks themselves are drawn under the strips below the profile — see strips.ts —
+  // but the rule that places them is still this chart's axis.
   it('ticks every 5 km, alternating long and short, with an end label only', () => {
+    const ticks = distanceTicks({ startM: 0, endM: varied.totalDistanceM, width: WIDTH });
     const expected = Math.floor(varied.totalDistanceM / 5000) + 1;
-    expect(geometry.ticks).toHaveLength(expected);
-    expect(geometry.ticks.map((tick) => tick.long).slice(0, 4)).toEqual([true, false, true, false]);
-    expect(geometry.ticks[1]?.x).toBeCloseTo((5000 / varied.totalDistanceM) * WIDTH, 6);
+    expect(ticks).toHaveLength(expected);
+    expect(ticks.map((tick) => tick.long).slice(0, 4)).toEqual([true, false, true, false]);
+    expect(ticks[1]?.x).toBeCloseTo((5000 / varied.totalDistanceM) * WIDTH, 6);
     expect(geometry.startLabel).toBeNull();
     expect(geometry.endLabel).toBe(`${VARIED_TOTAL_M / 1000}.0 km`);
     expect(geometry.showEndCircles).toBe(true);
@@ -276,8 +280,9 @@ describe('elevationGeometry, zoom windows', () => {
 
     expect(geometry.xFor(window.startM)).toBe(0);
     expect(geometry.xFor(window.endM)).toBeCloseTo(WIDTH, 9);
-    expect(geometry.ticks).toHaveLength(6);
-    expect(geometry.ticks[1]?.x).toBeCloseTo(WIDTH / 5, 6);
+    const ticks = distanceTicks({ startM: window.startM, endM: window.endM, width: WIDTH });
+    expect(ticks).toHaveLength(6);
+    expect(ticks[1]?.x).toBeCloseTo(WIDTH / 5, 6);
   });
 
   it('labels the window start and drops the route view end circles', () => {
@@ -289,8 +294,10 @@ describe('elevationGeometry, zoom windows', () => {
   });
 
   it('ticks every 100 m at the 500 m zoom', () => {
-    const { geometry } = windowed(12000, WINDOW_NARROW_M);
-    expect(geometry.ticks).toHaveLength(6);
+    const { window } = windowed(12000, WINDOW_NARROW_M);
+    expect(distanceTicks({ startM: window.startM, endM: window.endM, width: WIDTH })).toHaveLength(
+      6,
+    );
   });
 
   it('renders the same 250 m bins wider rather than re-binning', () => {

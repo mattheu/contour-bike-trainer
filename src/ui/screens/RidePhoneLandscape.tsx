@@ -1,5 +1,10 @@
 import { useMemo, useRef } from 'react';
-import { PHONE_METRICS, PowerStrip, phoneLandscapeChartStack } from '../charts';
+import {
+  PHONE_LANDSCAPE_STRIP,
+  PHONE_METRICS,
+  TrendStrips,
+  phoneLandscapeChartStack,
+} from '../charts';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
 import {
@@ -67,7 +72,8 @@ export function RidePhoneLandscape({
   const chartAreaRef = useRef<HTMLDivElement>(null);
   const width = useElementWidth(viewRef);
   const areaHeight = useElementHeight(chartAreaRef);
-  const stack = useMemo(() => phoneLandscapeChartStack(areaHeight), [areaHeight]);
+  // The map is drawn 6 px taller than the profile here, so the view is part of the sum.
+  const stack = useMemo(() => phoneLandscapeChartStack(areaHeight, view), [areaHeight, view]);
   const chartWidth = width ?? 796;
 
   const toggle = viewToggle(view);
@@ -157,11 +163,9 @@ export function RidePhoneLandscape({
 
       {/* min-h-0 so the area measures the space the charts have rather than the charts it
           contains; justify-end so the slack falls between the toggles and the view, which
-          is the clear band the mockups draw there. */}
-      <div
-        ref={chartAreaRef}
-        className="flex min-h-0 grow flex-col justify-end gap-[14px] pb-[4px]"
-      >
+          is the clear band the mockups draw there. No row gap: the view's baseline is the
+          power strip's top rule. design/DESIGN.md > Trend strips. */}
+      <div ref={chartAreaRef} className="flex min-h-0 grow flex-col justify-end pb-[4px]">
         <div
           ref={viewRef}
           data-testid="phone-view"
@@ -194,18 +198,18 @@ export function RidePhoneLandscape({
             />
           )}
         </div>
-        {/* The strip shares the profile's x-axis, so it shares its width exactly — and
-            stays under the map too, which is the one chart on the screen that does not
-            have the ride's power anywhere in it. */}
-        <PowerStrip
+        {/* The strips share the profile's x-axis, so they share its width exactly — and
+            stay under the map too, which is the one chart on the screen that does not have
+            the ride's power anywhere in it. */}
+        <TrendStrips
           ref={stripRef}
           samples={samples}
           ftpW={ftpW}
-          startM={window?.startM ?? 0}
-          endM={window?.endM ?? route.totalDistanceM}
-          distanceM={0}
+          startAt={window?.startM ?? 0}
+          endAt={window?.endM ?? route.totalDistanceM}
           width={chartWidth}
-          height={stack.stripHeight}
+          metrics={PHONE_LANDSCAPE_STRIP}
+          axis="distance"
         />
       </div>
     </div>

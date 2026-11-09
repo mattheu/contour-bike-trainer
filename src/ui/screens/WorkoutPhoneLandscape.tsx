@@ -1,5 +1,11 @@
 import { useMemo, useRef } from 'react';
-import { PHONE_PLAN_LABEL_GUTTER_PX, PlanChart, phoneLandscapePlanHeight } from '../charts';
+import {
+  PHONE_LANDSCAPE_STRIP,
+  PHONE_PLAN_LABEL_GUTTER_PX,
+  PlanChart,
+  TrendStrips,
+  phoneLandscapePlanHeight,
+} from '../charts';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
 import {
@@ -46,6 +52,8 @@ export function WorkoutPhoneLandscape({
   readings,
   ftpW,
   rows,
+  planS,
+  trends,
   view,
   onView,
   pauseLabel,
@@ -173,15 +181,29 @@ export function WorkoutPhoneLandscape({
         {...swipe}
       >
         {view === 'plan' ? (
-          <PlanChart
-            steps={workout.steps}
-            samples={snapshot.samples}
-            ftpW={ftpW}
-            scalePct={workout.scalePct}
-            elapsedS={snapshot.elapsedS}
-            width={chartWidth}
-            height={chartHeight}
-          />
+          /* No row gap: the plan's baseline is the power strip's top rule, and the time
+             axis rules the bottom of all three. design/DESIGN.md > Trend strips. */
+          <div className="flex flex-col">
+            <PlanChart
+              steps={workout.steps}
+              ftpW={ftpW}
+              scalePct={workout.scalePct}
+              elapsedS={snapshot.elapsedS}
+              width={chartWidth}
+              height={chartHeight}
+              phone
+            />
+            <TrendStrips
+              samples={trends}
+              ftpW={ftpW}
+              startAt={0}
+              endAt={planS}
+              width={chartWidth}
+              metrics={PHONE_LANDSCAPE_STRIP}
+              axis="time"
+              at={snapshot.elapsedS}
+            />
+          </div>
         ) : (
           <WorkoutPhoneSteps rows={rows} dense />
         )}

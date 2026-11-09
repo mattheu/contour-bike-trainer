@@ -2,34 +2,35 @@ import { describe, expect, it } from 'vitest';
 import {
   CHART_HEADING_GAP_PX,
   MIN_TABLET_MAP_HEIGHT,
-  TABLET_CHART_GAP_PX,
   TABLET_MAP_HEIGHT,
   TABLET_PROFILE_HEIGHT,
   TABLET_STACK_GAP_PX,
+  TABLET_STRIPS_HEIGHT,
   TABLET_STRIP_HEIGHT,
   tabletChartStack,
   MIN_PHONE_LANDSCAPE_VIEW_HEIGHT,
-  MIN_PHONE_STRIP_HEIGHT,
   MIN_PHONE_VIEW_HEIGHT,
-  PHONE_CHART_GAP_PX,
-  PHONE_LANDSCAPE_CHART_GAP_PX,
+  PHONE_LANDSCAPE_MAP_HEIGHT,
+  PHONE_LANDSCAPE_PROFILE_HEIGHT,
+  PHONE_LANDSCAPE_STRIPS_HEIGHT,
   PHONE_LANDSCAPE_STRIP_HEIGHT,
-  PHONE_LANDSCAPE_VIEW_HEIGHT,
   phoneLandscapeChartStack,
+  PHONE_STRIPS_HEIGHT,
   PHONE_STRIP_HEIGHT,
   PHONE_VIEW_HEIGHT,
   phoneChartStack,
   CHART_HEADING_PX,
   CHART_ROW_GAP_PX,
-  CHART_STACK_GAP_PX,
+  DESKTOP_STRIPS_HEIGHT,
+  DESKTOP_STRIP_HEIGHT,
   MIN_MAP_WIDTH,
   MIN_PROFILE_HEIGHT,
-  MIN_STRIP_HEIGHT,
   MIN_PLAN_HEIGHT,
   MIN_PLAN_WIDTH,
   MIN_PROFILE_WIDTH,
   MIN_STEPS_WIDTH,
   MOCKUP_MAP_WIDTH,
+  MOCKUP_PLAN_HEIGHT,
   MOCKUP_PROFILE_HEIGHT,
   MOCKUP_PROFILE_WIDTH,
   MOCKUP_STEPS_WIDTH,
@@ -37,7 +38,6 @@ import {
   PLAN_HEADING_GAP_PX,
   PLAN_HEADING_PX,
   PLAN_LABEL_GUTTER_PX,
-  POWER_STRIP_HEIGHT,
   chartRowLayout,
   chartStackHeights,
   planChartHeight,
@@ -141,44 +141,31 @@ describe('chartRowLayout', () => {
 });
 
 describe('chartStackHeights', () => {
+  /** The chrome inside the measured area: the chart heading and the gap under it. */
+  const CHROME = CHART_HEADING_PX + CHART_HEADING_GAP_PX;
+
   it('gives the drawn heights at the height the design was drawn for', () => {
-    // 220 + 74 plus the chrome that sits inside the measured area.
-    const drawn = MOCKUP_PROFILE_HEIGHT + POWER_STRIP_HEIGHT;
-    const area = drawn + CHART_HEADING_PX + CHART_HEADING_GAP_PX + CHART_STACK_GAP_PX;
+    // design/mockups/ride.html: a 220 px profile over two 50 px strips, flush.
+    const area = MOCKUP_PROFILE_HEIGHT + DESKTOP_STRIPS_HEIGHT + CHROME;
     expect(chartStackHeights(area)).toEqual({
       profileHeight: MOCKUP_PROFILE_HEIGHT,
-      stripHeight: POWER_STRIP_HEIGHT,
-      mapHeight: MOCKUP_PROFILE_HEIGHT + CHART_STACK_GAP_PX + POWER_STRIP_HEIGHT,
+      stripHeight: DESKTOP_STRIP_HEIGHT,
+      mapHeight: MOCKUP_PROFILE_HEIGHT + DESKTOP_STRIPS_HEIGHT,
     });
+    expect(DESKTOP_STRIP_HEIGHT).toBe(50);
+    expect(DESKTOP_STRIPS_HEIGHT).toBe(100);
   });
 
-  it('shares what is left in the ratio the design draws', () => {
-    // The heading, its gap and the space above the strip all sit inside the measured
-    // area, so they come out of the budget before either chart gets anything.
+  it('gives the profile whatever the strips did not need, and no gap between them', () => {
     const area = 300;
-    const forCharts = area - (CHART_HEADING_PX + CHART_HEADING_GAP_PX + CHART_STACK_GAP_PX);
     const { profileHeight, stripHeight } = chartStackHeights(area);
-
-    expect(profileHeight + stripHeight).toBe(forCharts);
-    // Within a pixel of the drawn 220:74, which is what rounding allows.
-    const drawnRatio = MOCKUP_PROFILE_HEIGHT / (MOCKUP_PROFILE_HEIGHT + POWER_STRIP_HEIGHT);
-    expect(profileHeight / forCharts).toBeCloseTo(drawnRatio, 2);
+    expect(profileHeight + 2 * stripHeight).toBe(area - CHROME);
   });
 
-  it('shrinks the strip rather than letting it dwarf a squeezed profile', () => {
-    const roomy = chartStackHeights(400);
-    const tight = chartStackHeights(260);
-    expect(tight.stripHeight).toBeLessThan(roomy.stripHeight);
-    expect(tight.stripHeight).toBeGreaterThanOrEqual(MIN_STRIP_HEIGHT);
-  });
-
-  it('hands the slack back to the profile once the strip is on its floor', () => {
-    // A strip pinned at its floor must not leave the space it did not need empty.
-    const area = 212;
-    const forCharts = area - (CHART_HEADING_PX + CHART_HEADING_GAP_PX + CHART_STACK_GAP_PX);
-    const { profileHeight, stripHeight } = chartStackHeights(area);
-    expect(stripHeight).toBe(MIN_STRIP_HEIGHT);
-    expect(profileHeight).toBe(forCharts - MIN_STRIP_HEIGHT);
+  it('holds the strips at 50 px whatever the profile does, because they are type', () => {
+    for (const area of [240, 300, 420, 1000]) {
+      expect(chartStackHeights(area).stripHeight).toBe(DESKTOP_STRIP_HEIGHT);
+    }
   });
 
   it('never takes the profile below the height a gradient can be read off', () => {
@@ -187,10 +174,10 @@ describe('chartStackHeights', () => {
     expect(chartStackHeights(-50).profileHeight).toBe(MIN_PROFILE_HEIGHT);
   });
 
-  it('matches the map to the profile stack so the two columns align', () => {
+  it('matches the map to the whole stack so the two columns align', () => {
     for (const area of [240, 300, 420, 1000]) {
       const { profileHeight, stripHeight, mapHeight } = chartStackHeights(area);
-      expect(mapHeight).toBe(profileHeight + CHART_STACK_GAP_PX + stripHeight);
+      expect(mapHeight).toBe(profileHeight + 2 * stripHeight);
     }
   });
 
@@ -200,16 +187,12 @@ describe('chartStackHeights', () => {
   });
 
   it('keeps growing on a tall screen rather than leaving centred whitespace', () => {
-    // No ceiling: a turbo screen sits further away than a desk one, so the charts take
-    // the room they are given. The ratio holds all the way up.
+    // No ceiling: a turbo screen sits further away than a desk one, so the profile takes
+    // the room it is given — and the strips, being type, do not.
     const tall = chartStackHeights(900);
     expect(tall.profileHeight).toBeGreaterThan(MOCKUP_PROFILE_HEIGHT);
-    expect(tall.stripHeight).toBeGreaterThan(POWER_STRIP_HEIGHT);
-
-    const forCharts = 900 - (CHART_HEADING_PX + CHART_HEADING_GAP_PX + CHART_STACK_GAP_PX);
-    expect(tall.profileHeight + tall.stripHeight).toBe(forCharts);
-    const drawnRatio = MOCKUP_PROFILE_HEIGHT / (MOCKUP_PROFILE_HEIGHT + POWER_STRIP_HEIGHT);
-    expect(tall.profileHeight / forCharts).toBeCloseTo(drawnRatio, 2);
+    expect(tall.stripHeight).toBe(DESKTOP_STRIP_HEIGHT);
+    expect(tall.profileHeight + DESKTOP_STRIPS_HEIGHT).toBe(900 - CHROME);
   });
 });
 
@@ -260,8 +243,8 @@ describe('planRowLayout', () => {
 });
 
 describe('planChartHeight', () => {
-  it('leaves the heading and the axis figures their own room', () => {
-    const chrome = PLAN_HEADING_PX + PLAN_HEADING_GAP_PX + PLAN_AXIS_PX;
+  it('leaves the heading, the two strips and the axis figures their own room', () => {
+    const chrome = PLAN_HEADING_PX + PLAN_HEADING_GAP_PX + PLAN_AXIS_PX + DESKTOP_STRIPS_HEIGHT;
     expect(planChartHeight(400)).toBe(400 - chrome);
   });
 
@@ -276,8 +259,9 @@ describe('planChartHeight', () => {
   });
 
   it('falls back to the drawn height before anything has been measured', () => {
-    expect(planChartHeight(null)).toBe(MOCKUP_PROFILE_HEIGHT);
-    expect(planChartHeight(Number.NaN)).toBe(MOCKUP_PROFILE_HEIGHT);
+    // design/mockups/workout.html draws the plan at 188 over its two strips.
+    expect(planChartHeight(null)).toBe(MOCKUP_PLAN_HEIGHT);
+    expect(planChartHeight(Number.NaN)).toBe(MOCKUP_PLAN_HEIGHT);
   });
 });
 
@@ -289,26 +273,32 @@ describe('phoneChartStack', () => {
     });
   });
 
-  it('keeps both at their drawn heights where there is room', () => {
+  it('draws the heights design/mockups/phone-portrait-profile.html does', () => {
     const stack = phoneChartStack(400);
-    expect(stack.viewHeight).toBe(PHONE_VIEW_HEIGHT);
-    expect(stack.stripHeight).toBe(PHONE_STRIP_HEIGHT);
+    expect(stack.viewHeight).toBe(200);
+    expect(stack.stripHeight).toBe(36);
+    expect(PHONE_STRIPS_HEIGHT).toBe(72);
   });
 
   it("spends a taller phone's extra height above the chart rather than on it", () => {
     expect(phoneChartStack(460).viewHeight).toBe(phoneChartStack(300).viewHeight);
   });
 
-  it('takes it off the view first on a screen with less', () => {
+  it('takes it off the view on a screen with less, the strips being type', () => {
     const stack = phoneChartStack(260);
-    expect(stack.viewHeight).toBe(260 - PHONE_CHART_GAP_PX - PHONE_STRIP_HEIGHT);
+    expect(stack.viewHeight).toBe(260 - PHONE_STRIPS_HEIGHT);
     expect(stack.stripHeight).toBe(PHONE_STRIP_HEIGHT);
   });
 
-  it('holds both floors on a screen too short for either', () => {
+  it('holds the view floor on a screen too short for it', () => {
     const stack = phoneChartStack(100);
     expect(stack.viewHeight).toBe(MIN_PHONE_VIEW_HEIGHT);
-    expect(stack.stripHeight).toBe(MIN_PHONE_STRIP_HEIGHT);
+    expect(stack.stripHeight).toBe(PHONE_STRIP_HEIGHT);
+  });
+
+  it('fits the block in the 390 x 844 screen it is for', () => {
+    const stack = phoneChartStack(400);
+    expect(stack.viewHeight + PHONE_STRIPS_HEIGHT).toBeLessThanOrEqual(400);
   });
 });
 
@@ -323,41 +313,49 @@ const LANDSCAPE_CHART_AREA = 390 - (16 + 14) - 44 - (18 + 64) - (4 + 32);
 describe('phoneLandscapeChartStack', () => {
   it('draws the mockup before the area has been measured', () => {
     expect(phoneLandscapeChartStack(null)).toEqual({
-      viewHeight: PHONE_LANDSCAPE_VIEW_HEIGHT,
+      viewHeight: PHONE_LANDSCAPE_PROFILE_HEIGHT,
       stripHeight: PHONE_LANDSCAPE_STRIP_HEIGHT,
     });
   });
 
-  it('fits both charts at their drawn heights on the 844 x 390 screen it is for', () => {
-    const stack = phoneLandscapeChartStack(LANDSCAPE_CHART_AREA);
-    expect(stack.viewHeight).toBe(PHONE_LANDSCAPE_VIEW_HEIGHT);
-    expect(stack.stripHeight).toBe(PHONE_LANDSCAPE_STRIP_HEIGHT);
-    expect(stack.viewHeight + PHONE_LANDSCAPE_CHART_GAP_PX + stack.stripHeight).toBeLessThanOrEqual(
-      LANDSCAPE_CHART_AREA,
-    );
+  it('draws the profile at 102 and the map at 108, over two 34 px strips', () => {
+    expect(phoneLandscapeChartStack(LANDSCAPE_CHART_AREA, 'profile')).toEqual({
+      viewHeight: 102,
+      stripHeight: 34,
+    });
+    expect(phoneLandscapeChartStack(LANDSCAPE_CHART_AREA, 'map').viewHeight).toBe(108);
+    expect(PHONE_LANDSCAPE_STRIPS_HEIGHT).toBe(68);
+  });
+
+  it('fits either view and its strips in the area the screen leaves', () => {
+    for (const view of ['profile', 'map'] as const) {
+      const stack = phoneLandscapeChartStack(LANDSCAPE_CHART_AREA, view);
+      expect(stack.viewHeight + PHONE_LANDSCAPE_STRIPS_HEIGHT).toBeLessThanOrEqual(
+        LANDSCAPE_CHART_AREA,
+      );
+    }
   });
 
   it('is shallower than the portrait stack, which is the point of the arrangement', () => {
-    expect(PHONE_LANDSCAPE_VIEW_HEIGHT).toBeLessThan(PHONE_VIEW_HEIGHT);
-    expect(PHONE_LANDSCAPE_CHART_GAP_PX).toBeLessThan(PHONE_CHART_GAP_PX);
+    expect(PHONE_LANDSCAPE_PROFILE_HEIGHT).toBeLessThan(PHONE_VIEW_HEIGHT);
+    expect(PHONE_LANDSCAPE_MAP_HEIGHT).toBeLessThan(PHONE_VIEW_HEIGHT);
+    expect(PHONE_LANDSCAPE_STRIP_HEIGHT).toBeLessThan(PHONE_STRIP_HEIGHT);
   });
 
   it('spends a taller screen above the chart rather than on it', () => {
-    expect(phoneLandscapeChartStack(300).viewHeight).toBe(PHONE_LANDSCAPE_VIEW_HEIGHT);
+    expect(phoneLandscapeChartStack(300).viewHeight).toBe(PHONE_LANDSCAPE_PROFILE_HEIGHT);
   });
 
-  it('takes it off the view first on a shorter one', () => {
-    const stack = phoneLandscapeChartStack(180);
-    expect(stack.viewHeight).toBe(
-      180 - PHONE_LANDSCAPE_CHART_GAP_PX - PHONE_LANDSCAPE_STRIP_HEIGHT,
-    );
+  it('takes it off the view on a shorter one', () => {
+    const stack = phoneLandscapeChartStack(165);
+    expect(stack.viewHeight).toBe(165 - PHONE_LANDSCAPE_STRIPS_HEIGHT);
     expect(stack.stripHeight).toBe(PHONE_LANDSCAPE_STRIP_HEIGHT);
   });
 
-  it('holds both floors on a screen too short for either', () => {
+  it('holds the view floor on a screen too short for it', () => {
     const stack = phoneLandscapeChartStack(80);
     expect(stack.viewHeight).toBe(MIN_PHONE_LANDSCAPE_VIEW_HEIGHT);
-    expect(stack.stripHeight).toBe(MIN_PHONE_STRIP_HEIGHT);
+    expect(stack.stripHeight).toBe(PHONE_LANDSCAPE_STRIP_HEIGHT);
   });
 });
 
@@ -370,13 +368,12 @@ describe('phoneLandscapeChartStack', () => {
  */
 const TABLET_CHART_AREA = 1194 - 88 - 191 - 79 - 24 - 53;
 
-/** What the three charts and the two gaps and the map heading ask for between them. */
-const TABLET_CHROME =
-  TABLET_CHART_GAP_PX + TABLET_STACK_GAP_PX + CHART_HEADING_PX + CHART_HEADING_GAP_PX;
+/** What the gap before the map and its heading ask for; nothing else here is chrome. */
+const TABLET_CHROME = TABLET_STACK_GAP_PX + CHART_HEADING_PX + CHART_HEADING_GAP_PX;
 
 /** The area that fits the drawn stack exactly, which is where giving height up starts. */
 const TABLET_EXACT_FIT =
-  TABLET_PROFILE_HEIGHT + TABLET_STRIP_HEIGHT + TABLET_MAP_HEIGHT + TABLET_CHROME;
+  TABLET_PROFILE_HEIGHT + TABLET_STRIPS_HEIGHT + TABLET_MAP_HEIGHT + TABLET_CHROME;
 
 describe('tabletChartStack', () => {
   it('draws the mockup before the area has been measured', () => {
@@ -399,7 +396,7 @@ describe('tabletChartStack', () => {
       mapHeight: TABLET_MAP_HEIGHT,
     });
     expect(
-      stack.profileHeight + stack.stripHeight + stack.mapHeight + TABLET_CHROME,
+      stack.profileHeight + 2 * stack.stripHeight + stack.mapHeight + TABLET_CHROME,
     ).toBeLessThanOrEqual(TABLET_CHART_AREA);
   });
 
@@ -428,19 +425,21 @@ describe('tabletChartStack', () => {
     expect(stack.stripHeight).toBe(TABLET_STRIP_HEIGHT);
   });
 
-  it('holds all three floors on a screen too short for any of them', () => {
+  it('holds both floors on a screen too short for either chart', () => {
     const stack = tabletChartStack(200);
     expect(stack.mapHeight).toBe(MIN_TABLET_MAP_HEIGHT);
     expect(stack.profileHeight).toBe(MIN_PROFILE_HEIGHT);
-    expect(stack.stripHeight).toBe(MIN_STRIP_HEIGHT);
   });
 
-  // The strip is the last thing to give height up: it is already the shortest chart here.
-  it('leaves the strip alone until both charts above it are at their floors', () => {
-    const toFloors =
-      TABLET_MAP_HEIGHT -
-      MIN_TABLET_MAP_HEIGHT +
-      (TABLET_PROFILE_HEIGHT - MIN_PROFILE_HEIGHT);
-    expect(tabletChartStack(TABLET_EXACT_FIT - toFloors).stripHeight).toBe(TABLET_STRIP_HEIGHT);
+  // The strips never give height up, here or anywhere: they are a caption over a trace.
+  it('holds the strips at the desktop 50 px however short the tablet is', () => {
+    expect(TABLET_STRIP_HEIGHT).toBe(DESKTOP_STRIP_HEIGHT);
+    for (const area of [200, TABLET_EXACT_FIT - 40, TABLET_CHART_AREA, 1400]) {
+      expect(tabletChartStack(area).stripHeight).toBe(TABLET_STRIP_HEIGHT);
+    }
+  });
+
+  it('draws the profile at the 190 px design/mockups/tablet-portrait.html gives it', () => {
+    expect(TABLET_PROFILE_HEIGHT).toBe(190);
   });
 });

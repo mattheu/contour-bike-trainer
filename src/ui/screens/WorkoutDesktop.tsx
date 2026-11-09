@@ -8,6 +8,7 @@ import {
   PLAN_HEADING_GAP_PX,
   PLAN_HEADING_PX,
   PlanChart,
+  TrendStrips,
   planChartHeight,
   planRowLayout,
 } from '../charts';
@@ -61,6 +62,8 @@ export function WorkoutDesktop({
   powerZone,
   heartZone,
   rows,
+  planS,
+  trends,
   hoveredRow,
   hoveredStep,
   onHoverStep,
@@ -240,17 +243,29 @@ export function WorkoutDesktop({
                   )
                 }
               />
-              <PlanChart
-                steps={workout.steps}
-                samples={snapshot.samples}
-                ftpW={ftpW}
-                scalePct={workout.scalePct}
-                elapsedS={snapshot.elapsedS}
-                width={layout.chartWidth}
-                height={chartHeight}
-                onHoverStep={onHoverStep}
-                hoveredStep={hoveredStep}
-              />
+              {/* No row gap: the plan's baseline is the power strip's top rule, and the
+                  time axis rules the bottom of all three. design/DESIGN.md > Trend strips. */}
+              <div className="flex flex-col">
+                <PlanChart
+                  steps={workout.steps}
+                  ftpW={ftpW}
+                  scalePct={workout.scalePct}
+                  elapsedS={snapshot.elapsedS}
+                  width={layout.chartWidth}
+                  height={chartHeight}
+                  onHoverStep={onHoverStep}
+                  hoveredStep={hoveredStep}
+                />
+                <TrendStrips
+                  samples={trends}
+                  ftpW={ftpW}
+                  startAt={0}
+                  endAt={planS}
+                  width={layout.chartWidth}
+                  axis="time"
+                  at={snapshot.elapsedS}
+                />
+              </div>
             </div>
           )}
           <Steps

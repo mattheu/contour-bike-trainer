@@ -1,10 +1,14 @@
 /**
- * The workout screen's plan chart: steps and samples in, path strings out.
+ * The workout screen's plan chart: steps in, path strings out.
  *
  * Time across, watts up, the whole session at once — a workout is bounded, so unlike the
  * route profile there is no window to project and nothing to zoom. The x-axis is the plan
  * as it will actually be ridden: a skip truncates its step in `workout.steps`, so the
  * session shortens and the chart follows without reconstructing a duration from anywhere.
+ *
+ * The plan alone. What the rider actually produced is two trend strips under this chart —
+ * see strips.ts — which is also where the time axis and its figures now live, because that
+ * axis rules the bottom of the block rather than this chart's own baseline.
  *
  * Pure, like every other geometry module here. The component draws and decides nothing.
  */
@@ -12,21 +16,17 @@
 import type { ExpandedStep } from '../../workout/expand';
 import { DEFAULT_SCALE_PCT } from '../../workout/runner';
 import { zoneBoundaries, zoneForPower, type PowerZone } from '../../zones/power';
-import { duration, type PowerReading } from '../format';
 import { polylinePath, type Pt } from './path';
-import { ZONE_WASH_OPACITY, planSegments, planTotalSeconds, type PlanSegment } from './plan';
-import { MAX_FRACTION_OF_FTP } from './power';
-
-/** The ride recorder's series, narrowed to what a power-over-time line needs. */
-export interface PlanChartSample {
-  /** Seconds from the start, pause-aware — the same clock the runner rides. */
-  t: number;
-  powerW: number | null;
-}
+import {
+  PLAN_FLOOR_FRACTION_OF_FTP,
+  ZONE_WASH_OPACITY,
+  planSegments,
+  planTotalSeconds,
+  type PlanSegment,
+} from './plan';
 
 export interface PlanChartInput {
   steps: readonly ExpandedStep[];
-  samples: readonly PlanChartSample[];
   /** The workout's own FTP where it has one, the rider's where it does not. */
   ftpW: number;
   /** Workout difficulty. The plan is drawn at it; the unscaled plan sits behind. */
@@ -35,114 +35,6 @@ export interface PlanChartInput {
   width: number;
   height: number;
 }
-
-/**
- * The window the drawn trace is averaged over, and the reason it is longer than the
- * hero's three seconds rather than the same figure reused.
- *
- * Measured on the author's second hardware ride, which was ERG for the first half and
- * manual for the second: second-to-second power change went from a mean of 3.4 W (p95 12)
- * under ERG to 17.6 W (p95 68, max 293) under manual, and the raw line read as a hedge
- * rather than a trace. Five seconds takes the manual half to a mean of 5.4 W and a p95 of
- * 27 — about what ERG produces with no smoothing at all.
- *
- * Longer than POWER_WINDOW_S on purpose, because the two are read differently. The hero
- * is a number the rider reacts to, so its lag is the cost of every correction they make
- * and three seconds is as far as it can be pushed. Nobody reads a watt value off the
- * trace: it answers "how steady was that block", which lag does not change. So the trade
- * runs the other way here and the legibility is worth the delay.
- *
- * For drawing, and for nothing else. See smoothTrace.
- */
-export const TRACE_WINDOW_S = 5;
-
-/** A sample the trainer actually reported, or null. A sample with no placeable time is
- *  no reading either: it cannot sit on the x-axis, so it breaks the line like a dropout. */
-function readingOf(sample: PlanChartSample): number | null {
-  if (!Number.isFinite(sample.t)) return null;
-  return sample.powerW === null || !Number.isFinite(sample.powerW) ? null : sample.powerW;
-}
-
-/**
- * The samples as the trace draws them: every reading replaced by the trailing mean of the
- * readings inside `windowS` ending at it.
- *
- * A fresh array, never the caller's. That is the whole of how the recording stays raw —
- * the series handed in is the recorder's own, which is what gets stored, exported to TCX
- * and scored for TSS, and it is read here and never written. The smoothed copy is local to
- * one geometry call and leaves this module as path strings.
- *
- * Absence survives exactly: a sample the trainer did not report comes back null, so the
- * line breaks where it always broke rather than being bridged by a mean. Readings age out
- * of the window by time and not by count, so a gap longer than the window empties it and
- * nothing is averaged across the hole — the same rule trailingMeanPower follows for the
- * hero, and the reason the first sample of a run is simply its own mean.
- *
- * Trailing, not centred. A centred mean would draw the line ahead of where the rider
- * actually was, and the last half-window would have to be drawn by a different rule from
- * the rest of the trace.
- *
- * One pass with a sliding sum rather than a mean computed per sample: the chart recomputes
- * every second as the series grows, so an hour of plan has to cost an hour of samples and
- * not their square. Assumes samples in time order, which the recorder's 1 Hz series is.
- */
-export function smoothTrace(
-  samples: readonly PlanChartSample[],
-  windowS: number = TRACE_WINDOW_S,
-): PlanChartSample[] {
-  if (!Number.isFinite(windowS) || windowS <= 0)
-    return samples.map((sample) => ({ t: sample.t, powerW: readingOf(sample) }));
-
-  // Values, not the sample objects: the output is built from these and must not be able
-  // to feed a smoothed watt back into the window it was averaged from.
-  const readings: PowerReading[] = [];
-  for (const sample of samples) {
-    const w = readingOf(sample);
-    if (w !== null) readings.push({ t: sample.t, w });
-  }
-
-  let head = 0;
-  let tail = 0;
-  let total = 0;
-  return samples.map((sample) => {
-    const w = readingOf(sample);
-    if (w === null) return { t: sample.t, powerW: null };
-    // Exclusive at the old end, inclusive at the new, as trailingMeanPower is: a reading
-    // landing exactly now counts, and one exactly a window old has had its turn.
-    while (head < readings.length) {
-      const next = readings[head] as PowerReading;
-      if (next.t > sample.t) break;
-      total += next.w;
-      head += 1;
-    }
-    const since = sample.t - windowS;
-    while (tail < head) {
-      const oldest = readings[tail] as PowerReading;
-      if (oldest.t > since) break;
-      total -= oldest.w;
-      tail += 1;
-    }
-    const count = head - tail;
-    return { t: sample.t, powerW: count === 0 ? w : total / count };
-  });
-}
-
-/**
- * Tick spacings, smallest first. A twelve-second plan and a three-hour one both have to
- * land on a figure a rider reads without counting, so the ladder runs from a second to an
- * hour rather than dividing the session into a fixed number of parts.
- */
-const TICK_STEPS_S = [1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
-
-/** Beyond this the axis is a comb. 63 minutes at 5-minute ticks is 13, which is the mockup. */
-const MAX_TICKS = 24;
-
-/** Every third tick carries a figure; every sixth is drawn long, as design/mockups/workout.html has it. */
-const LABEL_EVERY = 3;
-const LONG_EVERY = 6;
-
-/** Room kept clear at the right so the last tick figure never collides with the total. */
-const TOTAL_LABEL_CLEARANCE = 52;
 
 /** The zone figure sits in the middle of its band, nudged down to the type's baseline. */
 const ZONE_LABEL_BASELINE = 4;
@@ -181,17 +73,15 @@ function peakOf(segments: readonly PlanSegment[]): number {
 /**
  * The watts at the top of the chart.
  *
- * The power strip's 160 % of FTP is the floor of it, so an ordinary session is drawn at
- * the height it has always been drawn at and a watt is the same height on both screens.
- * Above that the ceiling follows the plan: the parser takes a target up to 300 % of FTP
+ * PLAN_FLOOR_FRACTION_OF_FTP is the floor of it, so an ordinary session is drawn at the
+ * height it has always been drawn at. Above that the ceiling follows the plan: the parser takes a target up to 300 % of FTP
  * or 2000 W, difficulty multiplies it by half as much again, and a chart that stopped at
  * 160 % drew a 200 % sprint and a 160 % one at exactly the same height. Showing the plan
  * is the chart's whole job, so the plan sets the top of it.
  *
- * Read off the plan and nothing else — never off the samples. Live power moving the scale
- * would redraw every block under the rider mid-interval, and a chart that rescales itself
- * while being read is a chart you cannot read. Actual power above this simply clips; see
- * PlanChart, where the trace is confined to the chart's own area.
+ * Read off the plan and nothing else. The rider's own power is not drawn here at all now,
+ * so there is nothing live that could move the scale: a chart that rescales itself while
+ * being read is a chart you cannot read.
  *
  * Both the plan being ridden and the plan as written, so the two never disagree about how
  * high the chart is. The faint unscaled line is drawn whenever difficulty is off 100 % and
@@ -213,14 +103,7 @@ export function planCeilingW(
     peakOf(planSegments(steps, ftp, scalePct)),
     peakOf(planSegments(steps, ftp, DEFAULT_SCALE_PCT)),
   );
-  return Math.max(ftp * MAX_FRACTION_OF_FTP, peak * (1 + CEILING_HEADROOM));
-}
-
-export interface TimeTick {
-  x: number;
-  long: boolean;
-  /** Null on a tick that carries no figure, or one that would sit under the total. */
-  label: string | null;
+  return Math.max(ftp * PLAN_FLOOR_FRACTION_OF_FTP, peak * (1 + CEILING_HEADROOM));
 }
 
 export interface PlanBlock {
@@ -243,35 +126,15 @@ export interface PlanChartGeometry {
   /** The watts at the top of the chart. Power above it clips; see planCeilingW. */
   ceilingW: number;
   totalS: number;
-  /** `63 min`, bottom right, of the plan that will actually be ridden. */
-  totalLabel: string;
   zoneLines: ZoneLine[];
-  ticks: TimeTick[];
   /** The plan's grey steps. Clipped to what is still ahead by the component. */
   blocks: PlanBlock[];
   /** The plan's outline, one path per run of targeted steps: a free block leaves a gap. */
   planPaths: string[];
   /** The unscaled plan, drawn faintly behind. Empty at 100 %, where it would be a copy. */
   historyPaths: string[];
-  /** Actual power, one path per run of samples that reported a reading. */
-  actualPaths: string[];
-  actualAreaPaths: string[];
   /** Where the rider is on the plan. Null before the session has a clock to place. */
   marker: { x: number; y: number } | null;
-}
-
-function tickStepFor(totalS: number): number {
-  const last = TICK_STEPS_S[TICK_STEPS_S.length - 1] as number;
-  return TICK_STEPS_S.find((step) => totalS / step <= MAX_TICKS) ?? last;
-}
-
-/** Minutes read as bare figures once the ticks are minutes apart; below that, a clock. */
-function tickLabel(seconds: number, stepS: number): string {
-  return stepS >= 60 ? String(Math.round(seconds / 60)) : duration(seconds);
-}
-
-function totalLabel(totalS: number): string {
-  return totalS >= 60 ? `${String(Math.round(totalS / 60))} min` : duration(totalS);
 }
 
 /** The watts the plan asks for at a moment, or null in the gap a free block leaves. */
@@ -302,7 +165,7 @@ function runsOf(segments: readonly PlanSegment[]): PlanSegment[][] {
 }
 
 export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
-  const { steps, samples, ftpW, scalePct, elapsedS, width, height } = input;
+  const { steps, ftpW, scalePct, elapsedS, width, height } = input;
 
   const totalS = planTotalSeconds(steps);
   const ftp = Math.max(ftpW, 1);
@@ -329,18 +192,6 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
       y: topY,
       labelY: (bottomY + topY) / 2 + ZONE_LABEL_BASELINE,
       label: `Z${String(zone)}`,
-    });
-  }
-
-  const stepS = tickStepFor(totalS);
-  const ticks: TimeTick[] = [];
-  for (let index = 0, at = 0; at <= totalS; index += 1, at += stepS) {
-    const x = xFor(at);
-    const labelled = index > 0 && index % LABEL_EVERY === 0 && x <= width - TOTAL_LABEL_CLEARANCE;
-    ticks.push({
-      x,
-      long: index % LONG_EVERY === 0,
-      label: labelled ? tickLabel(at, stepS) : null,
     });
   }
 
@@ -385,36 +236,9 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
   const historyPaths =
     scalePct === DEFAULT_SCALE_PCT ? [] : outline(planSegments(steps, ftp, DEFAULT_SCALE_PCT));
 
-  // A sample with no reading breaks the line for the same reason a free step does: the
-  // trainer not reporting is not the rider at nought watts.
-  const actualPaths: string[] = [];
-  const actualAreaPaths: string[] = [];
-  let run: Pt[] = [];
-  const flushRun = (): void => {
-    if (run.length >= 2) {
-      actualPaths.push(polylinePath(run));
-      const first = run[0] as Pt;
-      const last = run[run.length - 1] as Pt;
-      actualAreaPaths.push(
-        `${polylinePath(run)} L${last.x.toFixed(2)},${baselineY.toFixed(2)} L${first.x.toFixed(2)},${baselineY.toFixed(2)} Z`,
-      );
-    }
-    run = [];
-  };
-  // Smoothed here, at the point of drawing, and nowhere upstream of it: `samples` is the
-  // recorder's own series and is only read. See smoothTrace.
-  for (const sample of smoothTrace(samples)) {
-    if (sample.powerW === null) {
-      flushRun();
-      continue;
-    }
-    run.push({ x: xFor(sample.t), y: yFor(sample.powerW) });
-  }
-  flushRun();
-
-  // The marker rides the plan, not the power: it answers "where in the session am I",
-  // and the accent line already says what the rider is actually doing. On a free block
-  // the plan has no height to sit at, so it drops to the axis rather than inventing one.
+  // The marker rides the plan, not the power: it answers "where in the session am I", and
+  // the strips below already say what the rider is actually doing. On a free block the plan
+  // has no height to sit at, so it drops to the axis rather than inventing one.
   const planW = wattsAt(segments, Math.min(Math.max(elapsedS, 0), totalS));
   const marker =
     totalS <= 0 ? null : { x: xFor(elapsedS), y: planW === null ? baselineY : yFor(planW) };
@@ -425,14 +249,10 @@ export function planChartGeometry(input: PlanChartInput): PlanChartGeometry {
     baselineY,
     ceilingW,
     totalS,
-    totalLabel: totalLabel(totalS),
     zoneLines,
-    ticks,
     blocks,
     planPaths,
     historyPaths,
-    actualPaths,
-    actualAreaPaths,
     marker,
   };
 }

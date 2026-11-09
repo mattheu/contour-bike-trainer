@@ -335,6 +335,9 @@ export function ElevationProfile({
         ))}
       </g>
 
+      {/* The baseline, and no ticks on it: design/DESIGN.md > Trend strips gives the
+          profile's baseline to the power strip below as its top rule, and sends the km
+          ticks to the bottom of the block the three charts make — see TrendStrips. */}
       <line
         x1={0}
         y1={geometry.baselineY}
@@ -343,17 +346,6 @@ export function ElevationProfile({
         stroke="var(--color-muted)"
         strokeWidth={1}
       />
-      {geometry.ticks.map((tick) => (
-        <line
-          key={tick.distM}
-          x1={tick.x}
-          y1={geometry.baselineY}
-          x2={tick.x}
-          y2={geometry.baselineY + (tick.long ? 8 : 4)}
-          stroke="var(--color-muted)"
-          strokeWidth={1}
-        />
-      ))}
 
       <path
         d={geometry.linePath}

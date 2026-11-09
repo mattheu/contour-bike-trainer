@@ -11,7 +11,17 @@ import type { ExpandedStep } from '../../workout/expand';
 import { DEFAULT_SCALE_PCT, targetWattsAt } from '../../workout/runner';
 import { zoneForPower, type PowerZone } from '../../zones/power';
 import { polylinePath, type Pt } from './path';
-import { MAX_FRACTION_OF_FTP } from './power';
+
+/**
+ * The floor under a plan chart's ceiling, as a fraction of FTP, and the sparkline's ceiling
+ * outright.
+ *
+ * The trend strip's own ceiling used to be this number; the two no longer share a scale —
+ * the strip draws what the rider produced over 110 % of FTP, a plan chart draws what the
+ * plan asks for, and nothing is drawn on both. 160 % is the ceiling of zone 5, which is what
+ * keeps an ordinary session drawn at the height it has always been drawn at.
+ */
+export const PLAN_FLOOR_FRACTION_OF_FTP = 1.6;
 
 /** The routes list's sparkline size, so the two lead columns align down the page. */
 export const PLAN_SPARKLINE_WIDTH = 120;
@@ -152,7 +162,7 @@ export interface PlanSparklineGeometry {
 export function planSparklineGeometry(input: PlanSparklineInput): PlanSparklineGeometry {
   const { steps, ftpW, width, height } = input;
   const totalS = planTotalSeconds(steps);
-  const ceilingW = Math.max(ftpW, 1) * MAX_FRACTION_OF_FTP;
+  const ceilingW = Math.max(ftpW, 1) * PLAN_FLOOR_FRACTION_OF_FTP;
   const floorY = height - STROKE_PAD;
   const span = Math.max(floorY - STROKE_PAD, 0);
 

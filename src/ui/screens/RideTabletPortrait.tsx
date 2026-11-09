@@ -1,7 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react';
 import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
 import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
-import { PowerStrip, TABLET_CHART_GAP_PX, TABLET_STACK_GAP_PX, tabletChartStack } from '../charts';
+import { TABLET_STACK_GAP_PX, TrendStrips, tabletChartStack } from '../charts';
 import { GhostKey } from '../components/GhostKey';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
@@ -129,11 +129,9 @@ export function RideTabletPortrait({
         className="mt-[24px] flex min-h-0 grow flex-col justify-center px-[40px]"
         style={{ rowGap: `${String(TABLET_STACK_GAP_PX)}px` }}
       >
-        <div
-          ref={rowRef}
-          className="flex flex-col"
-          style={{ rowGap: `${String(TABLET_CHART_GAP_PX)}px` }}
-        >
+        {/* No row gap: each chart's baseline is the rule above the next, and the km ticks
+            rule the bottom of all three. design/DESIGN.md > Trend strips. */}
+        <div ref={rowRef} className="flex flex-col">
           <ProfileChart
             route={route}
             profile={profile}
@@ -144,16 +142,15 @@ export function RideTabletPortrait({
             handleRef={profileRef}
             onHover={onProfileHover}
           />
-          {/* The strip shares the profile's x-axis, so it shares its width exactly. */}
-          <PowerStrip
+          {/* The strips share the profile's x-axis, so they share its width exactly. */}
+          <TrendStrips
             ref={stripRef}
             samples={samples}
             ftpW={ftpW}
-            startM={window?.startM ?? 0}
-            endM={window?.endM ?? route.totalDistanceM}
-            distanceM={0}
+            startAt={window?.startM ?? 0}
+            endAt={window?.endM ?? route.totalDistanceM}
             width={chartWidth}
-            height={stack.stripHeight}
+            axis="distance"
           />
         </div>
 
