@@ -1,6 +1,9 @@
 import type { ConnectionState } from '../../ble/types';
 import type { RideState } from '../../ride/types';
+import { lapLabel, lapNumber, lapStartM } from '../../route/loop';
+import { ascentAt, type AscentSeries } from '../../route/profile';
 import type { MapZoom } from '../charts/map';
+import type { RideSnapshot } from '../store';
 import {
   ladderFraction as hrFraction,
   targetBand as hrTargetBand,
@@ -93,6 +96,69 @@ export function primaryControlLabel(
 export function kilometres(metres: number | null): number | null {
   return usable(metres) ? metres / 1000 : null;
 }
+
+/**
+ * The lap being ridden, as every reading of it: the word for it, where it started, and
+ * how far through it the rider is in all three of the strip's units.
+ *
+ * One object rather than three derivations, because the ride screen asks for the same lap
+ * four times over — the trend strips offset to its start, the secondary strip reads
+ * against it, the times list names it, and the header tags it — and a second answer to
+ * "which lap is this" is a screen disagreeing with itself about the ride.
+ *
+ * Null on a route that does not come back to its start. A point-to-point ride has one lap
+ * and it is the whole thing, so there is nothing for a lap/ride pair to say.
+ */
+export interface LapProgress {
+  /** `Loop` until the first is complete, `Lap 2` after: route/loop.ts owns the wording. */
+  label: string;
+  /** 1-based. The first metre of a ride is lap 1. */
+  number: number;
+  /** The route's length, which on a loop is a lap of it. */
+  lengthM: number;
+  /** Distance ridden at which this lap began, so a per-lap view can offset to it. */
+  startM: number;
+  /** Seconds into this lap. */
+  elapsedS: number;
+  /** Metres into it, which is the rider's position on the route. */
+  distanceM: number;
+  /** And metres climbed into it. */
+  ascentM: number;
+}
+
+/**
+ * The lap from a snapshot and the route's own ascent series.
+ *
+ * The clock comes from `lapStartS`, which is the crossing the ghost's gap already resets
+ * on — one line, watched once. Clamped at nought because the boundary is recorded at the
+ * tick's fractional second while `elapsedS` is published in whole ones, so for up to a
+ * second after a crossing the subtraction can come out just below zero.
+ *
+ * The climb is the route's gain to the rider's position rather than a second accumulation
+ * of the ride's. On a loop every lap climbs the same metres by construction — it is the
+ * same geometry — and taking it from the route is what makes this lap's figure exact from
+ * the first metre rather than needing a reading of the ride banked at the line.
+ */
+export function lapProgress(snapshot: RideSnapshot, ascent: AscentSeries): LapProgress | null {
+  const lengthM = snapshot.routeTotalDistanceM;
+  if (!snapshot.routeLoops || lengthM === null || !(lengthM > 0)) return null;
+  return {
+    label: lapLabel(snapshot.distanceM, lengthM),
+    number: lapNumber(snapshot.distanceM, lengthM),
+    lengthM,
+    startM: lapStartM(snapshot.distanceM, lengthM),
+    elapsedS: Math.max(0, snapshot.elapsedS - snapshot.lapStartS),
+    distanceM: snapshot.routePositionM,
+    ascentM: ascentAt(ascent, snapshot.routePositionM),
+  };
+}
+
+/**
+ * What the map column is showing. design/DESIGN.md > Screen rules, Ride times view: the
+ * column swaps to the ranked list of times on this route, and the header icon shows the
+ * view you would switch to rather than the one you are on.
+ */
+export type MapPanel = 'map' | 'times';
 
 /** The profile's two views: the whole route, or the window around the rider. */
 export type ProfileZoom = 'route' | 'window';

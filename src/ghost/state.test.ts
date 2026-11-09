@@ -72,6 +72,13 @@ describe('ghostState', () => {
     expect(ghostState(ghost(), { lapS: 50.5, lapM: 500 }).distanceM).toBeCloseTo(505, 6);
   });
 
+  it('carries the time it set, and none for a ride that stopped short of a length', () => {
+    expect(ghostState(ghost(), { lapS: 10, lapM: 100 }).lapTimeS).toBe(LAP_S);
+    // SPEC.md > Ghosts: raceable through the picked slot, but with no comparable time, so
+    // the times list has nothing to rank it on.
+    expect(ghostState(ghost('chosen', stoppedRide()), { lapS: 10, lapM: 100 }).lapTimeS).toBeNull();
+  });
+
   it('carries the slot symbol so the renderer looks nothing up', () => {
     const state = ghostState(ghost('year'), { lapS: 10, lapM: 100 });
 

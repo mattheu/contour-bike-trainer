@@ -12,7 +12,8 @@ import type {
 import type { RideSnapshot } from '../store';
 import type { PhoneView } from './phone-ride';
 import type { RideReadings } from './ride-readings';
-import type { ProfileZoom } from './ride-view';
+import type { TimeRow } from './ride-times';
+import type { MapPanel, ProfileZoom } from './ride-view';
 
 /**
  * What a ride arrangement is given.
@@ -45,6 +46,11 @@ export interface RideArrangementProps {
   title: string;
   /** "Loop" or "Lap 2", on a route that comes back to its start. Null otherwise. */
   lapLabel: string | null;
+
+  /** The times view's ranking: this session's laps and the ghosts, fastest first. */
+  times: readonly TimeRow[];
+  /** The muted line under it, which says what the figures are measured against. */
+  timesNote: string;
   /** What the primary control reads now: Start, Pause or Resume. */
   pauseLabel: string;
 
@@ -62,6 +68,14 @@ export interface RideArrangementProps {
   onProfileZoom: (zoom: ProfileZoom) => void;
   mapZoom: MapZoom;
   onMapZoom: (zoom: MapZoom) => void;
+  /**
+   * Whether the map column is showing the map or the times. Held by the ride screen for
+   * the reason `view` is: the arrangements that have a map column each draw it, and the
+   * rider's choice is about the ride rather than about the width of the window they
+   * happen to be riding at.
+   */
+  mapPanel: MapPanel;
+  onMapPanel: (panel: MapPanel) => void;
 
   /** The handles the ride screen's clock writes to. Shared, never duplicated. */
   profileRef: RefObject<ElevationProfileHandle | null>;

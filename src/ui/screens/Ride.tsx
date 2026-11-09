@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import type { HistorySlot } from '../../ghost/resolve';
+import { lapSplits } from '../../ride/metrics';
 import { detectClimbs } from '../../route/climbs';
-import { lapLabel, lapStartM } from '../../route/loop';
 import { WINDOW_WIDE_M, buildProfile, projectWindow } from '../../route/profile';
 import type { Route } from '../../route/types';
 import {
@@ -17,7 +17,8 @@ import type { PhoneView } from './phone-ride';
 import { arrangementFor, type ArrangementName } from './arrangement';
 import { type RideArrangementProps } from './ride-arrangement';
 import { rideReadings } from './ride-readings';
-import { primaryControlLabel, type ProfileZoom } from './ride-view';
+import { timeRows, timesNote } from './ride-times';
+import { lapProgress, primaryControlLabel, type MapPanel, type ProfileZoom } from './ride-view';
 import { RideDesktop } from './RideDesktop';
 import { RidePhoneLandscape } from './RidePhoneLandscape';
 import { RidePhonePortrait } from './RidePhonePortrait';
@@ -91,6 +92,7 @@ export function Ride({
 }: RideProps) {
   const [profileZoom, setProfileZoom] = useState<ProfileZoom>('route');
   const [mapZoom, setMapZoom] = useState<MapZoom>('route');
+  const [mapPanel, setMapPanel] = useState<MapPanel>('map');
   const [view, setView] = useState<PhoneView>('profile');
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -120,17 +122,14 @@ export function Ride({
    */
   const { routePositionM } = snapshot;
   /**
-   * Which lap, and the distance that lap began at. One label does both jobs — `Loop`
-   * until the first is complete, `Lap 2` after — so the tag and the counter never
-   * compete for the same slot. Null on a route that does not come back to its start.
+   * The lap being ridden — its word, its start and how far through it the rider is in all
+   * three of the strip's units. Null on a route that does not come back to its start.
+   *
+   * One derivation for the four things that ask: the strips offset to its start, the
+   * secondary strip reads lap against ride, the times list names it, and the header tags
+   * it. See lapProgress.
    */
-  const lap =
-    snapshot.routeLoops && snapshot.routeTotalDistanceM !== null
-      ? {
-          label: lapLabel(snapshot.distanceM, snapshot.routeTotalDistanceM),
-          startM: lapStartM(snapshot.distanceM, snapshot.routeTotalDistanceM),
-        }
-      : null;
+  const lap = lapProgress(snapshot, profile.ascent);
 
   // The window follows the rider, so it is rebuilt as the ride moves. Route zoom — the
   // default — keeps a null window and so a stable geometry for the whole ride.
@@ -151,6 +150,38 @@ export function Ride({
     () => trendSamplesByDistance(snapshot.samples, lap?.startM ?? 0),
     [snapshot.samples, lap?.startM],
   );
+
+  /**
+   * The ranking the times view draws: this session's completed laps against the ghosts.
+   *
+   * The splits come from the recorder's own series by the one function that cuts them —
+   * the same one the ghost model asks for the pool — so a lap in this list and the same
+   * lap as a ghost are the same number of seconds rather than two measurements of one
+   * crossing. Memoised on the series, which grows once a second, rather than recut on
+   * every render of a screen that re-renders for its clocks.
+   *
+   * The length is withheld on a point-to-point route, which has no laps to cut: reaching
+   * the finish there is one completed length, and counting it would put the ride itself in
+   * the ranking as "Lap 1" on the one screen where the list is meant to hold ghosts alone.
+   */
+  const lapLengthM = snapshot.routeLoops ? snapshot.routeTotalDistanceM : null;
+  const splits = useMemo(
+    () => lapSplits(snapshot.samples, lapLengthM),
+    [snapshot.samples, lapLengthM],
+  );
+  const times = timeRows({
+    laps: splits,
+    ghosts: snapshot.ghosts,
+    current:
+      lap === null
+        ? null
+        : {
+            number: lap.number,
+            elapsedS: lap.elapsedS,
+            distanceM: lap.distanceM,
+            lengthM: lap.lengthM,
+          },
+  });
 
   // The one place the charts are told the time has moved. They mutate their own SVG
   // through these handles; nothing here puts a chart's geometry into React state.
@@ -199,6 +230,7 @@ export function Ride({
 
   const readings = rideReadings({
     snapshot,
+    lap,
     ftpW,
     hrMaxBpm,
     targetPowerW: targets.powerW,
@@ -233,6 +265,8 @@ export function Ride({
     ftpW,
     title: snapshot.routeName ?? 'Free ride',
     lapLabel: lap?.label ?? null,
+    times,
+    timesNote: timesNote(lap),
     pauseLabel: primaryControlLabel(snapshot.state, snapshot.elapsedS),
     view,
     onView: setView,
@@ -240,6 +274,8 @@ export function Ride({
     onProfileZoom: setProfileZoom,
     mapZoom,
     onMapZoom: setMapZoom,
+    mapPanel,
+    onMapPanel: setMapPanel,
     profileRef,
     mapRef,
     stripRef,

@@ -7,6 +7,7 @@ import {
   powerLadder,
   readingTone,
   type LadderView,
+  type LapProgress,
 } from './ride-view';
 
 /**
@@ -50,6 +51,11 @@ export interface RideReadings {
 
 export interface RideReadingsInput {
   snapshot: RideSnapshot;
+  /**
+   * The lap being ridden, or null on a point-to-point route — where there is one lap and
+   * it is the whole ride, so the three blocks below keep their point-to-point reading.
+   */
+  lap: LapProgress | null;
   ftpW: number;
   hrMaxBpm: number;
   targetPowerW: number | null;
@@ -58,7 +64,8 @@ export interface RideReadingsInput {
 }
 
 export function rideReadings(input: RideReadingsInput): RideReadings {
-  const { snapshot, ftpW, hrMaxBpm, targetPowerW, targetHeartRateBpm, targetMarginPct } = input;
+  const { snapshot, lap, ftpW, hrMaxBpm, targetPowerW, targetHeartRateBpm, targetMarginPct } =
+    input;
 
   // The trainer's readings go stale together when it drops; heart rate follows the
   // strap, which can fail on its own. Speed is solved from power, so it is only as live
@@ -102,28 +109,42 @@ export function rideReadings(input: RideReadingsInput): RideReadings {
       testId: 'ride-heart-rate',
       ...(heartRate === null ? {} : { figure: `Z${String(heartRate.zone)}` }),
     },
-    elapsed: {
-      label: 'Elapsed',
-      value: duration(snapshot.elapsedS),
-      tone: 'ink',
-      testId: 'ride-elapsed',
-    },
-    // Position on the route over the route's length, which on a loop is the lap's
-    // progress rather than the ride's: "distance of total" has no meaning when the total
-    // is however long you choose to keep going. The lap it belongs to is named once, in
-    // the header.
+    // The first three blocks are where a loop differs from a point-to-point route, and
+    // the only place it does: design/DESIGN.md > Screen rules, Ride loop mode keeps the
+    // five blocks and their shape and changes what sits either side of the slash. On a
+    // loop the slash means part of whole in all three — this lap of the ride — and the
+    // first block is labelled with the lap rather than with the word Elapsed.
+    //
+    // Which is also why the loop's own length leaves the strip: "distance of total" says
+    // nothing when the total is however long you choose to keep going. How far round the
+    // lap you are stays on the profile, where the ground it names is drawn.
+    elapsed:
+      lap === null
+        ? {
+            label: 'Elapsed',
+            value: duration(snapshot.elapsedS),
+            tone: 'ink',
+            testId: 'ride-elapsed',
+          }
+        : {
+            label: lap.label,
+            value: duration(lap.elapsedS),
+            total: duration(snapshot.elapsedS),
+            tone: 'ink',
+            testId: 'ride-elapsed',
+          },
     distance: {
       label: 'Distance',
-      value: distance(kilometres(snapshot.routePositionM)),
-      total: distance(kilometres(snapshot.routeTotalDistanceM)),
+      value: distance(kilometres(lap === null ? snapshot.routePositionM : lap.distanceM)),
+      total: distance(kilometres(lap === null ? snapshot.routeTotalDistanceM : snapshot.distanceM)),
       unit: 'km',
       tone: 'ink',
       testId: 'ride-distance',
     },
     climbed: {
       label: 'Climbed',
-      value: elevation(snapshot.ascentM),
-      total: elevation(snapshot.routeTotalAscentM),
+      value: elevation(lap === null ? snapshot.ascentM : lap.ascentM),
+      total: elevation(lap === null ? snapshot.routeTotalAscentM : snapshot.ascentM),
       unit: 'm',
       tone: 'ink',
       testId: 'ride-climbed',

@@ -61,6 +61,13 @@ export interface ActiveGhost {
   end: GhostEnd;
   /** Metres into the lap, for the symbol's position on the map and the profile. */
   distanceM: number;
+  /**
+   * The time this ghost set over the whole length, which is what the times list ranks it
+   * on. Null for a ride that stopped short: SPEC.md > Ghosts keeps such a ride raceable
+   * through the picked slot but gives it no comparable time, so it has no claim on a
+   * ranking. Settled here rather than in the list, where `finished` is no longer in reach.
+   */
+  lapTimeS: number | null;
   /** The rider's deficit in seconds, positive when the ghost is ahead. Null when done:
    * there is no gap to a ghost that is no longer on the road. */
   gapS: number | null;
@@ -92,6 +99,7 @@ export function ghostState(ghost: Ghost, rider: RiderLap): ActiveGhost {
     // Where it got to, which for a finished ghost is the route end and for a stopped one
     // is the metre its ride reached.
     distanceM: over ? ghost.series.lengthM : distanceAtLapTime(ghost.series, rider.lapS),
+    lapTimeS: ghost.series.finished ? ghost.series.durationS : null,
     gapS,
     gapLabel: gapS === null ? null : formatGap(gapS),
   };

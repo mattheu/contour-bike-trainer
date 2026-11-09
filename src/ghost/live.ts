@@ -207,6 +207,17 @@ export class GhostTracker {
   }
 
   /**
+   * The ride second the lap being ridden began at — the crossing the gap resets on.
+   *
+   * Read by the ride screen so the lap clock on its secondary strip is this crossing and
+   * not a second opinion about where the line is. Only right once `update` has run for the
+   * tick, which is where the line is watched.
+   */
+  lapStart(): number {
+    return this.lapStartS;
+  }
+
+  /**
    * Reads the history and puts the first ghosts on the road. Awaited by nothing on the
    * ride path: a ride starts whether or not its ghosts have arrived yet.
    */

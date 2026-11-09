@@ -786,6 +786,14 @@ function bridge(snapshot: EngineSnapshot): void {
 
   wakeLock.setActive(snapshot.state === 'running');
 
+  // Before the patch rather than inside it, because the order matters: the tracker watches
+  // the line inside update(), and the lap start published below is only this tick's once
+  // it has.
+  const ghosts = ghostTracker?.update({
+    elapsedS: snapshot.elapsedS,
+    distanceM: snapshot.distanceM,
+  });
+
   rideStore.update({
     state: snapshot.state,
     alert: snapshot.alert,
@@ -806,10 +814,10 @@ function bridge(snapshot: EngineSnapshot): void {
     // Recomputed per tick like the other live readings, and derived from the engine's own
     // elapsed and distance rather than recorded again: the race is a reading of the ride,
     // not a second record of it.
-    ghosts: ghostTracker?.update({
-      elapsedS: snapshot.elapsedS,
-      distanceM: snapshot.distanceM,
-    }),
+    ghosts,
+    // The same crossing the gap resets on, published as the second the lap began rather
+    // than as a clock: the strip subtracts it from the elapsed it is already showing.
+    lapStartS: ghostTracker?.lapStart() ?? 0,
     // Held by identity between resolutions, so a tick that changed no slot republishes
     // nothing on this key.
     ghostSlots: ghostTracker?.slots(),
@@ -829,6 +837,9 @@ function teardown(): void {
   rideStore.update({
     ghosts: INITIAL_SNAPSHOT.ghosts,
     ghostSlots: INITIAL_SNAPSHOT.ghostSlots,
+    // With it, so a screen rendered between one ride ending and the next one's first tick
+    // cannot read the last ride's line as this one's.
+    lapStartS: INITIAL_SNAPSHOT.lapStartS,
   });
 }
 

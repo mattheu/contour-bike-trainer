@@ -2,9 +2,12 @@ import { useMemo, useRef, type ReactNode } from 'react';
 import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
 import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
 import { CHART_ROW_GAP_PX, TrendStrips, chartRowLayout, chartStackHeights } from '../charts';
+import { ButtonGroup } from '../components/ButtonGroup';
 import { GhostKey } from '../components/GhostKey';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
+import { IconButton } from '../components/IconButton';
+import { MapIcon, StepsIcon } from '../components/icons';
 import { LoopTag } from '../components/LoopTag';
 import { RideHeader } from '../components/RideHeader';
 import { Segmented } from '../components/Segmented';
@@ -16,6 +19,7 @@ import type { RideArrangementProps } from './ride-arrangement';
 import type { Reading } from './ride-readings';
 import { MAP_ZOOMS, PROFILE_ZOOMS, type LadderView } from './ride-view';
 import { MapChart, ProfileChart } from './RideCharts';
+import { RideTimes } from './RideTimes';
 import { useElementHeight, useElementWidth } from './use-element-width';
 
 /**
@@ -34,11 +38,15 @@ export function RideDesktop({
   ftpW,
   title,
   lapLabel,
+  times,
+  timesNote,
   pauseLabel,
   profileZoom,
   onProfileZoom,
   mapZoom,
   onMapZoom,
+  mapPanel,
+  onMapPanel,
   profileRef,
   mapRef,
   stripRef,
@@ -173,27 +181,62 @@ export function RideDesktop({
             </div>
           </div>
 
-          {layout.showMap && (
-            <div className="flex flex-col gap-[6px]">
-              <ChartHeading label="Map">
-                <Segmented
-                  size={32}
-                  label="Map zoom"
-                  options={MAP_ZOOMS}
-                  value={mapZoom}
-                  onChange={onMapZoom}
+          {layout.showMap &&
+            (mapPanel === 'times' ? (
+              <div className="flex flex-col gap-[6px]">
+                {/* The map icon alone: there is no zoom on a list, and the glyph shows the
+                    view you would switch to rather than the one you are on. */}
+                <ChartHeading label="Times">
+                  <IconButton
+                    size={32}
+                    label="Show map"
+                    title="Show map"
+                    onClick={() => {
+                      onMapPanel('map');
+                    }}
+                  >
+                    <MapIcon />
+                  </IconButton>
+                </ChartHeading>
+                <RideTimes rows={times} note={timesNote} height={stack.mapHeight} />
+              </div>
+            ) : (
+              <div className="flex flex-col gap-[6px]">
+                {/* The list icon sits flush against the zoom, so the two read as one
+                    object: both are things you do to this column. The zoom keeps its own
+                    group inside it, because it is a choice and the icon is an action —
+                    see ButtonGroup on why the two semantics stay apart. */}
+                <ChartHeading label="Map">
+                  <ButtonGroup label="Map view and zoom">
+                    <IconButton
+                      size={32}
+                      label="Show times"
+                      title="Show times"
+                      onClick={() => {
+                        onMapPanel('times');
+                      }}
+                    >
+                      <StepsIcon />
+                    </IconButton>
+                    <Segmented
+                      size={32}
+                      label="Map zoom"
+                      options={MAP_ZOOMS}
+                      value={mapZoom}
+                      onChange={onMapZoom}
+                    />
+                  </ButtonGroup>
+                </ChartHeading>
+                <MapChart
+                  route={route}
+                  zoom={mapZoom}
+                  width={layout.mapWidth}
+                  height={stack.mapHeight}
+                  handleRef={mapRef}
+                  onHover={onMapHover}
                 />
-              </ChartHeading>
-              <MapChart
-                route={route}
-                zoom={mapZoom}
-                width={layout.mapWidth}
-                height={stack.mapHeight}
-                handleRef={mapRef}
-                onHover={onMapHover}
-              />
-            </div>
-          )}
+              </div>
+            ))}
         </div>
       </div>
 
