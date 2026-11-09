@@ -680,7 +680,19 @@ A slot for the fastest lap of the current ride was considered and rejected. Wher
 
 **The label "Most recent" is wrong on a loop.** It describes a ride when the contents are a lap. "Last lap" is correct on a loop and wrong on a point-to-point.
 
-Not built. The label is currently fixed: "Most recent" in the settings panel and "Last" in the bottom band, on every route. Making it vary by route type is outstanding.
+Not built. There are now three words for this slot, in three places, and they are deliberate rather than an accident:
+
+| Where | Word | Why |
+| --- | --- | --- |
+| Settings panel | Most recent | Room for it, and a checkbox has to say what it switches on. |
+| Times view | Most recent | Sits in a column beside `Lap 1` and `Lap 2`, where a short word reads as another lap of this session rather than as a slot. |
+| Bottom band | Last | Eleven pixels beside a gap, where the symbol is doing the identifying. |
+
+**If the label does come to vary by route type, the times view is excluded.** "Last lap" there would sit among rows literally
+labelled `Lap 1` and `Lap 2`, which is the exact ambiguity that moved it off "Last" in the first place. The band is the place the
+change belongs, and the settings panel is arguable.
+
+The year slot reads **Best of year** in the panel and the times view, and **Year** in the band, on the same reasoning.
 
 ### The 365-day window
 
