@@ -70,7 +70,7 @@ const FIXED_NAME: Record<Exclude<GhostSlot, 'chosen'>, string> = {
  */
 export const SLOT_DESCRIPTION: Record<GhostSlot, string> = {
   best: 'Best',
-  year: 'Best this year',
+  year: 'Best of year',
   last: 'Most recent',
   chosen: 'Picked ride',
 };

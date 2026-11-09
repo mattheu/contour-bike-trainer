@@ -48,7 +48,7 @@ describe('timeRows', () => {
     expect(rows.map((row) => [row.rank, row.name, row.time])).toEqual([
       [1, 'Best', '19:48'],
       [2, 'Lap 1', '20:32'],
-      [3, 'Last', '21:12'],
+      [3, 'Most recent', '21:12'],
     ]);
   });
 
@@ -59,13 +59,13 @@ describe('timeRows', () => {
       current: null,
     });
 
-    expect(rows.map((row) => row.name)).toEqual(['Lap 2', 'Lap 1', 'Year']);
+    expect(rows.map((row) => row.name)).toEqual(['Lap 2', 'Lap 1', 'Best of year']);
     // The blank is the renderer's; what matters here is that a lap claims no slot's shape.
     expect(rows.filter((row) => row.symbol === null).map((row) => row.name)).toEqual([
       'Lap 2',
       'Lap 1',
     ]);
-    expect(rows.find((row) => row.name === 'Year')?.symbol).toEqual(SLOT_SYMBOL.year);
+    expect(rows.find((row) => row.name === 'Best of year')?.symbol).toEqual(SLOT_SYMBOL.year);
   });
 
   it('measures every gap against the best time, and leaves the best row without one', () => {
@@ -114,11 +114,11 @@ describe('timeRows', () => {
     const ghosts = [ghost('best', 'Best', 1188), ghost('last', 'Last', 1272)];
     // 4.1 km in 7:05 projects to 20:45 over 12 km: between the two.
     const projected = timeRows({ laps: [], ghosts, current: current() });
-    expect(projected.map((row) => row.name)).toEqual(['Best', 'Lap 2', 'Last']);
+    expect(projected.map((row) => row.name)).toEqual(['Best', 'Lap 2', 'Most recent']);
 
     // The same lap ridden harder — 6 km in the same time — projects to 14:10 and leads.
     const quick = timeRows({ laps: [], ghosts, current: current({ distanceM: 6000 }) });
-    expect(quick.map((row) => row.name)).toEqual(['Lap 2', 'Best', 'Last']);
+    expect(quick.map((row) => row.name)).toEqual(['Lap 2', 'Best', 'Most recent']);
   });
 
   it('sits a lap with no ground behind it last rather than claiming a rank on nothing', () => {
