@@ -165,8 +165,10 @@ if (fakeTrainer !== null && storageKindFromSearch(window.location.search) === 'm
     reconnect: () => fakeTrainer.forceReconnect(),
   };
 }
+// The strap gets the script too: on a script whose heart rate follows power, it derives
+// the beats from the same blocks the trainer is riding.
 const hrm: HeartRateMonitor =
-  script === null ? new WebBluetoothHeartRateMonitor() : new FakeHeartRateMonitor();
+  script === null ? new WebBluetoothHeartRateMonitor() : new FakeHeartRateMonitor(script);
 
 function fault(message: string): void {
   rideStore.update({ alert: { level: 'fault', message } });

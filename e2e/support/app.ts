@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { expect, type Locator, type Page } from '@playwright/test';
 
 /** The ?fake= scripts. Mirrors src/ble/fake-trainer.ts; no spec ever uses a real device. */
-export type FakeScript = 'constant' | 'ramp' | 'intervals' | 'dropout';
+export type FakeScript = 'constant' | 'ramp' | 'intervals' | 'dropout' | 'varied';
 
 /** A route handed to the app through the seed hook. Same shape as a manifest entry plus
  * its GPX, which is what src/ride/routes.ts registers. */
