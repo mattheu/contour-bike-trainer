@@ -1,15 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { SLOT_SYMBOL, type GhostSlot } from '../../ghost/slots';
+import {
+  SLOT_DESCRIPTION,
+  SLOT_SYMBOL,
+  YEAR_SECOND_DESCRIPTION,
+  type GhostSlot,
+} from '../../ghost/slots';
 import type { ActiveGhost } from '../../ghost/state';
 import { projectedLapS, timeRows, timesNote, type CurrentLap } from './ride-times';
 import type { LapProgress } from './ride-view';
 
-/** A ghost with a time to be ranked on, which is all this list reads of one. */
-function ghost(slot: GhostSlot, name: string, lapTimeS: number | null): ActiveGhost {
+/** A ghost with a time to be ranked on, which is all this list reads of one. Both words,
+ * because the list is one of the two places that prints the longer. */
+function ghost(
+  slot: GhostSlot,
+  name: string,
+  lapTimeS: number | null,
+  description: string = SLOT_DESCRIPTION[slot],
+): ActiveGhost {
   return {
     slot,
     symbol: SLOT_SYMBOL[slot],
     name,
+    description,
     end: 'racing',
     distanceM: 0,
     lapTimeS,
@@ -66,6 +78,18 @@ describe('timeRows', () => {
       'Lap 1',
     ]);
     expect(rows.find((row) => row.name === 'Best of year')?.symbol).toEqual(SLOT_SYMBOL.year);
+  });
+
+  it('takes the ghost’s own word for the year slot, so a second best says it is one', () => {
+    // Best holds the fastest lap of the window, so the triangle below it is the second
+    // fastest of the year and two rows are not one answer twice.
+    const rows = timeRows({
+      laps: [],
+      ghosts: [ghost('best', 'Best', 1188), ghost('year', 'Year', 1241, YEAR_SECOND_DESCRIPTION)],
+      current: null,
+    });
+
+    expect(rows.map((row) => row.name)).toEqual(['Best', '2nd best of year']);
   });
 
   it('measures every gap against the best time, and leaves the best row without one', () => {

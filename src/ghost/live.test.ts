@@ -365,5 +365,107 @@ describe('GhostTracker', () => {
     expect(slots.slice(0, 3).map((view) => view.ride)).toEqual([null, null, null]);
     expect(slots.map((view) => view.on)).toEqual([true, false, true, true]);
     expect(slots[3]?.ride).toEqual({ startedAt: quit.startedAt, durationS: 60 });
+    // An empty year slot is not a second anything, whatever Best did.
+    expect(slots[1]?.description).toBe('Best of year');
+  });
+
+  it('calls the year slot a second best where Best holds the fastest lap of the window', async () => {
+    // Both laps three weeks old, so Best is inside the window and this slot fell to the
+    // slower of the two.
+    const recent = ride({ id: 'recent', lapSplits: [100, 140] });
+    const tracker = new GhostTracker({
+      storage: storageOf([recent], { recent: ridden(240, LAP_M / 120) }),
+      routeId: ROUTE_ID,
+      rideId: LIVE_ID,
+      startedAt: STARTED_AT,
+      routeLengthM: LAP_M,
+      loops: true,
+      samples: () => [],
+      now: () => Date.parse('2026-10-20T10:00:00.000Z'),
+      selection: { best: true, year: true, last: true, chosenRideId: null },
+      onFailure: () => {},
+    });
+
+    await tracker.start();
+
+    const slots = tracker.slots();
+    expect(slots[1]?.description).toBe('2nd best of year');
+    // The band is untouched: eleven pixels beside a gap, where the symbol identifies it.
+    await vi.waitFor(() => {
+      const year = tracker.update({ elapsedS: 10, distanceM: 100 }).find((g) => g.slot === 'year');
+      expect(year?.name).toBe('Year');
+      expect(year?.description).toBe('2nd best of year');
+    });
+  });
+
+  it('changes the word at the line where a lap of this ride takes Best', async () => {
+    // An all-time best from two winters ago, outside the window, and a slower lap from
+    // last month inside it: the year slot genuinely holds the best of the year.
+    const ancient = ride({ id: 'ancient', startedAt: '2024-11-02T09:00:00.000Z', lapSplits: [60] });
+    const recent = ride({ id: 'recent', lapSplits: [400] });
+    const live = harness({
+      stored: [ancient, recent],
+      series: { ancient: ridden(60, LAP_M / 60), recent: ridden(400, LAP_M / 400) },
+    });
+    await live.tracker.start();
+
+    await vi.waitFor(() => {
+      const racing = live.tracker.update({ elapsedS: 1, distanceM: 10 });
+      expect(racing.map((ghost) => ghost.slot)).toEqual(['best', 'year']);
+    });
+    expect(live.tracker.slots()[1]?.description).toBe('Best of year');
+
+    // Over the line in 100 s. The lap is the fastest of the window and so takes the year
+    // slot, but it does not beat the 60 s best — Best stays outside the window and the
+    // slot is still the best of the year rather than a second to anything.
+    live.rideTo(105);
+    expect(live.tracker.slots()[1]?.description).toBe('Best of year');
+    await vi.waitFor(() => {
+      const year = live.tracker
+        .update({ elapsedS: 105, distanceM: 1050 })
+        .find((ghost) => ghost.slot === 'year');
+      expect(year?.lapTimeS).toBe(100);
+      expect(year?.description).toBe('Best of year');
+    });
+  });
+
+  it('re-words a year ghost already on the road when Best moves inside the window', async () => {
+    // The all-time best is a slow one from two winters ago, so the live ride's first lap
+    // takes Best off it. The year slot keeps the lap it was racing and changes only its
+    // word, which is the case a reload would never catch.
+    const ancient = ride({
+      id: 'ancient',
+      startedAt: '2024-11-02T09:00:00.000Z',
+      lapSplits: [150],
+    });
+    const recent = ride({ id: 'recent', lapSplits: [400] });
+    const live = harness({
+      stored: [ancient, recent],
+      series: { ancient: ridden(150, LAP_M / 150), recent: ridden(400, LAP_M / 400) },
+    });
+    await live.tracker.start();
+
+    let year: { description: string; lapTimeS: number | null } | undefined;
+    await vi.waitFor(() => {
+      year = live.tracker.update({ elapsedS: 1, distanceM: 10 }).find((g) => g.slot === 'year');
+      expect(year?.description).toBe('Best of year');
+    });
+    const wasRacing = year?.lapTimeS;
+
+    // A 100 s lap: faster than the ancient best, so Best is now a lap of this ride and the
+    // fastest lap of the year is in the Best row.
+    live.rideTo(105);
+    await vi.waitFor(() => {
+      const racing = live.tracker.update({ elapsedS: 105, distanceM: 1050 });
+      expect(racing.find((ghost) => ghost.slot === 'best')?.lapTimeS).toBe(100);
+    });
+
+    const after = live.tracker
+      .update({ elapsedS: 105, distanceM: 1050 })
+      .find((ghost) => ghost.slot === 'year');
+    expect(after?.description).toBe('2nd best of year');
+    expect(live.tracker.slots()[1]?.description).toBe('2nd best of year');
+    // Same lap, re-worded rather than swapped: it never left the road.
+    expect(after?.lapTimeS).toBe(wasRacing);
   });
 });

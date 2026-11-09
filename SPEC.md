@@ -692,7 +692,10 @@ Not built. There are now three words for this slot, in three places, and they ar
 labelled `Lap 1` and `Lap 2`, which is the exact ambiguity that moved it off "Last" in the first place. The band is the place the
 change belongs, and the settings panel is arguable.
 
-The year slot reads **Best of year** in the panel and the times view, and **Year** in the band, on the same reasoning.
+The year slot reads **Best of year** in the panel and the times view, and **Year** in the band, on the same reasoning. Where
+Best holds the fastest lap of the window, the panel and the times view read **2nd best of year** instead and the band is left
+alone: the distinction goes where there is room for it, and eleven pixels beside a gap is not where. An empty slot keeps the
+plain word, because it fell through to nothing.
 
 ### The 365-day window
 

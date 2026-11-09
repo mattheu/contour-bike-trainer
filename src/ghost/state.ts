@@ -34,10 +34,11 @@ export const DONE_LABEL = 'done';
  */
 export const STOPPED_LABEL = 'stopped';
 
-/** A ghost ready to race: a slot, the word for it, and the lap it will ride. */
+/** A ghost ready to race: a slot, the two words for it, and the lap it will ride. */
 export interface Ghost {
   slot: GhostSlot;
   name: string;
+  description: string;
   series: GhostSeries;
 }
 
@@ -52,7 +53,16 @@ export interface RiderLap {
 export interface ActiveGhost {
   slot: GhostSlot;
   symbol: GhostSymbol;
+  /** The band's word: short, read off the symbol beside it. */
   name: string;
+  /**
+   * The long word, for a list with a column wide enough to take it.
+   *
+   * Carried rather than looked up per slot because one slot's word is not fixed: the year
+   * slot reads as a second best where Best took the window's fastest lap, and only the
+   * resolution knows which case it is. src/ghost/resolve.ts > ResolvedGhosts.
+   */
+  description: string;
   /**
    * Racing, or how it ended. A ghost that finished parks at the route end and leaves the
    * map; one that stopped marks the metre its ride reached and fades there. Neither
@@ -95,6 +105,7 @@ export function ghostState(ghost: Ghost, rider: RiderLap): ActiveGhost {
     slot: ghost.slot,
     symbol: SLOT_SYMBOL[ghost.slot],
     name: ghost.name,
+    description: ghost.description,
     end,
     // Where it got to, which for a finished ghost is the route end and for a stopped one
     // is the metre its ride reached.

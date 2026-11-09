@@ -75,6 +75,27 @@ export const SLOT_DESCRIPTION: Record<GhostSlot, string> = {
   chosen: 'Picked ride',
 };
 
+/**
+ * And what the year slot is called where Best took the window's fastest lap, leaving this
+ * one the second fastest of the year.
+ *
+ * Numeral rather than "Second best of year": the panel sets it beside a date and a time in
+ * mono, and the times view sets it in a column of `Lap 1` and `Lap 2`, so a figure at the
+ * front of the phrase is read as quickly as the word it qualifies.
+ */
+export const YEAR_SECOND_DESCRIPTION = '2nd best of year';
+
+/**
+ * The word for a slot where there is room for one, which for the year slot depends on
+ * which lap Best took. src/ghost/resolve.ts settles that; this only spends it.
+ *
+ * The band is deliberately not a caller: eleven pixels beside a gap is where the symbol
+ * does the identifying, and the distinction belongs where there is room for it.
+ */
+export function slotDescription(slot: GhostSlot, yearIsSecond: boolean): string {
+  return slot === 'year' && yearIsSecond ? YEAR_SECOND_DESCRIPTION : SLOT_DESCRIPTION[slot];
+}
+
 // Spelled out rather than taken from Intl for the reason the rides list gives: en-GB
 // abbreviates September to "Sept" and the mockup uses "Sep". Duplicated rather than
 // imported, because that list lives in a screen module and a domain module must not

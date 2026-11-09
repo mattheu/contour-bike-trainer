@@ -49,7 +49,7 @@ function stoppedRide(): GhostSeries {
 }
 
 function ghost(slot: GhostSlot = 'best', series: GhostSeries = steadyLap()): Ghost {
-  return { slot, name: 'Best', series };
+  return { slot, name: 'Best', description: 'Best', series };
 }
 
 describe('ghostState', () => {
@@ -84,6 +84,19 @@ describe('ghostState', () => {
 
     expect(state.symbol).toEqual(SLOT_SYMBOL.year);
     expect(state.slot).toBe('year');
+  });
+
+  it('carries both words, so the band and the times list read the same resolution', () => {
+    const second: Ghost = {
+      slot: 'year',
+      name: 'Year',
+      description: '2nd best of year',
+      series: steadyLap(),
+    };
+
+    const state = ghostState(second, { lapS: 10, lapM: 100 });
+    expect(state.name).toBe('Year');
+    expect(state.description).toBe('2nd best of year');
   });
 
   it('finishes once the rider passes the ghost lap time, with no gap and parked at the end', () => {
@@ -143,9 +156,9 @@ describe('ghostState', () => {
 describe('activeGhosts', () => {
   it('reads in slot order, whatever order the ghosts were switched on in', () => {
     const ghosts: Ghost[] = [
-      { slot: 'chosen', name: '29 Sep', series: steadyLap() },
-      { slot: 'last', name: 'Last', series: steadyLap() },
-      { slot: 'best', name: 'Best', series: steadyLap() },
+      { slot: 'chosen', name: '29 Sep', description: 'Picked ride', series: steadyLap() },
+      { slot: 'last', name: 'Last', description: 'Most recent', series: steadyLap() },
+      { slot: 'best', name: 'Best', description: 'Best', series: steadyLap() },
     ];
 
     expect(activeGhosts(ghosts, { lapS: 10, lapM: 100 }).map((g) => g.slot)).toEqual([
@@ -157,8 +170,8 @@ describe('activeGhosts', () => {
 
   it('keeps a finished ghost in the key, saying it is done', () => {
     const ghosts: Ghost[] = [
-      { slot: 'best', name: 'Best', series: steadyLap(80) },
-      { slot: 'last', name: 'Last', series: steadyLap(120) },
+      { slot: 'best', name: 'Best', description: 'Best', series: steadyLap(80) },
+      { slot: 'last', name: 'Last', description: 'Most recent', series: steadyLap(120) },
     ];
     const states = activeGhosts(ghosts, { lapS: 90, lapM: 900 });
 
@@ -170,8 +183,8 @@ describe('activeGhosts', () => {
 
   it('leaves the ghosts it was given alone', () => {
     const ghosts: Ghost[] = [
-      { slot: 'last', name: 'Last', series: steadyLap() },
-      { slot: 'best', name: 'Best', series: steadyLap() },
+      { slot: 'last', name: 'Last', description: 'Most recent', series: steadyLap() },
+      { slot: 'best', name: 'Best', description: 'Best', series: steadyLap() },
     ];
     activeGhosts(ghosts, { lapS: 10, lapM: 100 });
 

@@ -1,5 +1,5 @@
 import { formatGap } from '../../ghost/gap';
-import { SLOT_DESCRIPTION, type GhostSymbol } from '../../ghost/slots';
+import type { GhostSymbol } from '../../ghost/slots';
 import type { ActiveGhost } from '../../ghost/state';
 import { duration } from '../format';
 import type { LapProgress } from './ride-view';
@@ -98,7 +98,7 @@ export function timeRows(input: TimesInput): TimeRow[] {
       // The panel's word, not the key band's. "Last" beside "Lap 1" and "Lap 2" reads as
       // another lap of this session rather than a slot, and a column with room for the
       // longer word should use it. The picked slot keeps its ride's date.
-      name: ghost.slot === 'chosen' ? ghost.name : SLOT_DESCRIPTION[ghost.slot],
+      name: ghost.slot === 'chosen' ? ghost.name : ghost.description,
       timeS: ghost.lapTimeS,
       sortS: ghost.lapTimeS,
       current: false,
