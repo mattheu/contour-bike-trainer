@@ -20,7 +20,7 @@ import { TimerProbe, visibilityState, watchVisibility } from '../instrument/prob
 import { summarise } from '../instrument/stats';
 import { VisibilityTracker } from '../instrument/verdict';
 import { RideCheckpointer, setLiveRide, writeRide } from '../ride/autosave';
-import { systemClock } from '../ride/clock';
+import { createScaledClock, parseTimeScale, systemClock } from '../ride/clock';
 import { RideEngine, type EngineSnapshot } from '../ride/engine';
 import { RideRecorder } from '../ride/recorder';
 import {
@@ -35,7 +35,7 @@ import { builtInWorkoutIds, seedWorkouts } from '../ride/workouts';
 import { planRouteImport, routeGeometryKey } from '../route/import';
 import { isLoop } from '../route/loop';
 import type { Route as RouteGeometry } from '../route/types';
-import { TrainerTickSource } from '../ride/tick';
+import { TICK_INTERVAL_MS, TrainerTickSource } from '../ride/tick';
 import type { EngineTrainer } from '../ride/types';
 import { createStorage, storageKindFromSearch } from '../storage';
 import { restoreRides } from '../storage/rides';
@@ -105,9 +105,20 @@ function readFakeScript(): { script: FakeScript | null; warning: string | null }
 }
 
 const { script, warning } = readFakeScript();
+const { speed: timeScale, warning: timeScaleWarning } = parseTimeScale(
+  new URLSearchParams(window.location.search).get('speed'),
+  script !== null,
+);
+
+/**
+ * Ride time: the engine, the tick fallback, and anything measured in seconds of riding.
+ * Exported so a test can see that ?speed= without ?fake= left it on real time.
+ */
+export const rideClock = timeScale === 1 ? systemClock : createScaledClock(timeScale);
 
 /** What produced the data, for the instrumentation log and the settings panel. */
-export const source = script === null ? 'real device' : `fake:${script}`;
+export const source =
+  script === null ? 'real device' : `fake:${script}${timeScale === 1 ? '' : ` ×${timeScale}`}`;
 export const fakeScript = script;
 export const availableScripts = FAKE_SCRIPTS;
 
@@ -142,7 +153,7 @@ export const instrumentation = new Recorder({ source });
 // the discovery getters are Web Bluetooth specifics the Trainer interface omits.
 function makeTrainer(): { trainer: Trainer; ftms: FtmsTrainer | null; fake: FakeTrainer | null } {
   if (script !== null) {
-    const fake = new FakeTrainer(script);
+    const fake = new FakeTrainer(script, { speed: timeScale });
     return { trainer: fake, ftms: null, fake };
   }
   const ftms = new FtmsTrainer();
@@ -168,7 +179,9 @@ if (fakeTrainer !== null && storageKindFromSearch(window.location.search) === 'm
 // The strap gets the script too: on a script whose heart rate follows power, it derives
 // the beats from the same blocks the trainer is riding.
 const hrm: HeartRateMonitor =
-  script === null ? new WebBluetoothHeartRateMonitor() : new FakeHeartRateMonitor(script);
+  script === null
+    ? new WebBluetoothHeartRateMonitor()
+    : new FakeHeartRateMonitor(script, { speed: timeScale });
 
 function fault(message: string): void {
   rideStore.update({ alert: { level: 'fault', message } });
@@ -352,7 +365,8 @@ export function downloadInstrumentationLog(): void {
   download(instrumentation.toBlob(), instrumentation.fileName());
 }
 
-if (warning !== null) rideStore.update({ alert: { level: 'warning', message: warning } });
+const bootWarning = [warning, timeScaleWarning].filter((line) => line !== null).join(' ');
+if (bootWarning !== '') rideStore.update({ alert: { level: 'warning', message: bootWarning } });
 
 // --- settings and route seeding -----------------------------------------------
 
@@ -608,7 +622,7 @@ const engineTrainer: EngineTrainer = {
 };
 
 // Created once. It holds no subscription until an engine subscribes to it.
-const tickSource = new TrainerTickSource(engineTrainer, systemClock);
+const tickSource = new TrainerTickSource(engineTrainer, rideClock, TICK_INTERVAL_MS, timeScale);
 
 // --- connection ---------------------------------------------------------------
 
@@ -713,8 +727,9 @@ let lastBridgeAtMs = 0;
  */
 let powerReadings: PowerReading[] = [];
 
+// Ride time, so the three-second window is three ridden seconds at any ?speed=.
 function nowS(): number {
-  return performance.now() / 1000;
+  return rideClock.now() / 1000;
 }
 
 function recordPower(watts: number): void {
@@ -778,7 +793,7 @@ function workoutSnapshot(state: EngineSnapshot['workout']): WorkoutSnapshot | nu
 }
 
 function bridge(snapshot: EngineSnapshot): void {
-  const now = performance.now();
+  const now = rideClock.now();
   const dt = lastBridgeAtMs === 0 ? 0 : (now - lastBridgeAtMs) / 1000;
   lastBridgeAtMs = now;
 
@@ -947,7 +962,7 @@ export async function startRide(routeId: string, options: StartRideOptions = {})
 
   const next = new RideEngine({
     trainer: engineTrainer,
-    clock: systemClock,
+    clock: rideClock,
     tickSource,
     route: geometry,
     settings: engineSettings(),
@@ -1044,7 +1059,7 @@ export async function startWorkout(workoutId: string): Promise<void> {
 
   const next = new RideEngine({
     trainer: engineTrainer,
-    clock: systemClock,
+    clock: rideClock,
     tickSource,
     route: null,
     settings: engineSettings(),

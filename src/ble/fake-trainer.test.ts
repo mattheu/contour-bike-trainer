@@ -361,3 +361,20 @@ describe('FakeTrainer forced dropout', () => {
     await trainer.disconnect();
   });
 });
+
+describe('FakeTrainer at ?speed=', () => {
+  it('sends ten samples a real second at 10×, each one simulated second on', async () => {
+    const fast = new FakeTrainer('varied', { speed: 10 });
+    const samples: BikeData[] = [];
+    fast.onData((d) => samples.push(d));
+    await fast.connect();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(samples).toHaveLength(10);
+    await vi.advanceTimersByTimeAsync(5000);
+    await fast.disconnect();
+
+    // The script is a function of elapsed seconds, so matching the real-time series
+    // sample for sample is what shows each tick moved the ride on exactly one second.
+    expect(series(samples)).toEqual(series(await ride('varied', 60)));
+  });
+});

@@ -12,10 +12,13 @@ const SESSION = { mode: 'guest', startedAt: '2026-03-01T07:30:00.000Z' };
  * Real timers while it loads, fake ones for the riding: the ride's tick interval is created
  * when the engine subscribes, so a test has to be holding the clock before that happens.
  */
-async function boot(seed: Record<string, unknown> = { session: SESSION }) {
+async function boot(
+  seed: Record<string, unknown> = { session: SESSION },
+  search = '?storage=memory&fake=constant',
+) {
   vi.resetModules();
   vi.stubGlobal('window', {
-    location: { search: '?storage=memory&fake=constant' },
+    location: { search },
     addEventListener: () => {},
     removeEventListener: () => {},
     __contourSeed: seed,
@@ -29,14 +32,21 @@ async function boot(seed: Record<string, unknown> = { session: SESSION }) {
   return { services, rideStore };
 }
 
-/** Rides a bundled route for a number of seconds, which the fake trainer ticks out. */
-async function ride(services: Awaited<ReturnType<typeof boot>>['services'], seconds: number) {
-  const [route] = await services.storage.routes.list();
+/**
+ * Rides a bundled route for a number of ridden seconds, which the fake trainer ticks out.
+ * At ?speed= that is fewer real ones.
+ */
+async function ride(
+  services: Awaited<ReturnType<typeof boot>>['services'],
+  seconds: number,
+  { speed = 1, routeId }: { speed?: number; routeId?: string } = {},
+) {
+  const [first] = await services.storage.routes.list();
   vi.useFakeTimers();
   await services.connectTrainer();
-  await services.startRide(route!.id);
+  await services.startRide(routeId ?? first!.id);
   services.beginRide();
-  await vi.advanceTimersByTimeAsync(seconds * 1000);
+  await vi.advanceTimersByTimeAsync((seconds * 1000) / speed);
 }
 
 afterEach(() => {
@@ -254,5 +264,65 @@ describe('ghosts during a ride', () => {
     await services.endRide();
     await services.startRide(route.id);
     expect(services.ghostSelection().chosenRideId).toBeNull();
+  });
+});
+
+describe('a fake ride at ?speed=', () => {
+  // The scaled clock reads performance.now(), which vitest's fake timers fake by default.
+  it.each([1, 5, 10])('records the same samples per ridden minute at %i×', async (speed) => {
+    const { services, rideStore } = await boot(
+      undefined,
+      `?storage=memory&fake=constant&speed=${speed}`,
+    );
+
+    await ride(services, 60, { speed });
+
+    expect(services.source).toBe(speed === 1 ? 'fake:constant' : `fake:constant ×${speed}`);
+    const count = rideStore.getSnapshot().samples.length;
+    expect(Math.abs(count - 60)).toBeLessThanOrEqual(1);
+  });
+
+  it('crosses the start line of a loop at the same points at 10× as at 1×', async () => {
+    async function laps(speed: number) {
+      const { services, rideStore } = await boot(
+        undefined,
+        `?storage=memory&fake=constant&speed=${speed}`,
+      );
+      // Otley: the shortest loop in the bundle, so two laps is minutes rather than an hour.
+      await ride(services, 600, { speed, routeId: 'otley' });
+      expect(rideStore.getSnapshot().routeLoops).toBe(true);
+      const outcome = await services.endRide();
+      if (outcome.status !== 'saved') throw new Error(`ride was ${outcome.status}`);
+      const record = await services.storage.rides.get(outcome.rideId);
+      const samples = (await services.storage.rideSamples.get(outcome.rideId))!.samples;
+      const lengthM = rideStore.getSnapshot().routeTotalDistanceM!;
+      const boundaries = record!.lapSplits.map((_, lap) =>
+        samples.findIndex((sample) => sample.distanceM >= (lap + 1) * lengthM),
+      );
+      vi.useRealTimers();
+      return { splits: record!.lapSplits, boundaries, count: samples.length };
+    }
+
+    const real = await laps(1);
+    const fast = await laps(10);
+
+    expect(real.splits.length).toBeGreaterThanOrEqual(2);
+    expect(fast.boundaries).toEqual(real.boundaries);
+    expect(fast.splits).toHaveLength(real.splits.length);
+    fast.splits.forEach((split, lap) => expect(split).toBeCloseTo(real.splits[lap]!, 6));
+  });
+
+  it('stays on real time without a fake, and says why alongside any other warning', async () => {
+    const { services, rideStore } = await boot(undefined, '?storage=memory&fake=nope&speed=10');
+
+    expect(services.source).toBe('real device');
+    const before = performance.now();
+    const reading = services.rideClock.now();
+    expect(reading).toBeGreaterThanOrEqual(before);
+    expect(reading).toBeLessThan(before + 1000);
+    expect(rideStore.getSnapshot().alert?.message).toBe(
+      'Unknown ?fake=nope. Valid scripts: constant, ramp, intervals, dropout, varied. ' +
+        'Falling back to a real device. ?speed= only applies with ?fake=. Running at real time.',
+    );
   });
 });

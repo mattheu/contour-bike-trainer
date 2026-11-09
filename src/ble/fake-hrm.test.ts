@@ -134,3 +134,18 @@ describe('the heart rate model', () => {
     expect(fallen).toBeLessThan(risen);
   });
 });
+
+describe('FakeHeartRateMonitor at ?speed=', () => {
+  it('sends ten readings a real second at 10×, each one simulated second on', async () => {
+    const fast = new FakeHeartRateMonitor('varied', { speed: 10 });
+    const bpm: number[] = [];
+    fast.onData((v) => bpm.push(v));
+    await fast.connect();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(bpm).toHaveLength(10);
+    await vi.advanceTimersByTimeAsync(11_000);
+    await fast.disconnect();
+
+    expect(bpm).toEqual(await wear(120, 'varied'));
+  });
+});

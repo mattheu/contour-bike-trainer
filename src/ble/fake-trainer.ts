@@ -143,13 +143,19 @@ export class FakeTrainer implements Trainer {
   private timer: ReturnType<typeof setInterval> | null = null;
   private rng = createRng(SEED);
   private elapsedS = 0;
+  private readonly speed: number;
   private reportedPowerW: number | null = null;
   private targetPowerW: number | null = null;
   private gradePercent = 0;
   /** Set by forceDropout(); overrides the script's own silent window. */
   private forcedSilent = false;
 
-  constructor(private readonly script: FakeScript = 'constant') {}
+  constructor(
+    private readonly script: FakeScript = 'constant',
+    options: { speed?: number } = {},
+  ) {
+    this.speed = options.speed ?? 1;
+  }
 
   /** Last value passed to setTargetPower, or null if ERG was never commanded. */
   get lastTargetPowerW(): number | null {
@@ -172,7 +178,8 @@ export class FakeTrainer implements Trainer {
     this.reportedPowerW = null;
     this.setState('connecting');
     this.setState('connected');
-    this.timer = setInterval(() => this.tick(), TICK_MS);
+    // Faster ticks, each still one simulated second, so ?speed= keeps the sample density.
+    this.timer = setInterval(() => this.tick(), TICK_MS / this.speed);
   }
 
   async disconnect(): Promise<void> {
