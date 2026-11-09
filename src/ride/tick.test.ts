@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { BikeData, ConnectionState } from '../ble/types';
-import { createManualClock } from './clock';
+import { createManualClock, createScaledClock } from './clock';
 import { ManualTickSource, TimerTickSource, TrainerTickSource } from './tick';
 import type { EngineTrainer } from './types';
 
@@ -101,6 +101,33 @@ describe('TrainerTickSource', () => {
   });
 });
 
+describe('TrainerTickSource at ?speed=', () => {
+  it('runs the fallback ten times as often, and still waits for the stream to go quiet', () => {
+    vi.useFakeTimers();
+    const base = createManualClock();
+    const clock = createScaledClock(10, base);
+    const trainer = new NotifyingTrainer();
+    const source = new TrainerTickSource(trainer, clock, 1000, 10);
+    const tick = vi.fn();
+    source.subscribe(tick);
+
+    // A notification every simulated second, which is 100 real ms: no doubling up.
+    for (let i = 0; i < 5; i += 1) {
+      base.advance(0.1);
+      trainer.notify();
+      vi.advanceTimersByTime(100);
+    }
+    expect(tick).toHaveBeenCalledTimes(5);
+
+    // Quiet: the timer carries it, once per 100 real ms.
+    for (let i = 0; i < 3; i += 1) {
+      base.advance(0.1);
+      vi.advanceTimersByTime(100);
+    }
+    expect(tick).toHaveBeenCalledTimes(8);
+  });
+});
+
 describe('TimerTickSource', () => {
   it('ticks on its interval and stops when nobody is listening', () => {
     vi.useFakeTimers();
@@ -115,6 +142,18 @@ describe('TimerTickSource', () => {
     vi.advanceTimersByTime(3000);
     expect(tick).toHaveBeenCalledTimes(3);
     expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
+describe('TimerTickSource at ?speed=', () => {
+  it('divides its period by the speed', () => {
+    vi.useFakeTimers();
+    const source = new TimerTickSource(1000, 5);
+    const tick = vi.fn();
+    source.subscribe(tick);
+
+    vi.advanceTimersByTime(1000);
+    expect(tick).toHaveBeenCalledTimes(5);
   });
 });
 

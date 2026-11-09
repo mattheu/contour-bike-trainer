@@ -123,6 +123,7 @@ export class FakeHeartRateMonitor implements HeartRateMonitor {
   private timer: ReturnType<typeof setInterval> | null = null;
   private rng = createRng(SEED);
   private elapsedS = 0;
+  private readonly speed: number;
   private heart = restingHeartRateState();
 
   /**
@@ -130,7 +131,12 @@ export class FakeHeartRateMonitor implements HeartRateMonitor {
    * pure functions of the script and their own elapsed second, which is what keeps the
    * series reproducible and the two devices independent the way real ones are.
    */
-  constructor(private readonly script: FakeScript = 'constant') {}
+  constructor(
+    private readonly script: FakeScript = 'constant',
+    options: { speed?: number } = {},
+  ) {
+    this.speed = options.speed ?? 1;
+  }
 
   get connectionState(): ConnectionState {
     return this.state;
@@ -143,7 +149,8 @@ export class FakeHeartRateMonitor implements HeartRateMonitor {
     this.heart = restingHeartRateState();
     this.setState('connecting');
     this.setState('connected');
-    this.timer = setInterval(() => this.tick(), TICK_MS);
+    // Faster ticks, each still one simulated second, so ?speed= keeps the sample density.
+    this.timer = setInterval(() => this.tick(), TICK_MS / this.speed);
   }
 
   async disconnect(): Promise<void> {

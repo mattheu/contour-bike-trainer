@@ -22,6 +22,7 @@ export class TrainerTickSource implements TickSource {
     private readonly trainer: EngineTrainer,
     private readonly clock: Clock,
     private readonly intervalMs: number = TICK_INTERVAL_MS,
+    private readonly speed: number = 1,
   ) {}
 
   subscribe(onTick: () => void): () => void {
@@ -36,10 +37,12 @@ export class TrainerTickSource implements TickSource {
   private attach(): void {
     if (this.unsubscribeTrainer !== null) return;
     this.unsubscribeTrainer = this.trainer.onData(() => this.fire());
+    // The timer runs in real time and the clock in ride time, already scaled, so only the
+    // period is divided by the speed; the quiet-stream test stays in ride milliseconds.
     this.timer = setInterval(() => {
       // Only when the notification stream has gone quiet: a live one already ticked.
       if (this.clock.now() - this.lastTickAt >= this.intervalMs) this.fire();
-    }, this.intervalMs);
+    }, this.intervalMs / this.speed);
   }
 
   private detach(): void {
@@ -60,14 +63,17 @@ export class TimerTickSource implements TickSource {
   private readonly listeners = new Set<() => void>();
   private timer: ReturnType<typeof setInterval> | null = null;
 
-  constructor(private readonly intervalMs: number = TICK_INTERVAL_MS) {}
+  constructor(
+    private readonly intervalMs: number = TICK_INTERVAL_MS,
+    private readonly speed: number = 1,
+  ) {}
 
   subscribe(onTick: () => void): () => void {
     this.listeners.add(onTick);
     if (this.timer === null) {
       this.timer = setInterval(() => {
         for (const listener of [...this.listeners]) listener();
-      }, this.intervalMs);
+      }, this.intervalMs / this.speed);
     }
     return () => {
       this.listeners.delete(onTick);
