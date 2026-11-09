@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react';
-import { PHONE_METRICS, PowerStrip, phoneChartStack } from '../charts';
+import { PHONE_METRICS, PHONE_STRIP, TrendStrips, phoneChartStack } from '../charts';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { IconButton } from '../components/IconButton';
 import {
@@ -121,8 +121,9 @@ export function RidePhonePortrait({
 
       {/* min-h-0 so the area measures the space the charts have rather than the charts
           it contains; justify-end so a short screen takes its height off the top, where
-          the readings have already had theirs. */}
-      <div ref={chartAreaRef} className="flex min-h-0 grow flex-col justify-end gap-[14px]">
+          the readings have already had theirs. No row gap: the view's baseline is the
+          power strip's top rule. design/DESIGN.md > Trend strips. */}
+      <div ref={chartAreaRef} className="flex min-h-0 grow flex-col justify-end">
         <div
           ref={viewRef}
           data-testid="phone-view"
@@ -155,21 +156,19 @@ export function RidePhonePortrait({
             />
           )}
         </div>
-        {/* The strip shares the profile's x-axis, so it shares its width exactly — and
-            stays under the map too, which is the one chart on the screen that does not
-            have the ride's power anywhere in it. */}
-        <div className="mt-[22px]">
-          <PowerStrip
-            ref={stripRef}
-            samples={samples}
-            ftpW={ftpW}
-            startM={window?.startM ?? 0}
-            endM={window?.endM ?? route.totalDistanceM}
-            distanceM={0}
-            width={chartWidth}
-            height={stack.stripHeight}
-          />
-        </div>
+        {/* The strips share the profile's x-axis, so they share its width exactly — and
+            stay under the map too, which is the one chart on the screen that does not have
+            the ride's power anywhere in it. */}
+        <TrendStrips
+          ref={stripRef}
+          samples={samples}
+          ftpW={ftpW}
+          startAt={window?.startM ?? 0}
+          endAt={window?.endM ?? route.totalDistanceM}
+          width={chartWidth}
+          metrics={PHONE_STRIP}
+          axis="distance"
+        />
       </div>
 
       <div className="mt-[18px] flex shrink-0 items-center justify-between">

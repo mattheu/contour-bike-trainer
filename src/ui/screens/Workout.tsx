@@ -1,5 +1,6 @@
-import { useEffect, useState, type ReactElement } from 'react';
+import { useEffect, useMemo, useState, type ReactElement } from 'react';
 import type { ErgMode } from '../../storage/types';
+import { planTotalSeconds, trendSamplesByTime } from '../charts';
 import type { DevicesView } from '../components/Devices';
 import { useFlash } from '../components/motion';
 import type { RideSnapshot, WorkoutSnapshot } from '../store';
@@ -199,6 +200,10 @@ export function Workout({
   });
 
   const rows = stepRows(workout, ftpW);
+  // The block's x-axis, and the series drawn over it. Derived once here rather than in each
+  // arrangement, so the plan chart and its two strips always measure the same session.
+  const planS = useMemo(() => planTotalSeconds(workout.steps), [workout.steps]);
+  const trends = useMemo(() => trendSamplesByTime(snapshot.samples), [snapshot.samples]);
 
   const devices: DevicesView = {
     source,
@@ -225,6 +230,8 @@ export function Workout({
     powerZone,
     heartZone,
     rows,
+    planS,
+    trends,
     view,
     onView: setView,
     hoveredRow: hoveredRowNumber(rows, hoveredStep),

@@ -5,10 +5,11 @@ import { lapLabel, lapStartM } from '../../route/loop';
 import { WINDOW_WIDE_M, buildProfile, projectWindow } from '../../route/profile';
 import type { Route } from '../../route/types';
 import {
+  trendSamplesByDistance,
   type ElevationProfileHandle,
   type MapZoom,
-  type PowerStripHandle,
   type RouteMapHandle,
+  type TrendStripsHandle,
 } from '../charts';
 import type { DevicesView } from '../components/Devices';
 import type { RideSnapshot } from '../store';
@@ -22,7 +23,6 @@ import { RidePhoneLandscape } from './RidePhoneLandscape';
 import { RidePhonePortrait } from './RidePhonePortrait';
 import { RideTabletPortrait } from './RideTabletPortrait';
 import { RideSettings, type Targets } from './RideSettings';
-import { powerSamplesFrom } from './summary-view';
 import {
   PHONE_LANDSCAPE_QUERY,
   PHONE_PORTRAIT_QUERY,
@@ -96,7 +96,7 @@ export function Ride({
 
   const profileRef = useRef<ElevationProfileHandle>(null);
   const mapRef = useRef<RouteMapHandle>(null);
-  const stripRef = useRef<PowerStripHandle>(null);
+  const stripRef = useRef<TrendStripsHandle>(null);
 
   /**
    * One arrangement is rendered, not two with one hidden: the charts below are
@@ -140,15 +140,15 @@ export function Ride({
     [profileZoom, route, profile, routePositionM],
   );
 
-  // The recorder's own 1 Hz series, published through the store. Mapped by the same
-  // tested function the summary uses, so the strip reads the same shape either side of
-  // the finish rather than one rebuilt from snapshots here.
+  // The recorder's own 1 Hz series, published through the store. Mapped by the same tested
+  // function the summary uses, so the strips read the same shape either side of the finish
+  // rather than one rebuilt from snapshots here.
   //
-  // Offset to the current lap, because the strip shares the profile's x-axis and that
-  // axis is the route rather than the ride: without it a second lap's samples would sit
-  // past the right-hand edge and the strip would stop growing at the start line.
+  // Offset to the current lap, because the strips share the profile's x-axis and that axis
+  // is the route rather than the ride: without it a second lap's samples would sit past the
+  // right-hand edge and the strips would stop growing at the start line.
   const samples = useMemo(
-    () => powerSamplesFrom(snapshot.samples, lap?.startM ?? 0),
+    () => trendSamplesByDistance(snapshot.samples, lap?.startM ?? 0),
     [snapshot.samples, lap?.startM],
   );
 

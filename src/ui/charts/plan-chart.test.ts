@@ -4,17 +4,8 @@ import { DEFAULT_SETTINGS } from '../../storage/settings';
 import { expandWorkout, type ExpandedStep } from '../../workout/expand';
 import { parseWorkout } from '../../workout/parse';
 import { workoutFtp } from '../../workout/runner';
-import {
-  CEILING_HEADROOM,
-  TRACE_WINDOW_S,
-  blockForStep,
-  planCeilingW,
-  planChartGeometry,
-  smoothTrace,
-  type PlanChartSample,
-} from './plan-chart';
-import { ZONE_WASH_OPACITY } from './plan';
-import { MAX_FRACTION_OF_FTP } from './power';
+import { CEILING_HEADROOM, blockForStep, planCeilingW, planChartGeometry } from './plan-chart';
+import { PLAN_FLOOR_FRACTION_OF_FTP, ZONE_WASH_OPACITY } from './plan';
 
 const FTP = 250;
 const WIDTH = 912;
@@ -45,11 +36,10 @@ function ramp(durationS: number, from: number, to: number): ExpandedStep {
 
 function geometry(
   steps: readonly ExpandedStep[],
-  patch: Partial<{ samples: PlanChartSample[]; scalePct: number; elapsedS: number }> = {},
+  patch: Partial<{ scalePct: number; elapsedS: number }> = {},
 ) {
   return planChartGeometry({
     steps,
-    samples: patch.samples ?? [],
     ftpW: FTP,
     scalePct: patch.scalePct ?? 100,
     elapsedS: patch.elapsedS ?? 0,
@@ -81,11 +71,6 @@ describe('the x-axis is the ridden timeline', () => {
     expect(skipped.totalS).toBe(720);
     // The second step still fills the rest of the chart: the axis is what was ridden.
     expect(points(skipped.blocks[1]?.d ?? '')[3]?.x).toBeCloseTo(WIDTH, 6);
-  });
-
-  it('labels the session with the length that will actually be ridden', () => {
-    expect(geometry([step(1800, 60), step(1980, 90)]).totalLabel).toBe('63 min');
-    expect(geometry([step(6, 60), step(6, 70)]).totalLabel).toBe('0:12');
   });
 });
 
@@ -158,172 +143,6 @@ describe('the plan as it was written, behind the plan as it is ridden', () => {
   });
 });
 
-describe('actual power', () => {
-  it('draws the samples as one line over the plan', () => {
-    const chart = geometry([step(600, 60)], {
-      samples: [
-        { t: 0, powerW: 150 },
-        { t: 300, powerW: 160 },
-      ],
-    });
-    expect(chart.actualPaths).toHaveLength(1);
-    const [start, end] = points(chart.actualPaths[0] as string);
-    expect(start?.x).toBe(0);
-    expect(end?.x).toBeCloseTo(WIDTH / 2, 6);
-    expect(end?.y).toBeLessThan(start?.y as number);
-  });
-
-  it('breaks the line where the trainer reported nothing, rather than dropping to nought', () => {
-    const chart = geometry([step(600, 60)], {
-      samples: [
-        { t: 0, powerW: 150 },
-        { t: 100, powerW: 150 },
-        { t: 200, powerW: null },
-        { t: 300, powerW: 150 },
-        { t: 400, powerW: 150 },
-      ],
-    });
-    expect(chart.actualPaths).toHaveLength(2);
-  });
-
-  it('closes each run down to the axis for the hatch behind it', () => {
-    const chart = geometry([step(600, 60)], {
-      samples: [
-        { t: 0, powerW: 150 },
-        { t: 300, powerW: 160 },
-      ],
-    });
-    expect(chart.actualAreaPaths[0]?.endsWith('Z')).toBe(true);
-    expect(chart.actualAreaPaths[0]).toContain(`,${String(HEIGHT)}`);
-  });
-});
-
-describe('smoothTrace', () => {
-  /** One reading a second, as the recorder writes them. */
-  const series = (watts: readonly (number | null)[]): PlanChartSample[] =>
-    watts.map((powerW, t) => ({ t, powerW }));
-
-  const watts = (samples: readonly PlanChartSample[]) => samples.map((sample) => sample.powerW);
-
-  it('averages over five seconds, which is longer than the hero reads power over', () => {
-    expect(TRACE_WINDOW_S).toBe(5);
-  });
-
-  it('is the trailing mean of the window ending at each reading', () => {
-    // 100, then 200 from t=1 on. At t=5 the window holds t=1..5, all 200.
-    const smoothed = watts(smoothTrace(series([100, 200, 200, 200, 200, 200])));
-    expect(smoothed[0]).toBeCloseTo(100, 6);
-    expect(smoothed[1]).toBeCloseTo(150, 6);
-    expect(smoothed[4]).toBeCloseTo(180, 6);
-    expect(smoothed[5]).toBeCloseTo(200, 6);
-  });
-
-  it('gives the first reading of a session its own value, rather than withholding one', () => {
-    expect(watts(smoothTrace(series([240])))).toEqual([240]);
-  });
-
-  it('cuts a manual half to something like an ERG one, which is why the window exists', () => {
-    // The author's ride: ERG held to a few watts a second, manual swung by tens.
-    const noisy = Array.from({ length: 300 }, (_, i) => 200 + (i % 2 === 0 ? 70 : -70));
-    const step = (values: readonly (number | null)[]) =>
-      values
-        .slice(1)
-        .map((value, i) => Math.abs((value as number) - (values[i] as number)))
-        .reduce((total, delta) => total + delta, 0) /
-      (values.length - 1);
-    expect(step(noisy)).toBeCloseTo(140, 0);
-    expect(step(watts(smoothTrace(series(noisy))))).toBeLessThan(30);
-  });
-
-  it('keeps a dropout absent, so the line breaks exactly where it broke before', () => {
-    const smoothed = watts(smoothTrace(series([200, 200, null, 200, 200])));
-    expect(smoothed[2]).toBeNull();
-    expect(smoothed.filter((value) => value === null)).toHaveLength(1);
-  });
-
-  it('averages over a dropout shorter than the window rather than across a hole', () => {
-    // t=2 is absent, so t=3 means t=0,1,3 — the readings there are, not an interpolation.
-    const smoothed = watts(smoothTrace(series([300, 300, null, 0])));
-    expect(smoothed[3]).toBeCloseTo(200, 6);
-  });
-
-  it('starts clean after a gap longer than the window, with nothing carried across it', () => {
-    const smoothed = watts(
-      smoothTrace([
-        { t: 0, powerW: 300 },
-        { t: 1, powerW: 300 },
-        { t: 60, powerW: 100 },
-      ]),
-    );
-    expect(smoothed[2]).toBeCloseTo(100, 6);
-  });
-
-  it("leaves the caller's samples untouched: the recording is what gets stored", () => {
-    const recorded = series([100, 200, 300, 400, 500, 600]);
-    const before = JSON.stringify(recorded);
-    const smoothed = smoothTrace(recorded);
-    expect(JSON.stringify(recorded)).toBe(before);
-    expect(smoothed[5]?.powerW).not.toBe(recorded[5]?.powerW);
-    expect(smoothed[0]).not.toBe(recorded[0]);
-  });
-
-  it('holds the clock still: a reading is smoothed in place, never moved along the axis', () => {
-    const recorded = series([100, 200, 300]);
-    expect(smoothTrace(recorded).map((sample) => sample.t)).toEqual([0, 1, 2]);
-  });
-
-  it('smooths nothing at a window of nought, which is the raw trace', () => {
-    expect(watts(smoothTrace(series([100, 200, 300]), 0))).toEqual([100, 200, 300]);
-  });
-});
-
-describe('the drawn trace', () => {
-  it('is the smoothed line, not the raw one', () => {
-    /** Where the second point of a two-sample trace is drawn. */
-    const secondY = (samples: PlanChartSample[]) =>
-      points(geometry([step(600, 60)], { samples }).actualPaths[0] as string)[1]?.y as number;
-
-    const spike = secondY([
-      { t: 0, powerW: 100 },
-      { t: 1, powerW: 300 },
-    ]);
-    // A flat series smooths to itself, so these two are the raw heights of 200 and 300 W.
-    const flat200 = secondY([
-      { t: 0, powerW: 200 },
-      { t: 1, powerW: 200 },
-    ]);
-    const flat300 = secondY([
-      { t: 0, powerW: 300 },
-      { t: 1, powerW: 300 },
-    ]);
-    // The spike is drawn at the mean of the pair, not at the 300 W it actually reached.
-    expect(spike).toBeCloseTo(flat200, 6);
-    expect(spike).toBeGreaterThan(flat300);
-  });
-
-  it('still breaks where the trainer reported nothing', () => {
-    const chart = geometry([step(600, 60)], {
-      samples: [
-        { t: 0, powerW: 150 },
-        { t: 1, powerW: 150 },
-        { t: 2, powerW: null },
-        { t: 3, powerW: 150 },
-        { t: 4, powerW: 150 },
-      ],
-    });
-    expect(chart.actualPaths).toHaveLength(2);
-  });
-
-  it('leaves the marker on the plan, which is what keeps the two from disagreeing', () => {
-    // A trace nowhere near the plan: the marker still sits on the block's top edge.
-    const chart = geometry([step(600, 60), step(600, 90)], {
-      elapsedS: 300,
-      samples: Array.from({ length: 300 }, (_, t) => ({ t, powerW: 400 })),
-    });
-    expect(chart.marker?.y).toBe(points(chart.blocks[0]?.d ?? '')[1]?.y);
-  });
-});
-
 describe('the marker', () => {
   it('sits where the rider is, on the plan', () => {
     const chart = geometry([step(600, 60), step(600, 90)], { elapsedS: 300 });
@@ -374,25 +193,6 @@ describe('the axes', () => {
       expect(line.labelY).toBeGreaterThan(line.y);
     });
   });
-
-  it('picks a tick spacing that reads, for twelve seconds and for an hour alike', () => {
-    expect(geometry([step(12, 60)]).ticks.length).toBeLessThanOrEqual(25);
-    expect(geometry([step(3780, 60)]).ticks.length).toBeLessThanOrEqual(25);
-    expect(geometry([step(10_800, 60)]).ticks.length).toBeLessThanOrEqual(25);
-  });
-
-  it('labels a long session in whole minutes, as the mockup does', () => {
-    const labels = geometry([step(3780, 60)])
-      .ticks.map((tick) => tick.label)
-      .filter((label) => label !== null);
-    expect(labels).toEqual(['15', '30', '45']);
-  });
-
-  it('keeps the last figure clear of the total, so the two never collide', () => {
-    const { ticks, width } = geometry([step(3600, 60)]);
-    const last = ticks.filter((tick) => tick.label !== null).at(-1);
-    expect(last?.x).toBeLessThanOrEqual(width - 52);
-  });
 });
 
 /**
@@ -407,8 +207,10 @@ describe('the ceiling covers the plan', () => {
     return (points(chart.blocks[index]?.d ?? '')[1]?.y as number) / chart.baselineY;
   }
 
-  it('is the power strip ceiling for a plan that fits under it', () => {
-    expect(geometry([step(600, 90), step(600, 120)]).ceilingW).toBe(FTP * MAX_FRACTION_OF_FTP);
+  it('is the zone 5 ceiling for a plan that fits under it', () => {
+    expect(geometry([step(600, 90), step(600, 120)]).ceilingW).toBe(
+      FTP * PLAN_FLOOR_FRACTION_OF_FTP,
+    );
   });
 
   it('rises to clear a target the old ceiling could not draw', () => {
@@ -451,7 +253,7 @@ describe('the ceiling covers the plan', () => {
   });
 
   it('ignores a free step, which asks for nothing and so asks for no room', () => {
-    expect(geometry([step(600, 'free')]).ceilingW).toBe(FTP * MAX_FRACTION_OF_FTP);
+    expect(geometry([step(600, 'free')]).ceilingW).toBe(FTP * PLAN_FLOOR_FRACTION_OF_FTP);
   });
 });
 
@@ -462,14 +264,6 @@ describe('the ceiling covers the plan', () => {
  */
 describe('the ceiling holds still through a session', () => {
   const plan = [step(600, 200), step(600, 60)];
-
-  it('does not follow live power, however far over the top it goes', () => {
-    const quiet = geometry(plan);
-    const spiking = geometry(plan, {
-      samples: Array.from({ length: 60 }, (_, t) => ({ t, powerW: FTP * 3 })),
-    });
-    expect(spiking.ceilingW).toBe(quiet.ceilingW);
-  });
 
   it('does not move as the session runs', () => {
     expect(geometry(plan, { elapsedS: 900 }).ceilingW).toBe(geometry(plan).ceilingW);
@@ -492,42 +286,6 @@ describe('the ceiling holds still through a session', () => {
   });
 });
 
-/**
- * The author's words: "spikes in power can go off the edge". No autoscale, no mark on the
- * clipped span — with no rule across the top of zone 6 the edge claims no boundary, so a
- * trace that reaches it reads as going off rather than as holding a value.
- */
-describe('actual power above the ceiling clips', () => {
-  const traceY = (watts: number) =>
-    points(
-      geometry([step(600, 90)], {
-        samples: Array.from({ length: 30 }, (_, t) => ({ t, powerW: watts })),
-      }).actualPaths[0] as string,
-    ).map((point) => point.y);
-
-  it('draws a 300 % spike along the top edge rather than off the chart', () => {
-    const ys = traceY(FTP * 3);
-    expect(Math.min(...ys)).toBe(0);
-    // Never above it: the geometry clamps, and PlanChart cuts the stroke at the same line.
-    expect(ys.every((y) => y >= 0)).toBe(true);
-  });
-
-  it('clips at the ceiling and not at 160 % of FTP, which is no longer the ceiling', () => {
-    const chart = geometry([step(600, 200)], {
-      samples: Array.from({ length: 30 }, (_, t) => ({ t, powerW: FTP * 1.9 })),
-    });
-    // 190 % is over the old ceiling and under this plan's, so it draws at its own height.
-    expect(points(chart.actualPaths[0] as string)[0]?.y).toBeGreaterThan(0);
-  });
-
-  it('holds the plan inside the chart, so only the trace ever reaches the edge', () => {
-    for (const percent of [160, 200, 300]) {
-      const chart = geometry([step(600, percent)]);
-      expect(chart.ceilingW).toBeGreaterThan(FTP * (percent / 100));
-    }
-  });
-});
-
 describe('planCeilingW', () => {
   it('is a pure read of the plan: the same steps give the same ceiling', () => {
     const steps = [step(600, 200), step(600, 60)];
@@ -535,8 +293,8 @@ describe('planCeilingW', () => {
   });
 
   it('survives a nonsense FTP rather than dividing the chart by nought', () => {
-    expect(planCeilingW([step(600, 90)], 0, 100)).toBe(MAX_FRACTION_OF_FTP);
-    expect(planCeilingW([], FTP, 100)).toBe(FTP * MAX_FRACTION_OF_FTP);
+    expect(planCeilingW([step(600, 90)], 0, 100)).toBe(PLAN_FLOOR_FRACTION_OF_FTP);
+    expect(planCeilingW([], FTP, 100)).toBe(FTP * PLAN_FLOOR_FRACTION_OF_FTP);
   });
 });
 
@@ -576,10 +334,6 @@ describe('the plan is drawn at the FTP the session is ridden at', () => {
     const heldW = (step.value.value / 100) * sessionFtp;
     const chart = planChartGeometry({
       steps,
-      samples: [
-        { t: 0, powerW: heldW },
-        { t: 1, powerW: heldW },
-      ],
       // Exactly what services.ts hands the engine and publishes on the snapshot.
       ftpW: ftpW ?? sessionFtp,
       scalePct: 100,
@@ -587,10 +341,10 @@ describe('the plan is drawn at the FTP the session is ridden at', () => {
       width: WIDTH,
       height: HEIGHT,
     });
-    return {
-      plan: points(chart.blocks[at]?.d ?? '')[1]?.y,
-      actual: points(chart.actualPaths[0] ?? '')[0]?.y,
-    };
+    // Where those held watts land on this chart's own scale. The regression was the two
+    // disagreeing: the block drawn at one FTP and the watts commanded by another.
+    const heldY = chart.baselineY - (heldW / chart.ceilingW) * chart.baselineY;
+    return { plan: points(chart.blocks[at]?.d ?? '')[1]?.y, actual: heldY };
   }
 
   it("is the workout's own FTP, not the rider's: holding the commanded watts sits on the plan", () => {

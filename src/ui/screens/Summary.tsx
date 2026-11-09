@@ -5,7 +5,7 @@ import { buildProfile } from '../../route/profile';
 import type { Route } from '../../route/types';
 import type { AlertState } from '../../ride/types';
 import type { Ride, RideSample } from '../../storage/types';
-import { ElevationProfile, PowerStrip } from '../charts';
+import { ElevationProfile, TrendStrips, trendSamplesByDistance } from '../charts';
 import { Button } from '../components/Button';
 import { ButtonGroup } from '../components/ButtonGroup';
 import { CONTROL_GAP } from '../components/control';
@@ -27,7 +27,7 @@ import {
   type DeleteResult,
 } from './ride-delete';
 import { rideDate, rideTitle } from './rides-list';
-import { ergModeNote, powerSamplesFrom } from './summary-view';
+import { ergModeNote } from './summary-view';
 
 /** The 1440 design width less its 64 px gutters: with no map beside it the profile
  * takes the whole row. */
@@ -48,7 +48,7 @@ interface SummaryProps {
 
 /**
  * No mockup: the ride screen's own rows, read back. The five secondaries become the
- * aggregate row, the profile is drawn complete, and the strip shows the whole ride
+ * aggregate row, the profile is drawn complete, and the two strips show the whole ride
  * rather than a window. Download TCX is the screen's one accent control.
  */
 export function Summary({
@@ -62,7 +62,7 @@ export function Summary({
 }: SummaryProps) {
   const profile = useMemo(() => (route === null ? null : buildProfile(route)), [route]);
   const climbs = useMemo(() => (route === null ? [] : detectClimbs(route)), [route]);
-  const power = useMemo(() => powerSamplesFrom(samples), [samples]);
+  const trends = useMemo(() => trendSamplesByDistance(samples), [samples]);
 
   const [armed, setArmed] = useState<Armed>(null);
   // Only a failure is reported here. A delete that worked takes the rider off this screen,
@@ -174,9 +174,11 @@ export function Summary({
       </div>
 
       <div className="mt-[16px] flex grow flex-col justify-center gap-[6px]">
-        {route !== null && profile !== null && (
-          <>
-            <div className={`${LABEL} text-micro`}>Profile</div>
+        {route !== null && profile !== null && <div className={`${LABEL} text-micro`}>Profile</div>}
+        {/* No row gap: each chart's baseline is the rule above the next, and the distance
+            axis rules the bottom of all three. design/DESIGN.md > Trend strips. */}
+        <div className="flex flex-col">
+          {route !== null && profile !== null && (
             <ElevationProfile
               route={route}
               profile={profile}
@@ -184,18 +186,16 @@ export function Summary({
               distanceM={ride.distanceM}
               width={CHART_WIDTH}
             />
-          </>
-        )}
-        <div className="mt-[26px]">
-          {/* A finished ride has no current reading, so the marker label is left off
-              rather than drawn as a dash against a trainer nobody is asking. */}
-          <PowerStrip
-            samples={power}
+          )}
+          {/* A finished ride has no "here", so the strips carry no drop line. */}
+          <TrendStrips
+            samples={trends}
             ftpW={ride.settings.ftp}
-            startM={0}
-            endM={Math.max(ride.distanceM, route?.totalDistanceM ?? ride.distanceM)}
-            mode="complete"
+            startAt={0}
+            endAt={Math.max(ride.distanceM, route?.totalDistanceM ?? ride.distanceM)}
             width={CHART_WIDTH}
+            axis="distance"
+            mode="complete"
           />
         </div>
       </div>

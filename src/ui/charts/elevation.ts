@@ -145,6 +145,30 @@ export interface AxisTick {
   long: boolean;
 }
 
+/**
+ * The distance axis, as pixels across whatever width it is drawn at.
+ *
+ * Exported because the axis no longer sits on this chart: design/DESIGN.md > Trend strips
+ * moves the km ticks off the profile's baseline to the bottom of the block the profile and
+ * its two strips make together, which is the heart-rate strip's baseline. The rule is the
+ * same either way, so it is one function rather than a second one written under the strips.
+ */
+export function distanceTicks(options: {
+  startM: number;
+  endM: number;
+  width: number;
+}): AxisTick[] {
+  const { startM, endM, width } = options;
+  const spanM = Math.max(endM - startM, 1e-9);
+  const step = tickStepM(spanM);
+  const ticks: AxisTick[] = [];
+  for (let i = 0; startM + i * step <= endM + 1e-6; i += 1) {
+    const distM = startM + i * step;
+    ticks.push({ x: ((distM - startM) / spanM) * width, distM, long: i % 2 === 0 });
+  }
+  return ticks;
+}
+
 export interface BandShape {
   d: string;
   band: GradientBand;
@@ -183,7 +207,6 @@ export interface ElevationGeometry {
   linePath: string;
   areaPath: string;
   bands: BandShape[];
-  ticks: AxisTick[];
   /** Window views label where the window starts; the route view has no left label. */
   startLabel: string | null;
   endLabel: string;
@@ -267,13 +290,6 @@ export function elevationGeometry(input: ElevationInput): ElevationGeometry {
     };
   });
 
-  const step = tickStepM(spanM);
-  const ticks: AxisTick[] = [];
-  for (let i = 0; startM + i * step <= endM + 1e-6; i += 1) {
-    const distM = startM + i * step;
-    ticks.push({ x: xFor(distM), distM, long: i % 2 === 0 });
-  }
-
   const km = (metres: number): string => (metres / 1000).toFixed(1);
 
   const summits: SummitTick[] = climbs
@@ -306,7 +322,6 @@ export function elevationGeometry(input: ElevationInput): ElevationGeometry {
     linePath: smoothPath(points),
     areaPath: areaPath(points, scale.baselineY),
     bands,
-    ticks,
     startLabel: win ? km(startM) : null,
     endLabel: `${km(endM)} km`,
     showEndCircles: !win,

@@ -1,40 +1,33 @@
 import { useId, useMemo, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ExpandedStep } from '../../workout/expand';
-import { blockForStep, planChartGeometry, type PlanChartSample } from './plan-chart';
+import { blockForStep, planChartGeometry } from './plan-chart';
 
 export const PLAN_CHART_WIDTH = 912;
-export const PLAN_CHART_HEIGHT = 220;
+export const PLAN_CHART_HEIGHT = 188;
 
-/** The tick figures under the axis, from design/mockups/workout.html. */
-const TICK_LONG = 8;
-const TICK_SHORT = 4;
-const AXIS_LABEL_Y = 22;
 /** The zone figures sit in the gutter the screen keeps clear to the right of the chart. */
 const ZONE_LABEL_X = 10;
 
 /**
- * The marker: an ink disc with an accent ring, knocked out of whatever it lands on by a
- * ring of ground around it.
+ * The rider's marker: a ring the size of a ghost symbol, ink inside and accent around it,
+ * sitting on the dashed drop line.
  *
- * design/DESIGN.md > Palette reads it straight — ink is the current value, accent is where
- * you are in the plan — and it was the shape asked for after the second hardware ride,
- * where an accent dot the size of three pixels was not findable at a glance over an accent
- * trace it shares a colour with.
+ * design/DESIGN.md > Marks asks for exactly this — r 5, r 4 on phones, a 2 px accent stroke
+ * — so a workout's marker is the same mark and the same weight as a ghost's on a route
+ * profile, differing only in being a circle and in being the accent among them.
  *
- * The ground ring is what makes it survive all three backgrounds it has to sit on. Over a
- * grey plan block or the ink hover veil the gap separates the accent ring from the wash;
- * over the accent trace it stops the ring from merging into the line it crosses, which is
- * the one case where an accent ring alone would disappear. A knockout, not a glow: flat
- * ground, hard edge, no shadow or blur, which is what DESIGN.md > Marks allows.
+ * No countdown bubble: the interval figure above already carries the time, and no ground
+ * halo either, now that the accent trace it used to have to survive crossing has moved to
+ * the strips below.
  */
 const MARKER_R = 5;
-const MARKER_HALO = 2;
-/** The stem starts clear of the halo, so the knockout stays a clean ring. */
-const DROP_GAP = 4;
+const PHONE_MARKER_R = 4;
+const MARKER_STROKE = 2;
+/** The stem starts clear of the ring rather than at its centre. */
+const DROP_GAP = 2;
 
 export interface PlanChartProps {
   steps: readonly ExpandedStep[];
-  samples: readonly PlanChartSample[];
   ftpW: number;
   scalePct: number;
   elapsedS: number;
@@ -58,12 +51,17 @@ export interface PlanChartProps {
    * hoverable itself, which is what a row driving it from the panel needs.
    */
   hoveredStep?: number | null;
+  /** A phone draws the marker a step smaller, as a ghost symbol is drawn a step smaller. */
+  phone?: boolean;
 }
 
 /**
- * The session as one picture: the plan as grey steps, actual power as the accent line over
- * it, and a marker at now. A renderer over plan-chart.ts and nothing else, the way
- * ElevationProfile is a renderer over elevation.ts.
+ * The plan as one picture: grey steps, zone washes ahead of the marker, and a marker at
+ * now. A renderer over plan-chart.ts and nothing else, the way ElevationProfile is a
+ * renderer over elevation.ts.
+ *
+ * The plan alone — design/DESIGN.md > Workout. What the rider actually produced is the two
+ * trend strips beneath, which also carry the time axis this chart used to draw.
  *
  * No ref handle. The workout screen re-renders every second anyway — both clocks count —
  * so there is nothing for mutation to save here, unlike the ride screen where the charts
@@ -79,7 +77,6 @@ const HOVER_VEIL_OPACITY = 0.12;
 
 export function PlanChart({
   steps,
-  samples,
   ftpW,
   scalePct,
   elapsedS,
@@ -87,12 +84,14 @@ export function PlanChart({
   height = PLAN_CHART_HEIGHT,
   onHoverStep,
   hoveredStep = null,
+  phone = false,
 }: PlanChartProps) {
   const uid = useId().replace(/[^a-zA-Z0-9_-]/g, '');
   const geometry = useMemo(
-    () => planChartGeometry({ steps, samples, ftpW, scalePct, elapsedS, width, height }),
-    [steps, samples, ftpW, scalePct, elapsedS, width, height],
+    () => planChartGeometry({ steps, ftpW, scalePct, elapsedS, width, height }),
+    [steps, ftpW, scalePct, elapsedS, width, height],
   );
+  const markerR = phone ? PHONE_MARKER_R : MARKER_R;
 
   const marker = geometry.marker;
   const aheadX = marker?.x ?? 0;
@@ -118,29 +117,10 @@ export function PlanChart({
         >
           <line x1={0} y1={0} x2={0} y2={8} stroke="var(--color-muted)" strokeWidth={0.8} />
         </pattern>
-        <pattern
-          id={`ridden-hatch-${uid}`}
-          patternUnits="userSpaceOnUse"
-          width={8}
-          height={8}
-          patternTransform="rotate(45)"
-        >
-          <line x1={0} y1={0} x2={0} y2={8} stroke="var(--color-accent)" strokeWidth={0.8} />
-        </pattern>
         {/* Muted is the plan ahead, so the blocks stop at the marker and the accent takes
             over behind it — the same rule the elevation profile's hatch follows. */}
         <clipPath id={`plan-ahead-${uid}`}>
           <rect x={aheadX} y={0} width={Math.max(0, width - aheadX)} height={height} />
-        </clipPath>
-        {/* The chart's own area, for the one thing drawn here that is allowed to leave it.
-            The plan sets the ceiling so a block always fits, but actual power does not:
-            a sprint over the top is clamped to the top edge by the geometry and then
-            paints 1.25 px of its 2.5 px stroke above the box, which this cuts off. The
-            svg stays overflow: visible — the zone figures sit in the gutter to its right,
-            the tick figures below it, and the hovered block's outline runs along its very
-            edges — so the confinement has to be here, on the trace alone. */}
-        <clipPath id={`plan-area-${uid}`}>
-          <rect x={0} y={0} width={width} height={height} />
         </clipPath>
       </defs>
 
@@ -175,6 +155,9 @@ export function PlanChart({
         ))}
       </g>
 
+      {/* The baseline, and no ticks on it: design/DESIGN.md > Trend strips gives this rule
+          to the power strip below as its top edge, and sends the minute figures to the
+          bottom of the block the three charts make — see TrendStrips. */}
       <line
         x1={0}
         y1={geometry.baselineY}
@@ -183,30 +166,6 @@ export function PlanChart({
         stroke="var(--color-muted)"
         strokeWidth={1}
       />
-      {geometry.ticks.map((tick) => (
-        <g key={tick.x}>
-          <line
-            x1={tick.x}
-            y1={geometry.baselineY}
-            x2={tick.x}
-            y2={geometry.baselineY + (tick.long ? TICK_LONG : TICK_SHORT)}
-            stroke="var(--color-muted)"
-            strokeWidth={1}
-          />
-          {tick.label !== null && (
-            <text
-              x={tick.x}
-              y={geometry.baselineY + AXIS_LABEL_Y}
-              textAnchor="middle"
-              className="font-mono"
-              fontSize={11}
-              fill="var(--color-muted)"
-            >
-              {tick.label}
-            </text>
-          )}
-        </g>
-      ))}
 
       {/* The plan as it was written, behind the plan as it is being ridden: only drawn
           once the rider has taken the difficulty off 100 %, which is the only time the
@@ -251,8 +210,8 @@ export function PlanChart({
           pointer this exists to fix.
 
           Drawn over the plan's own grey line, which runs along this same top edge, so the
-          edge reads as ink rather than as muted laid on top of it — and under the actual
-          power line and the marker, which keep the accent and the foreground.
+          edge reads as ink rather than as muted laid on top of it — and under the marker,
+          which keeps the accent and the foreground.
 
           Every block outlines, the current one included. The Steps row is exempt from its
           own hover because it is already solid ink with nothing left to raise; a block is
@@ -271,33 +230,11 @@ export function PlanChart({
         />
       )}
 
-      {/* Power the rider actually produced, and the only thing on the chart with no
-          ceiling of its own. A spike past the top of the scale runs along the top edge
-          and is cut there: with no rule across the top of zone 6 any more, the edge
-          claims no boundary, so a trace that reaches it reads as going off rather than
-          as holding a value. No autoscale, no mark on the clipped span — the chart is
-          the plan's, and live power is not allowed to redraw it. */}
-      <g clipPath={`url(#plan-area-${uid})`}>
-        {geometry.actualAreaPaths.map((d) => (
-          <path key={`area-${d}`} d={d} fill={`url(#ridden-hatch-${uid})`} opacity={0.75} />
-        ))}
-        {geometry.actualPaths.map((d) => (
-          <path
-            key={`actual-${d}`}
-            d={d}
-            fill="none"
-            stroke="var(--color-accent)"
-            strokeWidth="var(--stroke-ridden)"
-            strokeLinejoin="round"
-          />
-        ))}
-      </g>
-
       {marker !== null && (
         <>
           <line
             x1={marker.x}
-            y1={marker.y + MARKER_R + MARKER_HALO + DROP_GAP}
+            y1={marker.y + markerR + DROP_GAP}
             x2={marker.x}
             y2={geometry.baselineY}
             stroke="var(--color-accent)"
@@ -305,33 +242,16 @@ export function PlanChart({
             strokeDasharray="2 4"
           />
           <circle
-            cx={marker.x}
-            cy={marker.y}
-            r={MARKER_R + MARKER_HALO}
-            fill="var(--color-ground)"
-          />
-          <circle
             data-testid="plan-marker"
             cx={marker.x}
             cy={marker.y}
-            r={MARKER_R}
+            r={markerR}
             fill="var(--color-ink)"
             stroke="var(--color-accent)"
-            strokeWidth="var(--stroke-chart)"
+            strokeWidth={MARKER_STROKE}
           />
         </>
       )}
-
-      <text
-        x={width}
-        y={geometry.baselineY + AXIS_LABEL_Y}
-        textAnchor="end"
-        className="font-mono"
-        fontSize={11}
-        fill="var(--color-muted)"
-      >
-        {geometry.totalLabel}
-      </text>
 
       {/* The hit layer: the block shapes again, unpainted and unclipped.
           Unpainted, because the chart already says everything it has to say — the answer

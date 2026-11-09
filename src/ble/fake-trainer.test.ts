@@ -1,4 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  DESKTOP_STRIP,
+  smoothPower,
+  trendStripGeometry,
+  type TrendRideSample,
+} from '../ui/charts/strips';
 import { FakeTrainer, type FakeScript } from './fake-trainer';
 import type { BikeData, ConnectionState } from './types';
 
@@ -47,7 +53,7 @@ describe('FakeTrainer', () => {
     expect(states).toEqual(['connecting', 'connected', 'disconnected']);
   });
 
-  it.each<FakeScript>(['constant', 'ramp', 'intervals', 'dropout'])(
+  it.each<FakeScript>(['constant', 'ramp', 'intervals', 'dropout', 'varied'])(
     'produces an identical series across two instances of the %s script',
     async (script) => {
       const a = await ride(script, 60);
@@ -83,6 +89,76 @@ describe('FakeTrainer', () => {
     expect(samples[130]!.powerW).toBeGreaterThan(270);
     expect(samples[130]!.powerW).toBeLessThan(290);
     expect(samples[250]!.powerW).toBeLessThan(125); // cycle repeats
+  });
+
+  describe('varied script', () => {
+    /** Second `at` of the cycle, which is sample at - 1. */
+    const wattsAt = (samples: BikeData[], at: number): number => samples[at - 1]!.powerW!;
+
+    it('rides a soft start, endurance, a climb, sprints and a long stop', async () => {
+      const samples = await ride('varied', 1200);
+
+      // Soft pedal, endurance, climb: each within the 15 % a hand-ridden effort moves.
+      expect(wattsAt(samples, 1)).toBeGreaterThanOrEqual(51);
+      expect(wattsAt(samples, 1)).toBeLessThanOrEqual(69);
+      expect(wattsAt(samples, 300)).toBeGreaterThanOrEqual(128);
+      expect(wattsAt(samples, 300)).toBeLessThanOrEqual(173);
+      expect(wattsAt(samples, 600)).toBeGreaterThanOrEqual(191);
+      expect(wattsAt(samples, 600)).toBeLessThanOrEqual(259);
+
+      // The sprint peaks on its second second and is over by its fourth.
+      expect(wattsAt(samples, 421)).toBeGreaterThanOrEqual(595);
+      expect(wattsAt(samples, 421)).toBeLessThanOrEqual(805);
+      expect(wattsAt(samples, 421)).toBeGreaterThan(wattsAt(samples, 420));
+      expect(wattsAt(samples, 423)).toBeLessThan(150);
+
+      // Stopped, so heart rate has somewhere to fall to, and the cranks with it.
+      expect(wattsAt(samples, 1000)).toBe(0);
+      expect(wattsAt(samples, 1100)).toBe(0);
+      expect(samples[999]!.cadenceRpm).toBe(0);
+      expect(samples[299]!.cadenceRpm).toBeGreaterThan(80);
+    });
+
+    it('moves second to second the way a hand-ridden effort does', async () => {
+      const samples = await ride('varied', 400);
+      const endurance = samples.slice(150, 400).map((s) => s.powerW!);
+      expect(Math.min(...endurance)).toBeLessThan(140);
+      expect(Math.max(...endurance)).toBeGreaterThan(160);
+    });
+
+    it('needles past the strip ceiling on a sprint and sits inside the trace on the climb', async () => {
+      const samples = await ride('varied', 900);
+      const recorded: TrendRideSample[] = samples.map((sample, index) => ({
+        t: index + 1,
+        distanceM: index + 1,
+        powerW: sample.powerW!,
+        heartRateBpm: null,
+      }));
+      const traced = smoothPower(recorded);
+
+      // The strip as a desktop ride draws it, at the default FTP.
+      const geometry = trendStripGeometry({
+        samples: [],
+        kind: 'power',
+        ftpW: 200,
+        startAt: 0,
+        endAt: 900,
+        width: 600,
+        metrics: DESKTOP_STRIP,
+      });
+
+      // The big sprint pins: its trace reaches the strip's top rule, not just the ceiling.
+      const sprint = Math.max(...traced.slice(838, 843).map((w) => w ?? 0));
+      expect(sprint).toBeGreaterThan(geometry.ceiling);
+      expect(geometry.yFor(sprint)).toBe(0);
+
+      // The climb needs the trace's upper reaches without leaving it, which is the trade
+      // POWER_CEILING_FRACTION_OF_FTP was tuned to make.
+      const climb = traced[600] as number;
+      expect(climb).toBeLessThan(geometry.ceiling);
+      expect(geometry.yFor(climb)).toBeGreaterThan(geometry.traceTopY);
+      expect(geometry.yFor(climb)).toBeLessThan(geometry.traceTopY + geometry.height / 4);
+    });
   });
 
   describe('ERG', () => {

@@ -64,12 +64,18 @@ The series is seeded, so every run produces the same numbers. That is what makes
 something a test can assert against, and it means a layout change does not have to be checked in
 cycling shoes.
 
-| Script      | Behaviour                                                              |
-| ----------- | ---------------------------------------------------------------------- |
-| `constant`  | Steady 200 W                                                           |
-| `ramp`      | 100 W rising to 350 W over five minutes, then repeating                |
-| `intervals` | Two minutes at 120 W alternating with two minutes at 280 W             |
-| `dropout`   | Constant, but goes silent from 30 s to 45 s and reports `reconnecting` |
+| Script      | Behaviour                                                                                          |
+| ----------- | -------------------------------------------------------------------------------------------------- |
+| `constant`  | Steady 200 W                                                                                       |
+| `ramp`      | 100 W rising to 350 W over five minutes, then repeating                                            |
+| `intervals` | Two minutes at 120 W alternating with two minutes at 280 W                                         |
+| `dropout`   | Constant, but goes silent from 30 s to 45 s and reports `reconnecting`                             |
+| `varied`    | A twenty-minute session: soft start, endurance, a five-minute climb, three sprints and a long stop |
+
+On `varied`, and only there, the fake strap reads the same script and derives heart rate from it:
+a lagged response with cardiac drift, resting at 50 bpm and reaching zone 5 on the climb. It is
+the script to use when checking the trend strips, which the others cannot exercise — neither
+produces a sprint to needle the power strip or a rest for heart rate to fall back to.
 
 An unrecognised script name falls back to the real device and says so in the connection panel.
 With no `fake` parameter at all the app uses `FtmsTrainer` and Chrome's device chooser.

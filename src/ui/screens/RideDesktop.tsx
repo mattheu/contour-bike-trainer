@@ -1,7 +1,7 @@
 import { useMemo, useRef, type ReactNode } from 'react';
 import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
 import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
-import { CHART_ROW_GAP_PX, PowerStrip, chartRowLayout, chartStackHeights } from '../charts';
+import { CHART_ROW_GAP_PX, TrendStrips, chartRowLayout, chartStackHeights } from '../charts';
 import { GhostKey } from '../components/GhostKey';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
@@ -146,27 +146,29 @@ export function RideDesktop({
                 onChange={onProfileZoom}
               />
             </ChartHeading>
-            <ProfileChart
-              route={route}
-              profile={profile}
-              climbs={climbs}
-              window={window}
-              width={layout.profileWidth}
-              height={stack.profileHeight}
-              handleRef={profileRef}
-              onHover={onProfileHover}
-            />
-            <div className="mt-[26px]">
-              {/* The strip shares the profile's x-axis, so it shares its width exactly. */}
-              <PowerStrip
+            {/* No row gap: the profile's baseline is the power strip's top rule, the power
+                strip's is the heart-rate strip's, and the km ticks rule the bottom of all
+                three. design/DESIGN.md > Trend strips. */}
+            <div className="flex flex-col">
+              <ProfileChart
+                route={route}
+                profile={profile}
+                climbs={climbs}
+                window={window}
+                width={layout.profileWidth}
+                height={stack.profileHeight}
+                handleRef={profileRef}
+                onHover={onProfileHover}
+              />
+              {/* The strips share the profile's x-axis, so they share its width exactly. */}
+              <TrendStrips
                 ref={stripRef}
                 samples={samples}
                 ftpW={ftpW}
-                startM={startM}
-                endM={endM}
-                distanceM={0}
+                startAt={startM}
+                endAt={endM}
                 width={layout.profileWidth}
-                height={stack.stripHeight}
+                axis="distance"
               />
             </div>
           </div>
