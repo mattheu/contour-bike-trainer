@@ -2,9 +2,12 @@ import { useMemo, useRef, type ReactNode } from 'react';
 import { ZONE_COUNT as HR_ZONE_COUNT } from '../../zones/hr';
 import { ZONE_COUNT as POWER_ZONE_COUNT } from '../../zones/power';
 import { TABLET_STACK_GAP_PX, TrendStrips, tabletChartStack } from '../charts';
+import { ButtonGroup } from '../components/ButtonGroup';
 import { GhostKey } from '../components/GhostKey';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
+import { IconButton } from '../components/IconButton';
+import { MapIcon, StepsIcon } from '../components/icons';
 import { LoopTag } from '../components/LoopTag';
 import { RideHeader } from '../components/RideHeader';
 import { Segmented } from '../components/Segmented';
@@ -16,6 +19,7 @@ import type { RideArrangementProps } from './ride-arrangement';
 import type { Reading } from './ride-readings';
 import { MAP_ZOOMS, type LadderView } from './ride-view';
 import { MapChart, ProfileChart } from './RideCharts';
+import { RideTimes } from './RideTimes';
 import { useElementHeight, useElementWidth } from './use-element-width';
 
 /**
@@ -40,9 +44,13 @@ export function RideTabletPortrait({
   ftpW,
   title,
   lapLabel,
+  times,
+  timesNote,
   pauseLabel,
   mapZoom,
   onMapZoom,
+  mapPanel,
+  onMapPanel,
   profileRef,
   mapRef,
   stripRef,
@@ -154,26 +162,59 @@ export function RideTabletPortrait({
           />
         </div>
 
-        <div className="flex flex-col gap-[6px]">
-          <div className="flex items-center justify-between">
-            <div className={`${LABEL} text-micro`}>Map</div>
-            <Segmented
-              size={32}
-              label="Map zoom"
-              options={MAP_ZOOMS}
-              value={mapZoom}
-              onChange={onMapZoom}
+        {/* The same column as the desktop's, stacked rather than beside the profile: the
+            times take the map's place and its height, so switching moves nothing else. */}
+        {mapPanel === 'times' ? (
+          <div className="flex flex-col gap-[6px]">
+            <div className="flex items-center justify-between">
+              <div className={`${LABEL} text-micro`}>Times</div>
+              <IconButton
+                size={32}
+                label="Show map"
+                title="Show map"
+                onClick={() => {
+                  onMapPanel('map');
+                }}
+              >
+                <MapIcon />
+              </IconButton>
+            </div>
+            <RideTimes rows={times} note={timesNote} height={stack.mapHeight} />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-[6px]">
+            <div className="flex items-center justify-between">
+              <div className={`${LABEL} text-micro`}>Map</div>
+              <ButtonGroup label="Map view and zoom">
+                <IconButton
+                  size={32}
+                  label="Show times"
+                  title="Show times"
+                  onClick={() => {
+                    onMapPanel('times');
+                  }}
+                >
+                  <StepsIcon />
+                </IconButton>
+                <Segmented
+                  size={32}
+                  label="Map zoom"
+                  options={MAP_ZOOMS}
+                  value={mapZoom}
+                  onChange={onMapZoom}
+                />
+              </ButtonGroup>
+            </div>
+            <MapChart
+              route={route}
+              zoom={mapZoom}
+              width={chartWidth}
+              height={stack.mapHeight}
+              handleRef={mapRef}
+              onHover={onMapHover}
             />
           </div>
-          <MapChart
-            route={route}
-            zoom={mapZoom}
-            width={chartWidth}
-            height={stack.mapHeight}
-            handleRef={mapRef}
-            onHover={onMapHover}
-          />
-        </div>
+        )}
       </div>
 
       {/* Two lines, not the desktop's one: 754 px will not hold five ghosts, the gradient

@@ -1,12 +1,6 @@
 import type { GhostSlotView } from '../../ghost/live';
 import type { HistorySlot } from '../../ghost/resolve';
-import {
-  SLOT_DESCRIPTION,
-  SLOT_SYMBOL,
-  SYMBOL_BOX,
-  SYMBOL_STROKE_WIDTH,
-  longDate,
-} from '../../ghost/slots';
+import { SLOT_SYMBOL, SYMBOL_BOX, SYMBOL_STROKE_WIDTH, longDate } from '../../ghost/slots';
 import { SettingsPanel } from '../components/SettingsPanel';
 import { Button } from '../components/Button';
 import { Devices, type DevicesView } from '../components/Devices';
@@ -195,6 +189,9 @@ export function RideSettings({
  *
  * The picked slot's checkbox only ever empties it. There is no ride to put back from
  * here, which is why an empty one says where it is filled from instead of sitting dead.
+ *
+ * The word comes with the row rather than off the slot: where Best holds the fastest lap
+ * of the year, this one says it is the second, so the two rows are not one answer twice.
  */
 function GhostRow({ view, onChange }: { view: GhostSlotView; onChange: (on: boolean) => void }) {
   const id = `ghost-${view.slot}`;
@@ -224,7 +221,7 @@ function GhostRow({ view, onChange }: { view: GhostSlotView; onChange: (on: bool
         />
       </svg>
       <label htmlFor={id} className="text-body grow font-sans">
-        {SLOT_DESCRIPTION[view.slot]}
+        {view.description}
         <span className={`${MONO} text-micro text-muted ml-[6px]`}>{note}</span>
       </label>
       <input

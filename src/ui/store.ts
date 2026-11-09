@@ -89,6 +89,17 @@ export interface RideSnapshot {
    */
   routePositionM: number;
   ascentM: number;
+  /**
+   * The ride second the lap being ridden began at, from the one place that watches the
+   * line — see GhostTracker.lapStart. Zero on a point-to-point route, where the ride is
+   * the lap, and through the first lap of a loop.
+   *
+   * The boundary rather than the lap clock itself, so the strip's "7:05 / 27:37" is two
+   * readings of one published `elapsedS`: a lap time carried separately would be refreshed
+   * on the engine's tick while the ride's clock is refreshed ten times a second, and the
+   * pair would disagree by a second whenever the two fell either side of a boundary.
+   */
+  lapStartS: number;
   /** The real route grade, display-smoothed. The engine writes the raw value to the
    * trainer; a 30 m lookahead twitches too much to read as a number. */
   gradePercent: number | null;
@@ -161,6 +172,7 @@ const INITIAL: RideSnapshot = {
   distanceM: 0,
   routePositionM: 0,
   ascentM: 0,
+  lapStartS: 0,
   gradePercent: null,
   avgPowerW: null,
 

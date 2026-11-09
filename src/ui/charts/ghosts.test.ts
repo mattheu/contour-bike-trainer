@@ -34,8 +34,12 @@ function ghost(
     slot,
     symbol: SLOT_SYMBOL[slot],
     name: slot,
+    // Nothing on a chart reads the long word; the times list is what carries it.
+    description: slot,
     end,
     distanceM,
+    // Nothing here ranks a ghost; the times list is what reads this.
+    lapTimeS: 1200,
     gapS: racing ? gapS : null,
     gapLabel: !racing || gapS === null ? null : `${gapS < 0 ? '−' : '+'}${String(Math.abs(gapS))}`,
   };

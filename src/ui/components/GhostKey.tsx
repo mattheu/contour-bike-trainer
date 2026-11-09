@@ -34,8 +34,14 @@ export function GhostKey({ ghosts }: { ghosts: readonly ActiveGhost[] }) {
   );
 }
 
-/** The same hollow symbol the charts draw, at the size the paths were drawn against. */
-function GhostMark({ symbol }: { symbol: GhostSymbol }) {
+/**
+ * The same hollow symbol the charts draw, at the size the paths were drawn against.
+ *
+ * Exported because the times list names its ghosts with it too: one drawing of a slot's
+ * shape, so a square in a ranking is the square on the map rather than a second attempt
+ * at the same path.
+ */
+export function GhostMark({ symbol }: { symbol: GhostSymbol }) {
   return (
     <svg
       width={SYMBOL_BOX}

@@ -26,9 +26,32 @@ export const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 /** The slots a history fills. The picked slot is filled by an action, not resolved. */
 export type HistorySlot = 'best' | 'year' | 'last';
 
-/** Null where nothing can fill the slot. Nothing falls through: a triangle on a lap that
- * is not the best of the year would spend the symbol's meaning to avoid an empty row. */
-export type ResolvedGhosts = Record<HistorySlot, GhostLap | null>;
+/**
+ * Which lap fills each slot, and what the Year slot turned out to be.
+ *
+ * The lap is null where nothing can fill the slot. Nothing falls through: a triangle on a
+ * lap that is not the best of the year would spend the symbol's meaning to avoid an empty
+ * row.
+ *
+ * A record of laps with the flag beside it rather than a record of objects, so the three
+ * slots are still iterated over as three slots: the flag is one fact about the whole
+ * resolution, and giving every slot a field only one of them can use would invite a
+ * renderer to read `best.yearIsSecond` and get false for a reason it would have to look up.
+ */
+export interface ResolvedGhosts {
+  laps: Record<HistorySlot, GhostLap | null>;
+  /**
+   * True where Best took the fastest lap of the window, which leaves Year holding the
+   * second fastest of the year rather than the fastest.
+   *
+   * Settled here because it is a fact about the resolution, and a rider offered two slots
+   * and given one answer twice would be right to think it broken. SPEC.md > Slots.
+   *
+   * True even where the slot came up empty: it says where Best fell, not what Year holds.
+   * A caller with no lap to name has no word to choose and should not be asking.
+   */
+  yearIsSecond: boolean;
+}
 
 /** Two references to one lap, which is the join the dedupe rules are written against. */
 export function sameLap(a: GhostLap | null, b: GhostLap | null): boolean {
@@ -75,5 +98,10 @@ export function resolveGhosts(laps: readonly GhostLap[], nowMs: number): Resolve
 
   const last = mostRecent(laps.filter((lap) => !sameLap(lap, best) && !sameLap(lap, year)));
 
-  return { best, year, last };
+  return {
+    laps: { best, year, last },
+    // Best inside the window means the fastest lap of the year is already in the Best row,
+    // so whatever Year fell to is the second fastest of it.
+    yearIsSecond: best !== null && best.completedAtMs >= since,
+  };
 }

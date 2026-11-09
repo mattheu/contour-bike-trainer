@@ -154,6 +154,9 @@ export function workoutReadings(input: WorkoutReadingsInput): WorkoutReadings {
 
   const ride = rideReadings({
     snapshot,
+    // A workout has no route in version 1, so there is no lap for its strip to read
+    // against — see design/DESIGN.md > Screen rules, Workout.
+    lap: null,
     ftpW,
     hrMaxBpm,
     targetPowerW: workout.targetW,

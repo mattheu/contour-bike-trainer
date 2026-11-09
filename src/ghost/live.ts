@@ -11,7 +11,7 @@ import { lapNumber, lapPositionM } from '../route/loop';
 import type { Ride, RideSample, Storage } from '../storage/types';
 import { candidateLaps, lapSeries, rideSeries, type GhostLap, type GhostSeries } from './lap';
 import { resolveGhosts, sameLap, type HistorySlot } from './resolve';
-import { SLOT_ORDER, slotName, type GhostSlot } from './slots';
+import { SLOT_DESCRIPTION, SLOT_ORDER, slotDescription, slotName, type GhostSlot } from './slots';
 import { activeGhosts, type ActiveGhost, type Ghost, type RiderLap } from './state';
 
 /** Only what a tracker touches, so a test can hand it two repositories and nothing else. */
@@ -127,6 +127,13 @@ const HISTORY_SLOTS: readonly HistorySlot[] = ['best', 'year', 'last'];
  */
 export type GhostSource = { kind: 'lap'; lap: GhostLap } | { kind: 'ride'; rideId: string };
 
+/** What a resolution wants in a slot: the thing to race and the word for it, which move
+ * together because a slot can change either without changing the other. */
+interface Wanted {
+  source: GhostSource;
+  description: string;
+}
+
 /** The join two resolutions are compared on, so a slot racing the same thing is left
  * alone rather than torn down and reloaded at every line. */
 function sameSource(a: GhostSource | null, b: GhostSource | null): boolean {
@@ -151,6 +158,11 @@ function sourceRideId(source: GhostSource): string {
  */
 export interface GhostSlotView {
   slot: GhostSlot;
+  /**
+   * What the checkbox says it switches on. Resolved rather than looked up per slot because
+   * the year slot reads as a second best where Best took the window's fastest lap.
+   */
+  description: string;
   /** Switched on by the rider. The picked slot is on whenever it is filled. */
   on: boolean;
   /** The ride filling it, or null where nothing can. */
@@ -161,6 +173,8 @@ export interface GhostSlotView {
 function unfilledSlots(selection: GhostSelection): GhostSlotView[] {
   return SLOT_ORDER.map((slot) => ({
     slot,
+    // Nothing has resolved, so the year slot has not fallen through to anything yet.
+    description: SLOT_DESCRIPTION[slot],
     on: slot === 'chosen' ? selection.chosenRideId !== null : selection[slot],
     ride: null,
   }));
@@ -204,6 +218,17 @@ export class GhostTracker {
   /** The four slots as the ride settings panel shows them, switched on or not. */
   slots(): readonly GhostSlotView[] {
     return this.slotViews;
+  }
+
+  /**
+   * The ride second the lap being ridden began at — the crossing the gap resets on.
+   *
+   * Read by the ride screen so the lap clock on its secondary strip is this crossing and
+   * not a second opinion about where the line is. Only right once `update` has run for the
+   * tick, which is where the line is watched.
+   */
+  lapStart(): number {
+    return this.lapStartS;
   }
 
   /**
@@ -301,41 +326,64 @@ export class GhostTracker {
     });
 
     const history = resolveGhosts(pool, this.options.now());
-    const wanted = new Map<GhostSlot, GhostSource>();
+    const wanted = new Map<GhostSlot, Wanted>();
     const views: GhostSlotView[] = [];
     for (const slot of HISTORY_SLOTS) {
-      const lap = history[slot];
+      const lap = history.laps[slot];
       const on = this.selection[slot];
+      // An empty slot needs no word for what it fell through to: it fell through to
+      // nothing, and "2nd best of year · no ride yet" names a lap that does not exist.
+      const description = slotDescription(slot, history.yearIsSecond && lap !== null);
       views.push({
         slot,
+        description,
         on,
         ride: lap === null ? null : this.rideLine(lap.rideId, lap.durationS),
       });
-      if (on && lap !== null) wanted.set(slot, { kind: 'lap', lap });
+      if (on && lap !== null) wanted.set(slot, { source: { kind: 'lap', lap }, description });
     }
     const chosen = this.chosenSource();
     views.push({
       slot: 'chosen',
+      description: SLOT_DESCRIPTION.chosen,
       // No separate toggle: the slot is on because a ride is in it, and emptying it is
       // how it is switched off. There is nothing to leave switched on against.
       on: chosen !== null,
       ride: chosen === null ? null : this.chosenLine(chosen),
     });
-    if (chosen !== null) wanted.set('chosen', chosen);
+    if (chosen !== null)
+      wanted.set('chosen', { source: chosen, description: SLOT_DESCRIPTION.chosen });
     this.slotViews = views;
 
     for (const slot of SLOT_ORDER) {
       const next = wanted.get(slot) ?? null;
       const held = this.assigned.get(slot) ?? null;
-      if (sameSource(next, held)) continue;
+      if (sameSource(next?.source ?? null, held)) {
+        if (next !== null) this.reword(slot, next.description);
+        continue;
+      }
       this.assigned.delete(slot);
       // A slot whose lap has changed stops being that ghost at once rather than racing on
       // under a new name until its series arrives.
       this.loaded.delete(slot);
       if (next === null) continue;
-      this.assigned.set(slot, next);
-      void this.load(slot, next);
+      this.assigned.set(slot, next.source);
+      void this.load(slot, next.source, next.description);
     }
+  }
+
+  /**
+   * A slot racing the same lap under a new word.
+   *
+   * The year slot becomes a second best the moment a lap of this ride takes Best, which is
+   * a change of word and not of lap — so the ghost is re-worded in place rather than torn
+   * down and reloaded, which would drop it off the road at a line for no reason the rider
+   * could see.
+   */
+  private reword(slot: GhostSlot, description: string): void {
+    const ghost = this.loaded.get(slot);
+    if (ghost === undefined || ghost.description === description) return;
+    this.loaded.set(slot, { ...ghost, description });
   }
 
   /**
@@ -372,13 +420,13 @@ export class GhostTracker {
     return { startedAt: ride.startedAt, durationS: ride.elapsedS };
   }
 
-  private async load(slot: GhostSlot, source: GhostSource): Promise<void> {
+  private async load(slot: GhostSlot, source: GhostSource, description: string): Promise<void> {
     try {
       const series = await this.series(source);
       // The slot may have resolved again while the read was out; the answer to a question
       // nobody is asking any more is dropped rather than installed.
       if (series === null || !sameSource(this.assigned.get(slot) ?? null, source)) return;
-      this.loaded.set(slot, { slot, name: this.name(slot, source), series });
+      this.loaded.set(slot, { slot, name: this.name(slot, source), description, series });
     } catch (error) {
       this.options.onFailure(error);
     }
