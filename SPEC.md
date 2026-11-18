@@ -693,9 +693,13 @@ labelled `Lap 1` and `Lap 2`, which is the exact ambiguity that moved it off "La
 change belongs, and the settings panel is arguable.
 
 The year slot reads **Best of year** in the panel and the times view, and **Year** in the band, on the same reasoning. Where
-Best holds the fastest lap of the window, the panel and the times view read **2nd best of year** instead and the band is left
+Best holds the fastest lap of the window, the panel and the times view read **2nd of year** instead and the band is left
 alone: the distinction goes where there is room for it, and eleven pixels beside a gap is not where. An empty slot keeps the
 plain word, because it fell through to nothing.
+
+**"2nd best of year" was the phrase and did not fit.** The times view's name cell is 91 px at a narrow desktop width and the
+longer phrase needs 101, so the word being truncated away was "best" — paying a cell width for nothing. **2nd of year** is
+eleven characters and fits wherever **Most recent** does, and the numeral has already said which of the two slots the row is.
 
 ### The 365-day window
 

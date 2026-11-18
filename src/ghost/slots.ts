@@ -82,8 +82,13 @@ export const SLOT_DESCRIPTION: Record<GhostSlot, string> = {
  * Numeral rather than "Second best of year": the panel sets it beside a date and a time in
  * mono, and the times view sets it in a column of `Lap 1` and `Lap 2`, so a figure at the
  * front of the phrase is read as quickly as the word it qualifies.
+ *
+ * And without "best", because the longer phrase did not fit: the times view's name cell is
+ * 91 px at a narrow desktop width and "2nd best of year" needs 101, so the word that was
+ * truncated away was paying for nothing. Eleven characters fits wherever "Most recent"
+ * does, and the numeral already says which of the two the row is.
  */
-export const YEAR_SECOND_DESCRIPTION = '2nd best of year';
+export const YEAR_SECOND_DESCRIPTION = '2nd of year';
 
 /**
  * The word for a slot where there is room for one, which for the year slot depends on

@@ -36,6 +36,8 @@ function ghost(
     name: slot,
     // Nothing on a chart reads the long word; the times list is what carries it.
     description: slot,
+    // Nor which lap of this session it is; that too is the times list's.
+    sessionLapIndex: null,
     end,
     distanceM,
     // Nothing here ranks a ghost; the times list is what reads this.
