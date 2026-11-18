@@ -760,9 +760,8 @@ A workout is ridden against a plan, and the plan chart already shows what you ar
 
 ### Not built yet
 
-Three parts of this phase are specified above but not in the build:
+One part of this phase is specified above but not in the build:
 
-- **Phone layouts.** The ride screen is desktop and tablet only. It has no responsive branching and nothing in the app handles orientation, while the design specifies three phone arrangements. The placement geometry for phones is built and tested — 4 px symbols, the gap beside the symbol rather than above it, a 60 × 16 collision box — but there is no layout to host it.
 - **A label that varies by route type**, so that Most recent reads "Last lap" on a loop.
 
 ### Limits and caveats
@@ -847,44 +846,49 @@ at the end of every ride, and on a phone it is still the desktop arrangement.
 
 ## Laps are recorded and barely shown
 
-Unscheduled. A ride stores its lap splits, the engine knows which lap you are on, and the ghost
-knows its own lap times. Almost none of it reaches a screen.
+Mostly built. A ride stores its lap splits, the engine knows which lap you are on, and the ghost
+knows its own lap times; two of the three places that could not say so now can.
 
-**The rides list does not say how many laps a loop took.** A row shows distance, time and average
-power, so eight laps of the Koppenberg and one lap of something 54 km long read alike. The lap
-count is `lapSplits.length` and needs no new data.
+**The ride screen reads lap against ride on a loop.** The first three secondaries became pairs —
+`Lap 2  7:05 / 27:37`, `4.1 / 16.1 km`, `52 / 200 m`. Point-to-point is unchanged, because
+without laps the totals are the figures.
 
-**The ride screen shows totals only.** Elapsed and distance count the whole session, so on a loop
-the figures a rider is actually racing — this lap's time and this lap's distance — are the two
-that are missing. The engine already derives both for the ghost's lap-relative clock.
+**The times view ranks this session's laps against the ghosts**, ordered by time and labelled by
+lap, with no sort control: it is a leaderboard, the lap number is the row's identity rather than
+its position, and a list you could re-sort would stop being one.
 
-**Ghosts have no list.** Up to four can be racing and the only readout is a gap beside each
-symbol. There is nowhere to see their lap times, or yours against them, while riding. This is the
-same want as the summary's lap table and may be the same component shown in two places — but a
-rider mid-effort has different attention from one reading a summary, so it is not obviously the
-same design.
+**Still open: the rides list does not say how many laps a loop took.** A row shows distance, time
+and average power, so eight laps of the Koppenberg and one lap of something 54 km long read
+alike. The count is `lapSplits.length` and needs no new data.
 
-## The power strip clips hard efforts
+## The chart block, and why its axis is distance
 
-Its ceiling is 160 % of FTP — the top of zone 5 — and anything above is drawn flat against it.
+Built. Under the primary chart sit two trend strips — power, then heart rate — replacing the
+power-so-far strip and the workout plan's actual-power overlay. They answered three things that
+were open here: where a heart rate trace lives, what a hard effort does at the top of a scale,
+and whether the strips carry readouts (they do not; the hero figures carry those).
 
-Zone 6 has no upper bound. A sprint is routinely three times FTP, and a steep ramp out of a corner
-is more. On the two-lap Koppenberg ride of 2026-10-23, ridden at an FTP of 200, the ceiling sat at
-320 W while the second lap peaked at 566: every effort that mattered arrived as a flat top.
+**The power ceiling is 130 % of FTP**, tuned from the design's 110 % on a measured ride rather
+than a guess. Two laps of the Koppenberg at FTP 200 held 218–223 W on the climb for five and a
+half minutes a lap, so at 110 % eleven of that ride's thirty-three minutes sat on the rule — the
+part of the lap the rider cares about was the part the strip stopped resolving. It is one
+exported constant and expected to move again.
 
-The fix is not simply a higher number. A fixed ceiling high enough for a sprint leaves endurance
-riding squashed into the bottom third, which is the reason the current one is low. Options worth
-drawing before choosing: a ceiling that takes the ride's own maximum, a soft ceiling that
-compresses above zone 5 rather than clipping, or a log scale. The figures are recorded correctly
-either way — this is a drawing fault, not a recording one.
+Over the ceiling a trace does not flatten: it keeps climbing at the same pixels per watt up
+through the caption band and stops at the strip's top rule, so a spike's length says how far over
+it went.
 
-## A heart rate sparkline
+**The axis is distance, and that is settled.** Zwift and essentially every other tool put an
+in-ride power or heart rate graph on time. Contour does not, because the strips sit under the
+elevation profile and the profile is a picture of the course. One shared axis means the drop line
+through all three charts points at one place on the road, and the needle on the power strip lines
+up with the ramp above it.
 
-Unscheduled, and the open question is where it goes rather than how to draw it.
-
-The power strip owns the band under the profile, and a second strip costs height the phone
-layouts have none of. Three shapes worth drawing: a toggle on the existing strip, heart rate as a
-second muted line inside it, or desktop and tablet only.
+The cost is real and accepted: anything time-shaped is compressed where the rider is slow and
+stretched where they are fast, and a genuine stop occupies no width at all. The `varied` fake
+script's five-minute stop draws heart rate falling from 184 to 50 as a vertical line at a single
+x. A workout's plan chart uses time, because a workout has no course, so the two disagree by
+design rather than by accident.
 
 ## Phase 5 — Usage and errors
 
