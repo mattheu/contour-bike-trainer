@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   SWIPE_MIN_PX,
-  nextMapZoom,
-  nextProfileZoom,
   swipeDirection,
   viewAfterSwipe,
   viewToggle,
@@ -50,21 +48,9 @@ describe('zoomToggle', () => {
     expect(zoomToggle('map', 'window', 'route')).toMatchObject({ glyph: 'in', zoomed: false });
   });
 
-  it('labels the near zoom the way the desktop control does', () => {
+  it('labels the near zoom the way every other chart header does', () => {
     expect(zoomToggle('map', 'route', 'route').label).toBe('Zoom to 5 km');
     expect(zoomToggle('map', 'route', 'near').label).toBe('Zoom to the whole route');
-  });
-});
-
-describe('the zoom each chart cycles through', () => {
-  it('is two states on the profile', () => {
-    expect(nextProfileZoom('route')).toBe('window');
-    expect(nextProfileZoom('window')).toBe('route');
-  });
-
-  it('is two states on the map', () => {
-    expect(nextMapZoom('route')).toBe('near');
-    expect(nextMapZoom('near')).toBe('route');
   });
 });
 

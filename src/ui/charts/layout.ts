@@ -232,7 +232,7 @@ function phoneStack(
 /**
  * design/mockups/tablet-portrait.html draws all four charts at once inside an 834 x 1194
  * artboard: the profile at 190 over two strips at the desktop's 50, then the map at 240
- * under a heading of its own, 40 px below the block.
+ * 40 px below the block. Each chart sits under a heading of its own.
  */
 export const TABLET_PROFILE_HEIGHT = 190;
 export const TABLET_STRIP_HEIGHT = DESKTOP_STRIP_HEIGHT;
@@ -254,7 +254,9 @@ export interface TabletChartStack {
   mapHeight: number;
 }
 
-const TABLET_CHART_CHROME_PX = TABLET_STACK_GAP_PX + CHART_HEADING_PX + CHART_HEADING_GAP_PX;
+/** Two headings now, not one: the profile carries a zoom button of its own here. */
+const TABLET_CHART_CHROME_PX =
+  TABLET_STACK_GAP_PX + 2 * (CHART_HEADING_PX + CHART_HEADING_GAP_PX);
 
 const TABLET_STACK_DRAWN: TabletChartStack = {
   profileHeight: TABLET_PROFILE_HEIGHT,

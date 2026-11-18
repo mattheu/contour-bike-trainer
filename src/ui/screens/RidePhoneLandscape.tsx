@@ -20,8 +20,9 @@ import { PhoneInlinePrimary, PhoneInlineStat, PhoneRowReading } from '../compone
 import { LABEL } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
-import { nextMapZoom, nextProfileZoom, viewAfterSwipe, viewToggle, zoomToggle } from './phone-ride';
+import { viewAfterSwipe, viewToggle, zoomToggle } from './phone-ride';
 import type { RideArrangementProps } from './ride-arrangement';
+import { nextMapZoom, nextProfileZoom } from './ride-view';
 import { MapChart, ProfileChart } from './RideCharts';
 import { useElementHeight, useElementWidth } from './use-element-width';
 import { useViewSwipe } from './use-view-swipe';

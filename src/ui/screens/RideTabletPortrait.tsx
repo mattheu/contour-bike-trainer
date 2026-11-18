@@ -7,17 +7,22 @@ import { GhostKey } from '../components/GhostKey';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
 import { IconButton } from '../components/IconButton';
-import { MapIcon, StepsIcon } from '../components/icons';
+import { MapIcon, StepsIcon, ZoomInIcon, ZoomOutIcon } from '../components/icons';
 import { LoopTag } from '../components/LoopTag';
 import { RideHeader } from '../components/RideHeader';
-import { Segmented } from '../components/Segmented';
 import { Stat } from '../components/Stat';
 import { LABEL, MONO } from '../components/styles';
 import { ZoneLadder } from '../components/ZoneLadder';
 import { AlertStrip } from './AlertStrip';
 import type { RideArrangementProps } from './ride-arrangement';
 import type { Reading } from './ride-readings';
-import { MAP_ZOOMS, type LadderView } from './ride-view';
+import {
+  chartZoomToggle,
+  nextMapZoom,
+  nextProfileZoom,
+  type LadderView,
+  type ZoomToggle,
+} from './ride-view';
 import { MapChart, ProfileChart } from './RideCharts';
 import { RideTimes } from './RideTimes';
 import { useElementHeight, useElementWidth } from './use-element-width';
@@ -30,8 +35,9 @@ import { useElementHeight, useElementWidth } from './use-element-width';
  * secondaries at 20, and the profile stacked over the map instead of beside it, because
  * 754 px is wide enough for one good chart and not for two.
  *
- * The mockup draws no zoom toggle over the profile, only over the map, so the window
- * view has no control here. Reported rather than invented: see the task notes.
+ * The profile carries the same zoom button as the map, which the mockup leaves off: the
+ * zoom is shared across the arrangements, so without one a rider who zoomed in on a phone
+ * and then turned the tablet upright would be stuck in the window with no way back out.
  */
 export function RideTabletPortrait({
   snapshot,
@@ -47,6 +53,8 @@ export function RideTabletPortrait({
   times,
   timesNote,
   pauseLabel,
+  profileZoom,
+  onProfileZoom,
   mapZoom,
   onMapZoom,
   mapPanel,
@@ -72,6 +80,11 @@ export function RideTabletPortrait({
   const areaHeight = useElementHeight(chartAreaRef);
   const stack = useMemo(() => tabletChartStack(areaHeight), [areaHeight]);
   const chartWidth = width ?? 754;
+
+  // One button per chart, each answering for its own chart: both are drawn at once, so
+  // neither can be read off a "current view" the way a phone's single toggle is.
+  const profileToggle = chartZoomToggle({ chart: 'profile', zoom: profileZoom });
+  const mapToggle = chartZoomToggle({ chart: 'map', zoom: mapZoom });
 
   return (
     <>
@@ -137,29 +150,40 @@ export function RideTabletPortrait({
         className="mt-[24px] flex min-h-0 grow flex-col justify-center px-[40px]"
         style={{ rowGap: `${String(TABLET_STACK_GAP_PX)}px` }}
       >
-        {/* No row gap: each chart's baseline is the rule above the next, and the km ticks
-            rule the bottom of all three. design/DESIGN.md > Trend strips. */}
-        <div ref={rowRef} className="flex flex-col">
-          <ProfileChart
-            route={route}
-            profile={profile}
-            climbs={climbs}
-            window={window}
-            width={chartWidth}
-            height={stack.profileHeight}
-            handleRef={profileRef}
-            onHover={onProfileHover}
-          />
-          {/* The strips share the profile's x-axis, so they share its width exactly. */}
-          <TrendStrips
-            ref={stripRef}
-            samples={samples}
-            ftpW={ftpW}
-            startAt={window?.startM ?? 0}
-            endAt={window?.endM ?? route.totalDistanceM}
-            width={chartWidth}
-            axis="distance"
-          />
+        <div className="flex flex-col gap-[6px]">
+          <div className="flex items-center justify-between">
+            <div className={`${LABEL} text-micro`}>Profile</div>
+            <ZoomButton
+              toggle={profileToggle}
+              onClick={() => {
+                onProfileZoom(nextProfileZoom(profileZoom));
+              }}
+            />
+          </div>
+          {/* No row gap: each chart's baseline is the rule above the next, and the km
+              ticks rule the bottom of all three. design/DESIGN.md > Trend strips. */}
+          <div ref={rowRef} className="flex flex-col">
+            <ProfileChart
+              route={route}
+              profile={profile}
+              climbs={climbs}
+              window={window}
+              width={chartWidth}
+              height={stack.profileHeight}
+              handleRef={profileRef}
+              onHover={onProfileHover}
+            />
+            {/* The strips share the profile's x-axis, so they share its width exactly. */}
+            <TrendStrips
+              ref={stripRef}
+              samples={samples}
+              ftpW={ftpW}
+              startAt={window?.startM ?? 0}
+              endAt={window?.endM ?? route.totalDistanceM}
+              width={chartWidth}
+              axis="distance"
+            />
+          </div>
         </div>
 
         {/* The same column as the desktop's, stacked rather than beside the profile: the
@@ -196,12 +220,11 @@ export function RideTabletPortrait({
                 >
                   <StepsIcon />
                 </IconButton>
-                <Segmented
-                  size={32}
-                  label="Map zoom"
-                  options={MAP_ZOOMS}
-                  value={mapZoom}
-                  onChange={onMapZoom}
+                <ZoomButton
+                  toggle={mapToggle}
+                  onClick={() => {
+                    onMapZoom(nextMapZoom(mapZoom));
+                  }}
                 />
               </ButtonGroup>
             </div>
@@ -230,6 +253,15 @@ export function RideTabletPortrait({
         </div>
       </div>
     </>
+  );
+}
+
+/** The one zoom control on every arrangement: a magnifier that cycles. See ride-view. */
+function ZoomButton({ toggle, onClick }: { toggle: ZoomToggle; onClick: () => void }) {
+  return (
+    <IconButton size={32} label={toggle.label} title={toggle.label} onClick={onClick}>
+      {toggle.glyph === 'in' ? <ZoomInIcon /> : <ZoomOutIcon />}
+    </IconButton>
   );
 }
 
