@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { AscentSeries } from '../../route/profile';
 import { INITIAL_SNAPSHOT, type RideSnapshot } from '../store';
 import {
+  chartZoomToggle,
   ftpSharePercent,
   heartRateLadder,
   kilometres,
   lapProgress,
+  nextMapZoom,
+  nextProfileZoom,
   powerLadder,
   primaryControlLabel,
   readingTone,
@@ -150,5 +153,62 @@ describe('lapProgress', () => {
     );
 
     expect(lap?.elapsedS).toBe(0);
+  });
+});
+
+describe('chartZoomToggle', () => {
+  it('offers the profile its 5 km window, and the way back out', () => {
+    expect(chartZoomToggle({ chart: 'profile', zoom: 'route' })).toEqual({
+      glyph: 'in',
+      label: 'Zoom to 5 km',
+      zoomed: false,
+    });
+    expect(chartZoomToggle({ chart: 'profile', zoom: 'window' })).toEqual({
+      glyph: 'out',
+      label: 'Zoom to the whole route',
+      zoomed: true,
+    });
+  });
+
+  it('offers the map the same pair', () => {
+    expect(chartZoomToggle({ chart: 'map', zoom: 'route' })).toEqual({
+      glyph: 'in',
+      label: 'Zoom to 5 km',
+      zoomed: false,
+    });
+    expect(chartZoomToggle({ chart: 'map', zoom: 'near' })).toEqual({
+      glyph: 'out',
+      label: 'Zoom to the whole route',
+      zoomed: true,
+    });
+  });
+
+  it('answers for the chart asked about and no other', () => {
+    // The desktop and the tablet draw both charts at once, so a zoomed map must leave the
+    // profile's button reading "zoom in" rather than following the other chart.
+    expect(chartZoomToggle({ chart: 'profile', zoom: 'route' }).zoomed).toBe(false);
+    expect(chartZoomToggle({ chart: 'map', zoom: 'near' }).zoomed).toBe(true);
+  });
+});
+
+describe('the zoom each chart cycles through', () => {
+  it('is two states on the profile', () => {
+    expect(nextProfileZoom('route')).toBe('window');
+    expect(nextProfileZoom('window')).toBe('route');
+  });
+
+  it('is two states on the map', () => {
+    expect(nextMapZoom('route')).toBe('near');
+    expect(nextMapZoom('near')).toBe('route');
+  });
+
+  it('lets a window zoomed in on a phone be undone wherever the rider turns next', () => {
+    // The zoom is shared across the arrangements, so the tablet's profile button has to
+    // read the phone's state and offer the way out of it — without one the rider is stuck
+    // in the 5 km window until they turn the device back.
+    const toggle = chartZoomToggle({ chart: 'profile', zoom: 'window' });
+
+    expect(toggle.glyph).toBe('out');
+    expect(nextProfileZoom('window')).toBe('route');
   });
 });

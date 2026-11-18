@@ -7,17 +7,22 @@ import { GhostKey } from '../components/GhostKey';
 import { GradientKey } from '../components/GradientKey';
 import { Hero } from '../components/Hero';
 import { IconButton } from '../components/IconButton';
-import { MapIcon, StepsIcon } from '../components/icons';
+import { MapIcon, StepsIcon, ZoomInIcon, ZoomOutIcon } from '../components/icons';
 import { LoopTag } from '../components/LoopTag';
 import { RideHeader } from '../components/RideHeader';
-import { Segmented } from '../components/Segmented';
 import { Stat } from '../components/Stat';
 import { LABEL, MONO } from '../components/styles';
 import { ZoneLadder } from '../components/ZoneLadder';
 import { AlertStrip } from './AlertStrip';
 import type { RideArrangementProps } from './ride-arrangement';
 import type { Reading } from './ride-readings';
-import { MAP_ZOOMS, PROFILE_ZOOMS, type LadderView } from './ride-view';
+import {
+  chartZoomToggle,
+  nextMapZoom,
+  nextProfileZoom,
+  type LadderView,
+  type ZoomToggle,
+} from './ride-view';
 import { MapChart, ProfileChart } from './RideCharts';
 import { RideTimes } from './RideTimes';
 import { useElementHeight, useElementWidth } from './use-element-width';
@@ -71,6 +76,11 @@ export function RideDesktop({
   const chartAreaHeight = useElementHeight(chartAreaRef);
   const layout = useMemo(() => chartRowLayout(rowWidth), [rowWidth]);
   const stack = useMemo(() => chartStackHeights(chartAreaHeight), [chartAreaHeight]);
+
+  // One button per chart, each answering for its own chart: both are on screen at once,
+  // so neither can be read off a "current view" the way a phone's single toggle is.
+  const profileToggle = chartZoomToggle({ chart: 'profile', zoom: profileZoom });
+  const mapToggle = chartZoomToggle({ chart: 'map', zoom: mapZoom });
 
   const startM = window?.startM ?? 0;
   const endM = window?.endM ?? route.totalDistanceM;
@@ -146,12 +156,11 @@ export function RideDesktop({
         >
           <div className="flex flex-col gap-[6px]">
             <ChartHeading label="Profile">
-              <Segmented
-                size={32}
-                label="Profile zoom"
-                options={PROFILE_ZOOMS}
-                value={profileZoom}
-                onChange={onProfileZoom}
+              <ZoomButton
+                toggle={profileToggle}
+                onClick={() => {
+                  onProfileZoom(nextProfileZoom(profileZoom));
+                }}
               />
             </ChartHeading>
             {/* No row gap: the profile's baseline is the power strip's top rule, the power
@@ -203,9 +212,7 @@ export function RideDesktop({
             ) : (
               <div className="flex flex-col gap-[6px]">
                 {/* The list icon sits flush against the zoom, so the two read as one
-                    object: both are things you do to this column. The zoom keeps its own
-                    group inside it, because it is a choice and the icon is an action —
-                    see ButtonGroup on why the two semantics stay apart. */}
+                    object: both are things you do to this column. */}
                 <ChartHeading label="Map">
                   <ButtonGroup label="Map view and zoom">
                     <IconButton
@@ -218,12 +225,11 @@ export function RideDesktop({
                     >
                       <StepsIcon />
                     </IconButton>
-                    <Segmented
-                      size={32}
-                      label="Map zoom"
-                      options={MAP_ZOOMS}
-                      value={mapZoom}
-                      onChange={onMapZoom}
+                    <ZoomButton
+                      toggle={mapToggle}
+                      onClick={() => {
+                        onMapZoom(nextMapZoom(mapZoom));
+                      }}
                     />
                   </ButtonGroup>
                 </ChartHeading>
@@ -317,6 +323,15 @@ function Ladder({ view, label, count }: { view: LadderView | null; label: string
         label={label}
       />
     </div>
+  );
+}
+
+/** The one zoom control on every arrangement: a magnifier that cycles. See ride-view. */
+function ZoomButton({ toggle, onClick }: { toggle: ZoomToggle; onClick: () => void }) {
+  return (
+    <IconButton size={32} label={toggle.label} title={toggle.label} onClick={onClick}>
+      {toggle.glyph === 'in' ? <ZoomInIcon /> : <ZoomOutIcon />}
+    </IconButton>
   );
 }
 

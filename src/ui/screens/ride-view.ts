@@ -164,9 +164,10 @@ export type MapPanel = 'map' | 'times';
 export type ProfileZoom = 'route' | 'window';
 
 /**
- * The two zoom toggles, in one place because two arrangements now draw them: the desktop
- * row draws them as a Segmented and a phone as a single icon button that cycles. A label
- * written twice is a label that ends up disagreeing with the chart it names.
+ * The two zoom toggles, in one place because every arrangement draws them: one icon
+ * button per chart header, cycling between the whole route and the near window. The
+ * labels are what the button is named with — a label written twice is a label that ends
+ * up disagreeing with the chart it names.
  */
 export const PROFILE_ZOOMS = [
   { value: 'route', label: 'Route' },
@@ -178,3 +179,60 @@ export const MAP_ZOOMS = [
   { value: 'route', label: 'Route' },
   { value: 'near', label: '5 km' },
 ] as const satisfies readonly { value: MapZoom; label: string }[];
+
+/** The glyph a zoom button draws: a direction, not a state. */
+export type ZoomGlyph = 'in' | 'out';
+
+export interface ZoomToggle {
+  /** Magnifier + while the whole route is showing, − once it is zoomed in. */
+  glyph: ZoomGlyph;
+  label: string;
+  /** Whether this chart is at its near zoom. */
+  zoomed: boolean;
+}
+
+const PROFILE_NEAR: ProfileZoom = 'window';
+const MAP_NEAR: MapZoom = 'near';
+
+/** The zoom's own label, so the button and the chart cannot drift apart. */
+function nearLabel(options: readonly { value: string; label: string }[], near: string): string {
+  return options.find((option) => option.value === near)?.label ?? near;
+}
+
+/**
+ * Which chart a zoom button belongs to, and where that chart is now. A pair rather than
+ * two loose arguments because the zoom a chart can be at is the chart's own type: a map
+ * is never at the profile's window.
+ */
+export type ChartZoom = { chart: 'profile'; zoom: ProfileZoom } | { chart: 'map'; zoom: MapZoom };
+
+/**
+ * One chart's zoom button, answered from that chart alone.
+ *
+ * The desktop and the tablet draw both charts at once, so each header asks about itself;
+ * a phone shows one at a time and asks about the one on screen (see zoomToggle in
+ * phone-ride). Same decision either way, so it is made once here.
+ */
+export function chartZoomToggle(control: ChartZoom): ZoomToggle {
+  const zoomed =
+    control.chart === 'profile' ? control.zoom === PROFILE_NEAR : control.zoom === MAP_NEAR;
+  const near =
+    control.chart === 'profile'
+      ? nearLabel(PROFILE_ZOOMS, PROFILE_NEAR)
+      : nearLabel(MAP_ZOOMS, MAP_NEAR);
+  return {
+    glyph: zoomed ? 'out' : 'in',
+    label: zoomed ? 'Zoom to the whole route' : `Zoom to ${near}`,
+    zoomed,
+  };
+}
+
+/** The zoom the button leaves the profile at. */
+export function nextProfileZoom(zoom: ProfileZoom): ProfileZoom {
+  return zoom === PROFILE_NEAR ? 'route' : PROFILE_NEAR;
+}
+
+/** The zoom the button leaves the map at. */
+export function nextMapZoom(zoom: MapZoom): MapZoom {
+  return zoom === MAP_NEAR ? 'route' : MAP_NEAR;
+}

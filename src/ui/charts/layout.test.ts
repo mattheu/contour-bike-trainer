@@ -368,8 +368,8 @@ describe('phoneLandscapeChartStack', () => {
  */
 const TABLET_CHART_AREA = 1194 - 88 - 191 - 79 - 24 - 53;
 
-/** What the gap before the map and its heading ask for; nothing else here is chrome. */
-const TABLET_CHROME = TABLET_STACK_GAP_PX + CHART_HEADING_PX + CHART_HEADING_GAP_PX;
+/** The gap before the map, and a heading over each chart; nothing else here is chrome. */
+const TABLET_CHROME = TABLET_STACK_GAP_PX + 2 * (CHART_HEADING_PX + CHART_HEADING_GAP_PX);
 
 /** The area that fits the drawn stack exactly, which is where giving height up starts. */
 const TABLET_EXACT_FIT =

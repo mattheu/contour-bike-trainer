@@ -1,5 +1,5 @@
 import type { MapZoom } from '../charts/map';
-import { MAP_ZOOMS, PROFILE_ZOOMS, type ProfileZoom } from './ride-view';
+import { chartZoomToggle, type ProfileZoom, type ZoomToggle } from './ride-view';
 
 /**
  * The phone ride screen's two controls, as arithmetic rather than as JSX.
@@ -12,9 +12,8 @@ import { MAP_ZOOMS, PROFILE_ZOOMS, type ProfileZoom } from './ride-view';
 
 export type PhoneView = 'profile' | 'map';
 
-/** The glyph a toggle draws. The view glyphs name a view; the zoom glyphs a direction. */
+/** The view glyphs name a view; the zoom glyphs a direction — see ride-view. */
 export type ViewGlyph = PhoneView;
-export type ZoomGlyph = 'in' | 'out';
 
 export interface ViewToggle {
   /** What pressing it leaves you looking at. */
@@ -33,50 +32,20 @@ export function viewToggle(view: PhoneView): ViewToggle {
     : { next: 'profile', glyph: 'profile', label: 'Show profile' };
 }
 
-export interface ZoomToggle {
-  /** Magnifier + while the whole route is showing, − once it is zoomed in. */
-  glyph: ZoomGlyph;
-  label: string;
-  /** Whether the chart in view is at its near zoom. */
-  zoomed: boolean;
-}
-
-const PROFILE_NEAR: ProfileZoom = 'window';
-const MAP_NEAR: MapZoom = 'near';
-
-/** The label the desktop's Segmented gives the same zoom, so the two cannot drift. */
-function nearLabel(options: readonly { value: string; label: string }[], near: string): string {
-  return options.find((option) => option.value === near)?.label ?? near;
-}
-
 /**
- * One button for two charts' zooms. The state it reads is the desktop row's own — a
- * phone that kept a zoom of its own would hand the rider a chart at one zoom and a
- * control naming another the moment the window changed shape mid-ride.
+ * One button for two charts' zooms. Which chart it speaks for is the view on screen, and
+ * the state it reads is the one every arrangement shares — a phone that kept a zoom of
+ * its own would hand the rider a chart at one zoom and a control naming another the
+ * moment the window changed shape mid-ride.
  */
 export function zoomToggle(
   view: PhoneView,
   profileZoom: ProfileZoom,
   mapZoom: MapZoom,
 ): ZoomToggle {
-  const zoomed = view === 'profile' ? profileZoom === PROFILE_NEAR : mapZoom === MAP_NEAR;
-  const near =
-    view === 'profile' ? nearLabel(PROFILE_ZOOMS, PROFILE_NEAR) : nearLabel(MAP_ZOOMS, MAP_NEAR);
-  return {
-    glyph: zoomed ? 'out' : 'in',
-    label: zoomed ? 'Zoom to the whole route' : `Zoom to ${near}`,
-    zoomed,
-  };
-}
-
-/** The zoom the toggle leaves the profile at. */
-export function nextProfileZoom(zoom: ProfileZoom): ProfileZoom {
-  return zoom === PROFILE_NEAR ? 'route' : PROFILE_NEAR;
-}
-
-/** The zoom the toggle leaves the map at. */
-export function nextMapZoom(zoom: MapZoom): MapZoom {
-  return zoom === MAP_NEAR ? 'route' : MAP_NEAR;
+  return view === 'profile'
+    ? chartZoomToggle({ chart: 'profile', zoom: profileZoom })
+    : chartZoomToggle({ chart: 'map', zoom: mapZoom });
 }
 
 /**
