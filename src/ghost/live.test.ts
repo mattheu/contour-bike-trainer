@@ -200,6 +200,26 @@ describe('GhostTracker', () => {
     expect(lapSplits(live.samples(), LAP_M)).toHaveLength(1);
   });
 
+  it('says which of this session’s laps a slot is racing, and says nothing of a stored one', async () => {
+    // A slow stored lap to fill a second slot, so one slot is this ride's and one is
+    // history's — and a ghost out of history carries no lap of this session.
+    const live = harness({
+      stored: [ride({ id: 'old', lapSplits: [140] })],
+      series: { old: ridden(140, LAP_M / 140) },
+    });
+    await live.tracker.start();
+
+    live.rideTo(101);
+    await vi.waitFor(() => {
+      const racing = live.tracker.update({ elapsedS: 101, distanceM: 1010 });
+      expect(racing.map((ghost) => [ghost.slot, ghost.sessionLapIndex])).toEqual([
+        // The lap just ridden, 0-based: the times list prints it as Lap 1 (Best).
+        ['best', 0],
+        ['year', null],
+      ]);
+    });
+  });
+
   it('re-resolves at the line and never part way round one', async () => {
     // A slow stored lap, so the live ride's first lap takes Best away from it when the
     // rider crosses the line — a swap with a visible before and after.
@@ -389,12 +409,12 @@ describe('GhostTracker', () => {
     await tracker.start();
 
     const slots = tracker.slots();
-    expect(slots[1]?.description).toBe('2nd best of year');
+    expect(slots[1]?.description).toBe('2nd of year');
     // The band is untouched: eleven pixels beside a gap, where the symbol identifies it.
     await vi.waitFor(() => {
       const year = tracker.update({ elapsedS: 10, distanceM: 100 }).find((g) => g.slot === 'year');
       expect(year?.name).toBe('Year');
-      expect(year?.description).toBe('2nd best of year');
+      expect(year?.description).toBe('2nd of year');
     });
   });
 
@@ -463,8 +483,8 @@ describe('GhostTracker', () => {
     const after = live.tracker
       .update({ elapsedS: 105, distanceM: 1050 })
       .find((ghost) => ghost.slot === 'year');
-    expect(after?.description).toBe('2nd best of year');
-    expect(live.tracker.slots()[1]?.description).toBe('2nd best of year');
+    expect(after?.description).toBe('2nd of year');
+    expect(live.tracker.slots()[1]?.description).toBe('2nd of year');
     // Same lap, re-worded rather than swapped: it never left the road.
     expect(after?.lapTimeS).toBe(wasRacing);
   });

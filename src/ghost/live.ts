@@ -332,7 +332,7 @@ export class GhostTracker {
       const lap = history.laps[slot];
       const on = this.selection[slot];
       // An empty slot needs no word for what it fell through to: it fell through to
-      // nothing, and "2nd best of year · no ride yet" names a lap that does not exist.
+      // nothing, and "2nd of year · no ride yet" names a lap that does not exist.
       const description = slotDescription(slot, history.yearIsSecond && lap !== null);
       views.push({
         slot,
@@ -426,10 +426,28 @@ export class GhostTracker {
       // The slot may have resolved again while the read was out; the answer to a question
       // nobody is asking any more is dropped rather than installed.
       if (series === null || !sameSource(this.assigned.get(slot) ?? null, source)) return;
-      this.loaded.set(slot, { slot, name: this.name(slot, source), description, series });
+      this.loaded.set(slot, {
+        slot,
+        name: this.name(slot, source),
+        description,
+        sessionLapIndex: this.sessionLapIndex(source),
+        series,
+      });
     } catch (error) {
       this.options.onFailure(error);
     }
+  }
+
+  /**
+   * Which of this ride's own laps a slot is racing, where it is racing one of them.
+   *
+   * The times list needs it to say `Lap 1 (Best)` rather than listing one lap as both,
+   * and this is the only place that can answer: the pool mixes the history with the
+   * recorder's laps, and by the time a ghost reaches a panel the two look alike.
+   */
+  private sessionLapIndex(source: GhostSource): number | null {
+    if (source.kind !== 'lap' || source.lap.rideId !== this.options.rideId) return null;
+    return source.lap.lapIndex;
   }
 
   private name(slot: GhostSlot, source: GhostSource): string {

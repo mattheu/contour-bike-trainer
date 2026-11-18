@@ -269,6 +269,7 @@ describe('phoneChartStack', () => {
   it('draws the mockup before the area has been measured', () => {
     expect(phoneChartStack(null)).toEqual({
       viewHeight: PHONE_VIEW_HEIGHT,
+      listHeight: PHONE_VIEW_HEIGHT,
       stripHeight: PHONE_STRIP_HEIGHT,
     });
   });
@@ -296,6 +297,20 @@ describe('phoneChartStack', () => {
     expect(stack.stripHeight).toBe(PHONE_STRIP_HEIGHT);
   });
 
+  it('gives the times list the slack the charts hand back, so it shows another lap', () => {
+    // 460 is a tall phone: the profile keeps its drawn 200 and the list takes the rest.
+    const stack = phoneChartStack(460);
+    expect(stack.viewHeight).toBe(PHONE_VIEW_HEIGHT);
+    expect(stack.listHeight).toBe(460 - PHONE_STRIPS_HEIGHT);
+  });
+
+  it('never gives the list less than the view, so swapping back moves nothing', () => {
+    for (const height of [100, 260, 400, 460]) {
+      const stack = phoneChartStack(height);
+      expect(stack.listHeight).toBeGreaterThanOrEqual(stack.viewHeight);
+    }
+  });
+
   it('fits the block in the 390 x 844 screen it is for', () => {
     const stack = phoneChartStack(400);
     expect(stack.viewHeight + PHONE_STRIPS_HEIGHT).toBeLessThanOrEqual(400);
@@ -314,17 +329,23 @@ describe('phoneLandscapeChartStack', () => {
   it('draws the mockup before the area has been measured', () => {
     expect(phoneLandscapeChartStack(null)).toEqual({
       viewHeight: PHONE_LANDSCAPE_PROFILE_HEIGHT,
+      listHeight: PHONE_LANDSCAPE_PROFILE_HEIGHT,
       stripHeight: PHONE_LANDSCAPE_STRIP_HEIGHT,
     });
   });
 
   it('draws the profile at 102 and the map at 108, over two 34 px strips', () => {
-    expect(phoneLandscapeChartStack(LANDSCAPE_CHART_AREA, 'profile')).toEqual({
+    expect(phoneLandscapeChartStack(LANDSCAPE_CHART_AREA, 'profile')).toMatchObject({
       viewHeight: 102,
       stripHeight: 34,
     });
     expect(phoneLandscapeChartStack(LANDSCAPE_CHART_AREA, 'map').viewHeight).toBe(108);
     expect(PHONE_LANDSCAPE_STRIPS_HEIGHT).toBe(68);
+  });
+
+  it('keeps the list to the view, so the band under the stats line survives', () => {
+    const stack = phoneLandscapeChartStack(LANDSCAPE_CHART_AREA, 'map');
+    expect(stack.listHeight).toBe(stack.viewHeight);
   });
 
   it('fits either view and its strips in the area the screen leaves', () => {

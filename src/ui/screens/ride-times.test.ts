@@ -16,12 +16,14 @@ function ghost(
   name: string,
   lapTimeS: number | null,
   description: string = SLOT_DESCRIPTION[slot],
+  sessionLapIndex: number | null = null,
 ): ActiveGhost {
   return {
     slot,
     symbol: SLOT_SYMBOL[slot],
     name,
     description,
+    sessionLapIndex,
     end: 'racing',
     distanceM: 0,
     lapTimeS,
@@ -89,7 +91,73 @@ describe('timeRows', () => {
       current: null,
     });
 
-    expect(rows.map((row) => row.name)).toEqual(['Best', '2nd best of year']);
+    expect(rows.map((row) => row.name)).toEqual(['Best', '2nd of year']);
+  });
+
+  it('merges a slot onto the lap of this session that filled it, rather than listing both', () => {
+    // The first ride of a route: your own lap 1 is the only lap there is, so it resolves
+    // into Best and the list would otherwise show one lap as two rows.
+    const rows = timeRows({
+      laps: [418],
+      ghosts: [ghost('best', 'Best', 418, SLOT_DESCRIPTION.best, 0)],
+      current: null,
+    });
+
+    expect(rows.map((row) => [row.rank, row.name, row.time])).toEqual([
+      [1, 'Lap 1 (Best)', '6:58'],
+    ]);
+    // The row is the slot now, so it carries the slot's shape.
+    expect(rows[0]?.symbol).toEqual(SLOT_SYMBOL.best);
+    expect(rows[0]?.key).toBe('lap-1');
+  });
+
+  it('annotates with the slot’s own word, so a second best of the year says which it is', () => {
+    const rows = timeRows({
+      laps: [418, 402],
+      ghosts: [
+        ghost('best', 'Best', 402, SLOT_DESCRIPTION.best, 1),
+        ghost('year', 'Year', 418, YEAR_SECOND_DESCRIPTION, 0),
+      ],
+      current: null,
+    });
+
+    expect(rows.map((row) => row.name)).toEqual(['Lap 2 (Best)', 'Lap 1 (2nd of year)']);
+  });
+
+  it('keeps a ghost from another ride in a row of its own, with its slot word', () => {
+    const rows = timeRows({
+      laps: [418],
+      ghosts: [ghost('best', 'Best', 402), ghost('last', 'Last', 418, SLOT_DESCRIPTION.last, 0)],
+      current: null,
+    });
+
+    // Best came out of history and keeps its row; Most recent is this session's lap 1.
+    expect(rows.map((row) => row.name)).toEqual(['Best', 'Lap 1 (Most recent)']);
+  });
+
+  it('matches on which lap it was and not on the time, so two equal laps stay two rows', () => {
+    const rows = timeRows({
+      laps: [418, 418],
+      ghosts: [ghost('best', 'Best', 418, SLOT_DESCRIPTION.best, 0)],
+      current: null,
+    });
+
+    expect(rows.map((row) => row.name)).toEqual(['Lap 1 (Best)', 'Lap 2']);
+  });
+
+  it('never annotates the lap in progress, which has no finished time to have filled one', () => {
+    // A slot pointing at a lap that has not been ridden yet cannot be shown on it, so it
+    // keeps its own row rather than vanishing.
+    const rows = timeRows({
+      laps: [],
+      ghosts: [ghost('best', 'Best', 418, SLOT_DESCRIPTION.best, 1)],
+      current: current(),
+    });
+
+    expect(rows.map((row) => [row.name, row.current])).toEqual([
+      ['Best', false],
+      ['Lap 2', true],
+    ]);
   });
 
   it('measures every gap against the best time, and leaves the best row without one', () => {

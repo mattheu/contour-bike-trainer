@@ -21,10 +21,10 @@ export interface TimeRow {
   key: string;
   /** 1-based, by time. */
   rank: number;
-  /** The ghost's shape, or null for a lap of this session — which carries a blank of the
-   * same width instead, so the names line up down the column. */
+  /** The slot's shape, or null for a row with no slot behind it — which carries a blank
+   * of the same width instead, so the names line up down the column. */
   symbol: GhostSymbol | null;
-  /** `Lap 2`, or the ghost's slot name. */
+  /** `Lap 2`, the ghost's slot word, or `Lap 2 (Best)` where the two are one lap. */
   name: string;
   /** The gap to the fastest time, or null on the fastest row and on the lap in progress,
    * which has no finished time to be a gap from. */
@@ -77,6 +77,45 @@ interface Entry {
 }
 
 /**
+ * The word this list gives a slot: the panel's, not the key band's. "Last" beside "Lap 1"
+ * and "Lap 2" reads as another lap of this session rather than a slot, and a column with
+ * room for the longer word should use it. The picked slot keeps its ride's date.
+ */
+function slotWord(ghost: ActiveGhost): string {
+  return ghost.slot === 'chosen' ? ghost.name : ghost.description;
+}
+
+/** A split this list can rank: a lap that was ridden and finished. */
+function ridden(durationS: number | undefined): durationS is number {
+  return durationS !== undefined && Number.isFinite(durationS) && durationS > 0;
+}
+
+/**
+ * The slot each of this session's finished laps is also filling, by lap index.
+ *
+ * On your first ride of a route your own lap 1 resolves into Best, and two rows for one
+ * lap is the list contradicting itself about how many you have ridden. The lap keeps the
+ * row — it is yours, and `Lap 1` is what you rode — and the slot becomes an annotation on
+ * it. Matched on ActiveGhost.sessionLapIndex rather than on the time, because two
+ * different laps can be the same number of seconds and merging those would be a claim
+ * about the wrong lap.
+ *
+ * The lap in progress is never merged: a slot is filled by a lap that has finished, so
+ * the case cannot arise, and the running row has no settled time to annotate. A ghost
+ * pointing at one keeps its own row rather than disappearing with nowhere to go.
+ */
+function slotLaps(input: TimesInput): Map<number, ActiveGhost> {
+  const laps = new Map<number, ActiveGhost>();
+  for (const ghost of input.ghosts) {
+    if (ghost.sessionLapIndex === null || ghost.lapTimeS === null) continue;
+    if (!ridden(input.laps[ghost.sessionLapIndex])) continue;
+    // One annotation per row: src/ghost/resolve.ts gives each lap at most one slot.
+    laps.set(ghost.sessionLapIndex, ghost);
+  }
+  return laps;
+}
+
+/**
  * The rows, ranked.
  *
  * Ghosts are listed ahead of this session's laps before the sort, which is what decides a
@@ -89,16 +128,15 @@ interface Entry {
  */
 export function timeRows(input: TimesInput): TimeRow[] {
   const entries: Entry[] = [];
+  const slots = slotLaps(input);
+  const merged = new Set(slots.values());
 
   for (const ghost of input.ghosts) {
-    if (ghost.lapTimeS === null) continue;
+    if (ghost.lapTimeS === null || merged.has(ghost)) continue;
     entries.push({
       key: `ghost-${ghost.slot}`,
       symbol: ghost.symbol,
-      // The panel's word, not the key band's. "Last" beside "Lap 1" and "Lap 2" reads as
-      // another lap of this session rather than a slot, and a column with room for the
-      // longer word should use it. The picked slot keeps its ride's date.
-      name: ghost.slot === 'chosen' ? ghost.name : ghost.description,
+      name: slotWord(ghost),
       timeS: ghost.lapTimeS,
       sortS: ghost.lapTimeS,
       current: false,
@@ -106,11 +144,15 @@ export function timeRows(input: TimesInput): TimeRow[] {
   }
 
   input.laps.forEach((durationS, index) => {
-    if (!Number.isFinite(durationS) || durationS <= 0) return;
+    if (!ridden(durationS)) return;
+    const slot = slots.get(index) ?? null;
+    const lap = `Lap ${String(index + 1)}`;
     entries.push({
       key: `lap-${String(index + 1)}`,
-      symbol: null,
-      name: `Lap ${String(index + 1)}`,
+      // The slot's symbol comes with its word: the row is the slot now, and a square in
+      // the key band with no square in the list is a slot the rider cannot find.
+      symbol: slot?.symbol ?? null,
+      name: slot === null ? lap : `${lap} (${slotWord(slot)})`,
       timeS: durationS,
       sortS: durationS,
       current: false,

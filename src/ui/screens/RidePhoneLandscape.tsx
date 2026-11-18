@@ -13,6 +13,7 @@ import {
   PauseIcon,
   ProfileIcon,
   SettingsIcon,
+  StepsIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from '../components/icons';
@@ -20,10 +21,11 @@ import { PhoneInlinePrimary, PhoneInlineStat, PhoneRowReading } from '../compone
 import { LABEL } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
-import { viewAfterSwipe, viewToggle, zoomToggle } from './phone-ride';
+import { timesToggle, viewAfterSwipe, viewToggle, zoomToggle } from './phone-ride';
 import type { RideArrangementProps } from './ride-arrangement';
 import { nextMapZoom, nextProfileZoom } from './ride-view';
 import { MapChart, ProfileChart } from './RideCharts';
+import { RideTimes } from './RideTimes';
 import { useElementHeight, useElementWidth } from './use-element-width';
 import { useViewSwipe } from './use-view-swipe';
 
@@ -33,9 +35,9 @@ import { useViewSwipe } from './use-view-swipe';
  *
  * Height is the scarce thing at 390 px, so the readings spend width instead: four slots
  * on one row with each readout beside its figure, then a single 11 px line of clocks.
- * That line also carries the view and zoom toggles at its right end — design/DESIGN.md
- * puts them there rather than in a foot so nothing sits over the chart, which is the
- * only part of the screen that gets what is left.
+ * That line also carries the view controls at its right end — design/DESIGN.md puts them
+ * there rather than in a foot so nothing sits over the chart, which is the only part of
+ * the screen that gets what is left.
  */
 export function RidePhoneLandscape({
   snapshot,
@@ -58,6 +60,8 @@ export function RidePhoneLandscape({
   profileRef,
   mapRef,
   stripRef,
+  times,
+  timesNote,
   onProfileHover,
   onMapHover,
   onPause,
@@ -74,18 +78,25 @@ export function RidePhoneLandscape({
   const width = useElementWidth(viewRef);
   const areaHeight = useElementHeight(chartAreaRef);
   // The map is drawn 6 px taller than the profile here, so the view is part of the sum.
-  const stack = useMemo(() => phoneLandscapeChartStack(areaHeight, view), [areaHeight, view]);
+  // The times list measures against the map, whose place it takes.
+  const stack = useMemo(
+    () => phoneLandscapeChartStack(areaHeight, view === 'profile' ? 'profile' : 'map'),
+    [areaHeight, view],
+  );
   const chartWidth = width ?? 796;
 
   const toggle = viewToggle(view);
-  const zoom = zoomToggle(view, profileZoom, mapZoom);
+  const list = timesToggle(view);
+  // No zoom on a list, so the button goes rather than sitting there dead. It is last in
+  // the group for that reason: the two it leaves behind do not move when it does.
+  const zoom = view === 'times' ? null : zoomToggle(view, profileZoom, mapZoom);
 
   function onZoom(): void {
     if (view === 'profile') onProfileZoom(nextProfileZoom(profileZoom));
     else onMapZoom(nextMapZoom(mapZoom));
   }
 
-  const swipe = useViewSwipe(viewAfterSwipe, onView);
+  const swipe = useViewSwipe((direction) => viewAfterSwipe(view, direction), onView);
 
   return (
     <div className="flex min-h-0 grow flex-col px-[24px] pt-[16px] pb-[14px]">
@@ -140,9 +151,10 @@ export function RidePhoneLandscape({
         <PhoneInlineStat {...readings.elapsed} />
         <PhoneInlineStat {...readings.distance} divided />
         <PhoneInlineStat {...readings.climbed} divided />
-        {/* Two ways of changing what you are looking at, so they share an edge. Pushed to
-            the line's right end, and 32 px rather than 44: this row is the chart's
-            ceiling, and design/DESIGN.md puts the pair here so neither sits over it. */}
+        {/* Every way of changing what you are looking at, so they share an edge. Pushed
+            to the line's right end, and 32 px rather than 44: this row is the chart's
+            ceiling, and design/DESIGN.md puts the group here so none of it sits over the
+            chart. Three of them come to 96 px, which this line has to spare. */}
         <div className="ml-auto">
           <ButtonGroup label="View">
             <IconButton
@@ -155,9 +167,22 @@ export function RidePhoneLandscape({
             >
               {toggle.glyph === 'map' ? <MapIcon /> : <ProfileIcon />}
             </IconButton>
-            <IconButton label={zoom.label} title={zoom.label} size={32} onClick={onZoom}>
-              {zoom.glyph === 'in' ? <ZoomInIcon /> : <ZoomOutIcon />}
+            <IconButton
+              label={list.label}
+              title={list.label}
+              size={32}
+              pressed={list.pressed}
+              onClick={() => {
+                onView(list.next);
+              }}
+            >
+              <StepsIcon />
             </IconButton>
+            {zoom !== null && (
+              <IconButton label={zoom.label} title={zoom.label} size={32} onClick={onZoom}>
+                {zoom.glyph === 'in' ? <ZoomInIcon /> : <ZoomOutIcon />}
+              </IconButton>
+            )}
           </ButtonGroup>
         </div>
       </div>
@@ -175,7 +200,7 @@ export function RidePhoneLandscape({
           style={{ touchAction: 'pan-y' }}
           {...swipe}
         >
-          {view === 'profile' ? (
+          {view === 'profile' && (
             <ProfileChart
               route={route}
               profile={profile}
@@ -187,7 +212,8 @@ export function RidePhoneLandscape({
               onHover={onProfileHover}
               ghostMetrics={PHONE_METRICS}
             />
-          ) : (
+          )}
+          {view === 'map' && (
             <MapChart
               route={route}
               zoom={mapZoom}
@@ -197,6 +223,12 @@ export function RidePhoneLandscape({
               onHover={onMapHover}
               ghostMetrics={PHONE_METRICS}
             />
+          )}
+          {/* The desktop's list at the phone's height — see PhoneChartStack.listHeight.
+              Height is what this screen has least of, so the list takes the slack the
+              charts leave above them rather than their drawn height. */}
+          {view === 'times' && (
+            <RideTimes rows={times} note={timesNote} height={stack.listHeight} />
           )}
         </div>
         {/* The strips share the profile's x-axis, so they share its width exactly — and

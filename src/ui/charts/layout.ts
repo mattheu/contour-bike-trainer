@@ -197,16 +197,30 @@ export function phoneLandscapeChartStack(
   availableHeight: number | null,
   view: StackView = 'profile',
 ): PhoneChartStack {
-  return phoneStack(availableHeight, {
+  const stack = phoneStack(availableHeight, {
     view: view === 'map' ? PHONE_LANDSCAPE_MAP_HEIGHT : PHONE_LANDSCAPE_PROFILE_HEIGHT,
     strips: PHONE_LANDSCAPE_STRIPS_HEIGHT,
     strip: PHONE_LANDSCAPE_STRIP_HEIGHT,
     minView: MIN_PHONE_LANDSCAPE_VIEW_HEIGHT,
   });
+  // The one place a list does not get the slack. Sideways there is barely any — half a
+  // row — and it is the clear band design/mockups/phone-landscape.html draws between the
+  // stats line and the view. A list flush under the toggles buys half a lap for it.
+  return { ...stack, listHeight: stack.viewHeight };
 }
 
 export interface PhoneChartStack {
   viewHeight: number;
+  /**
+   * The most a list may take in the view's place — the ranked times, which is the one
+   * thing that goes there and is not a chart.
+   *
+   * It keeps the slack the charts give back, because the two gain differently from
+   * height: a profile drawn taller is the same terrain in a bigger box, where a ranking
+   * drawn taller is another lap you can see. Never less than the view, so swapping to it
+   * and back moves nothing below it.
+   */
+  listHeight: number;
   /** One strip. The block under the view is twice this. */
   stripHeight: number;
 }
@@ -221,12 +235,17 @@ function phoneStack(
   drawn: { view: number; strips: number; strip: number; minView: number },
 ): PhoneChartStack {
   if (availableHeight === null || !Number.isFinite(availableHeight)) {
-    return { viewHeight: drawn.view, stripHeight: drawn.strip };
+    return { viewHeight: drawn.view, listHeight: drawn.view, stripHeight: drawn.strip };
   }
 
   const forCharts = Math.floor(availableHeight);
-  const viewHeight = Math.min(drawn.view, Math.max(drawn.minView, forCharts - drawn.strips));
-  return { viewHeight, stripHeight: drawn.strip };
+  const forView = forCharts - drawn.strips;
+  const viewHeight = Math.min(drawn.view, Math.max(drawn.minView, forView));
+  return {
+    viewHeight,
+    listHeight: Math.max(viewHeight, forView),
+    stripHeight: drawn.strip,
+  };
 }
 
 /**

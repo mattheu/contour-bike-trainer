@@ -8,6 +8,7 @@ import {
   PauseIcon,
   ProfileIcon,
   SettingsIcon,
+  StepsIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from '../components/icons';
@@ -15,10 +16,11 @@ import { PhoneFigure, PhonePrimary, PhoneStat } from '../components/PhoneReading
 import { LABEL } from '../components/styles';
 import { Logo } from '../components/Wordmark';
 import { AlertStrip } from './AlertStrip';
-import { viewAfterSwipe, viewToggle, zoomToggle } from './phone-ride';
+import { timesToggle, viewAfterSwipe, viewToggle, zoomToggle } from './phone-ride';
 import type { RideArrangementProps } from './ride-arrangement';
 import { nextMapZoom, nextProfileZoom } from './ride-view';
 import { MapChart, ProfileChart } from './RideCharts';
+import { RideTimes } from './RideTimes';
 import { useElementHeight, useElementWidth } from './use-element-width';
 import { useViewSwipe } from './use-view-swipe';
 
@@ -27,8 +29,8 @@ import { useViewSwipe } from './use-view-swipe';
  * design/mockups/phone-portrait-profile.html and phone-portrait-map.html.
  *
  * One column: the three primaries, speed and gradient, the three clocks, then the view —
- * profile or map, never both — over the power strip. Every control is an icon, because
- * at 390 px a row of tracked caps is the whole foot.
+ * one of the profile, the map and the ranked times — over the power strip. Every control
+ * is an icon, because at 390 px a row of tracked caps is the whole foot.
  */
 export function RidePhonePortrait({
   snapshot,
@@ -51,6 +53,8 @@ export function RidePhonePortrait({
   profileRef,
   mapRef,
   stripRef,
+  times,
+  timesNote,
   onProfileHover,
   onMapHover,
   onPause,
@@ -70,14 +74,17 @@ export function RidePhonePortrait({
   const chartWidth = width ?? 358;
 
   const toggle = viewToggle(view);
-  const zoom = zoomToggle(view, profileZoom, mapZoom);
+  const list = timesToggle(view);
+  // No zoom on a list, so the button goes rather than sitting there dead. It is last in
+  // the group for that reason: the two it leaves behind do not move when it does.
+  const zoom = view === 'times' ? null : zoomToggle(view, profileZoom, mapZoom);
 
   function onZoom(): void {
     if (view === 'profile') onProfileZoom(nextProfileZoom(profileZoom));
     else onMapZoom(nextMapZoom(mapZoom));
   }
 
-  const swipe = useViewSwipe(viewAfterSwipe, onView);
+  const swipe = useViewSwipe((direction) => viewAfterSwipe(view, direction), onView);
 
   return (
     <div className="flex min-h-0 grow flex-col px-[16px] pt-[28px] pb-[28px]">
@@ -133,7 +140,7 @@ export function RidePhonePortrait({
           style={{ touchAction: 'pan-y' }}
           {...swipe}
         >
-          {view === 'profile' ? (
+          {view === 'profile' && (
             <ProfileChart
               route={route}
               profile={profile}
@@ -145,7 +152,8 @@ export function RidePhonePortrait({
               onHover={onProfileHover}
               ghostMetrics={PHONE_METRICS}
             />
-          ) : (
+          )}
+          {view === 'map' && (
             <MapChart
               route={route}
               zoom={mapZoom}
@@ -155,6 +163,11 @@ export function RidePhonePortrait({
               onHover={onMapHover}
               ghostMetrics={PHONE_METRICS}
             />
+          )}
+          {/* The desktop's list at the phone's height — see PhoneChartStack.listHeight.
+              One list, sized for the screen it is on, rather than a second one. */}
+          {view === 'times' && (
+            <RideTimes rows={times} note={timesNote} height={stack.listHeight} />
           )}
         </div>
         {/* The strips share the profile's x-axis, so they share its width exactly — and
@@ -173,7 +186,8 @@ export function RidePhonePortrait({
       </div>
 
       <div className="mt-[18px] flex shrink-0 items-center justify-between">
-        {/* Two ways of changing what you are looking at, so they share an edge. */}
+        {/* Every way of changing what you are looking at, so they share an edge: the two
+            charts, the times list, then how close. */}
         <ButtonGroup label="View">
           <IconButton
             label={toggle.label}
@@ -185,9 +199,22 @@ export function RidePhonePortrait({
           >
             {toggle.glyph === 'map' ? <MapIcon /> : <ProfileIcon />}
           </IconButton>
-          <IconButton label={zoom.label} title={zoom.label} size={44} onClick={onZoom}>
-            {zoom.glyph === 'in' ? <ZoomInIcon /> : <ZoomOutIcon />}
+          <IconButton
+            label={list.label}
+            title={list.label}
+            size={44}
+            pressed={list.pressed}
+            onClick={() => {
+              onView(list.next);
+            }}
+          >
+            <StepsIcon />
           </IconButton>
+          {zoom !== null && (
+            <IconButton label={zoom.label} title={zoom.label} size={44} onClick={onZoom}>
+              {zoom.glyph === 'in' ? <ZoomInIcon /> : <ZoomOutIcon />}
+            </IconButton>
+          )}
         </ButtonGroup>
         {/* Pause and End as glyphs, and grey: design/DESIGN.md takes the accent off a
             control once the ride is under way — the data owns the colour from then on. */}

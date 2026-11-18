@@ -39,6 +39,9 @@ export interface Ghost {
   slot: GhostSlot;
   name: string;
   description: string;
+  /** See ActiveGhost.sessionLapIndex. Settled where the slot was filled, which is the one
+   * place that knows which ride the lap came out of. */
+  sessionLapIndex: number | null;
   series: GhostSeries;
 }
 
@@ -78,6 +81,15 @@ export interface ActiveGhost {
    * ranking. Settled here rather than in the list, where `finished` is no longer in reach.
    */
   lapTimeS: number | null;
+  /**
+   * Which of the ride in progress's own laps this ghost is, 0-based, where it is one of
+   * them. Null for every ghost out of the history.
+   *
+   * The times list merges such a slot onto that lap's row rather than listing one lap
+   * twice. It is carried rather than worked out there because the list has only times to
+   * go on, and two different laps can be the same number of seconds.
+   */
+  sessionLapIndex: number | null;
   /** The rider's deficit in seconds, positive when the ghost is ahead. Null when done:
    * there is no gap to a ghost that is no longer on the road. */
   gapS: number | null;
@@ -106,6 +118,7 @@ export function ghostState(ghost: Ghost, rider: RiderLap): ActiveGhost {
     symbol: SLOT_SYMBOL[ghost.slot],
     name: ghost.name,
     description: ghost.description,
+    sessionLapIndex: ghost.sessionLapIndex,
     end,
     // Where it got to, which for a finished ghost is the route end and for a stopped one
     // is the metre its ride reached.
